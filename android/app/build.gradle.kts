@@ -8,7 +8,7 @@ plugins {
 }
 
 android {
-    namespace = "com.example.deadbounce_flutter_app"
+    namespace = "com.pranta.deadbounce"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
