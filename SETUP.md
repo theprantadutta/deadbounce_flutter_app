@@ -8,7 +8,7 @@ in the `deadbounce-dotnet-api` repo (see its SETUP.md).
 ```
 lib/
   core/
-    config/    AppConfig — API base URL from --dart-define
+    config/    AppConfig — reads .env (URLs by kDebugMode, Google client id)
     network/   ApiClient (dio + bearer interceptor + error normalization)
     storage/   TokenStorage (flutter_secure_storage)
     router/    go_router setup + route constants
@@ -25,6 +25,16 @@ lib/
 
 ## Prerequisites
 
+- **`.env` at the repo root** — copy `.env.example` and fill in. It is loaded
+  at startup by flutter_dotenv (and bundled as an asset, so a missing `.env`
+  fails the build). Keys:
+
+  | Key | Notes |
+  |---|---|
+  | `API_BASE_URL_DEV` | Used by **debug** builds (`kDebugMode`). `http://10.0.2.2:8394` for the Android emulator; your LAN IP for a physical device |
+  | `API_BASE_URL_PROD` | Used by **release** builds — `https://deadbounce.pranta.dev` |
+  | `GOOGLE_SERVER_CLIENT_ID` | The web OAuth client ID Google Sign-In uses to mint Firebase-verifiable ID tokens |
+
 - `android/app/google-services.json` must exist (Firebase project
   `deadbounce-421b4`, package `com.pranta.deadbounce`). It is git-ignored —
   re-download from the Firebase console if missing.
@@ -32,10 +42,6 @@ lib/
   console): enable the Google provider, register your debug SHA-1, and
   re-download `google-services.json`. The code path is fully wired and will
   work as soon as the console side is done.
-- The **web (server) OAuth client ID** is read automatically from
-  `google-services.json` on Android (the `client_type: 3` entry Firebase adds
-  when the Google provider is enabled). To pass it explicitly instead:
-  `--dart-define=GOOGLE_SERVER_CLIENT_ID=xxx.apps.googleusercontent.com`.
 - Email/password and Anonymous providers must be enabled in
   Firebase Auth → Sign-in method.
 
@@ -43,13 +49,12 @@ lib/
 
 ```bash
 flutter pub get
-flutter run                          # debug: API defaults to http://10.0.2.2:8394 (Android emulator → host)
-flutter run --dart-define=API_BASE_URL=http://192.168.0.42:8394   # physical device → LAN IP
-flutter build apk                    # release: defaults to https://deadbounce.pranta.dev
+flutter run          # debug → API_BASE_URL_DEV
+flutter build apk    # release → API_BASE_URL_PROD
 ```
 
-The API base URL lives only in `lib/core/config/app_config.dart` and the
-`--dart-define`; nothing else hardcodes it.
+Configuration lives only in `.env` (read through
+`lib/core/config/app_config.dart`); nothing else hardcodes URLs or client IDs.
 
 ## Verify
 

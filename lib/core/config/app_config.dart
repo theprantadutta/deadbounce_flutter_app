@@ -1,33 +1,29 @@
 import 'package:flutter/foundation.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
-/// Build-time configuration. Values come from `--dart-define` so nothing
-/// environment-specific is hardcoded in widget/data code:
+/// Runtime configuration backed by the `.env` file (loaded in main.dart
+/// before runApp). Nothing environment-specific is hardcoded in widget or
+/// data code — copy `.env.example` to `.env` and edit there.
 ///
-///   flutter run --dart-define=API_BASE_URL=http://192.168.0.10:8394
-///
-/// Defaults: Android-emulator loopback in debug builds, the production
-/// Traefik host otherwise.
+/// Debug builds talk to [API_BASE_URL_DEV], release builds to
+/// [API_BASE_URL_PROD] — selected by [kDebugMode].
 abstract final class AppConfig {
-  static const String _definedBaseUrl = String.fromEnvironment('API_BASE_URL');
-
   static String get apiBaseUrl {
-    if (_definedBaseUrl.isNotEmpty) return _definedBaseUrl;
-    // 10.0.2.2 is the Android emulator's alias for the host machine.
-    return kDebugMode
-        ? 'http://10.0.2.2:8394'
-        : 'https://deadbounce.pranta.dev';
+    final key = kDebugMode ? 'API_BASE_URL_DEV' : 'API_BASE_URL_PROD';
+    final url = dotenv.env[key];
+    if (url == null || url.isEmpty) {
+      throw StateError('$key is missing from .env — copy .env.example to '
+          '.env and fill it in.');
+    }
+    return url;
   }
 
   static String get apiV1 => '$apiBaseUrl/api/v1';
 
   /// Web (server) OAuth client ID for Google Sign-In, e.g.
-  /// `351700332072-xxxx.apps.googleusercontent.com`.
-  ///
-  /// Optional on Android: when empty, google_sign_in falls back to the
-  /// `default_web_client_id` that the google-services Gradle plugin
-  /// generates from google-services.json (present once the Google provider
-  /// is enabled in the Firebase console). Pass it explicitly via
-  /// `--dart-define=GOOGLE_SERVER_CLIENT_ID=...` to override.
-  static const String googleServerClientId =
-      String.fromEnvironment('GOOGLE_SERVER_CLIENT_ID');
+  /// `351700332072-xxxx.apps.googleusercontent.com`. Empty string when not
+  /// configured — google_sign_in then falls back to the
+  /// `default_web_client_id` generated from google-services.json on Android.
+  static String get googleServerClientId =>
+      dotenv.env['GOOGLE_SERVER_CLIENT_ID'] ?? '';
 }
