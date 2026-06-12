@@ -32,6 +32,10 @@ lib/
   console): enable the Google provider, register your debug SHA-1, and
   re-download `google-services.json`. The code path is fully wired and will
   work as soon as the console side is done.
+- The **web (server) OAuth client ID** is read automatically from
+  `google-services.json` on Android (the `client_type: 3` entry Firebase adds
+  when the Google provider is enabled). To pass it explicitly instead:
+  `--dart-define=GOOGLE_SERVER_CLIENT_ID=xxx.apps.googleusercontent.com`.
 - Email/password and Anonymous providers must be enabled in
   Firebase Auth → Sign-in method.
 

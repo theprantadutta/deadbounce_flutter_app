@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
+import '../../../../core/config/app_config.dart';
 import '../../domain/repositories/auth_repository.dart';
 
 /// Wraps the Firebase client SDK sign-in flows. Every provider funnels to
@@ -53,7 +54,15 @@ class AuthFirebaseDataSource {
   Future<String> signInWithGoogle() async {
     try {
       if (!_googleInitialized) {
-        await _googleSignIn.initialize();
+        // serverClientId (the WEB OAuth client id) is what makes Google
+        // return an ID token Firebase can verify. On Android it defaults
+        // to the default_web_client_id generated from google-services.json,
+        // so the dart-define override is optional there.
+        await _googleSignIn.initialize(
+          serverClientId: AppConfig.googleServerClientId.isEmpty
+              ? null
+              : AppConfig.googleServerClientId,
+        );
         _googleInitialized = true;
       }
 

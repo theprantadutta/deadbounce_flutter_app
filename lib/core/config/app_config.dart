@@ -19,4 +19,15 @@ abstract final class AppConfig {
   }
 
   static String get apiV1 => '$apiBaseUrl/api/v1';
+
+  /// Web (server) OAuth client ID for Google Sign-In, e.g.
+  /// `351700332072-xxxx.apps.googleusercontent.com`.
+  ///
+  /// Optional on Android: when empty, google_sign_in falls back to the
+  /// `default_web_client_id` that the google-services Gradle plugin
+  /// generates from google-services.json (present once the Google provider
+  /// is enabled in the Firebase console). Pass it explicitly via
+  /// `--dart-define=GOOGLE_SERVER_CLIENT_ID=...` to override.
+  static const String googleServerClientId =
+      String.fromEnvironment('GOOGLE_SERVER_CLIENT_ID');
 }
