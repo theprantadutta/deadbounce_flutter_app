@@ -10,6 +10,7 @@ import '../../../core/theme/app_effects.dart';
 import '../../../core/widgets/animated_arena_background.dart';
 import '../../../core/widgets/db_button.dart';
 import '../../../core/widgets/db_logo.dart';
+import '../../../core/widgets/fitted_headline.dart';
 import '../../../core/widgets/utc_midnight_countdown.dart';
 import '../../auth/presentation/cubit/auth_cubit.dart';
 import '../../economy/presentation/cubit/wallet_cubit.dart';
@@ -90,11 +91,15 @@ class _HomeViewState extends State<_HomeView> {
                             const SizedBox(height: AppSpacing.sm),
                             const _TopBar(),
                             const Spacer(flex: 2),
-                            const DbLogo(size: 96),
+                            // Logo scales down on short screens so the
+                            // Spacer layout never overflows vertically.
+                            DbLogo(
+                              size: (constraints.maxHeight * 0.13)
+                                  .clamp(64.0, 96.0),
+                            ),
                             const SizedBox(height: AppSpacing.md),
-                            Text('DEADBOUNCE',
-                                style: textTheme.displayMedium,
-                                textAlign: TextAlign.center),
+                            FittedHeadline('DEADBOUNCE',
+                                style: textTheme.displayMedium),
                             const SizedBox(height: AppSpacing.xs),
                             Text('Bullets only bite after they bounce.',
                                 style: textTheme.bodyMedium,

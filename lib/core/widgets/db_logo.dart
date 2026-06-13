@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../theme/app_colors.dart';
 import '../theme/app_effects.dart';
+import 'fitted_headline.dart';
 
 /// The Deadbounce logo: [Icons.airline_stops] (a trajectory path with a
 /// bounce — the ricochet) set inside a rotated-diamond badge with the
@@ -74,22 +75,18 @@ class DbLogoLockup extends StatelessWidget {
       children: [
         DbLogo(size: logoSize),
         SizedBox(height: logoSize * 0.45),
-        Text(
+        FittedHeadline(
           'DEADBOUNCE',
-          style: textTheme.displaySmall?.copyWith(
-            fontSize: logoSize * 0.30,
-          ),
-          textAlign: TextAlign.center,
+          style: textTheme.displaySmall?.copyWith(fontSize: logoSize * 0.30),
         ),
         SizedBox(height: logoSize * 0.08),
-        Text(
+        FittedHeadline(
           'NO DAMAGE TILL IT BOUNCES',
           style: textTheme.labelMedium?.copyWith(
             color: AppColors.blue300,
             letterSpacing: 3,
             fontSize: logoSize * 0.10,
           ),
-          textAlign: TextAlign.center,
         ),
       ],
     );

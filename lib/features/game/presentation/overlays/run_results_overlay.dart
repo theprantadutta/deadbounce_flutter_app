@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_dimens.dart';
 import '../../../../core/widgets/db_button.dart';
+import '../../../../core/widgets/fitted_headline.dart';
 import '../../../runs/domain/entities/run_result.dart';
 
 /// End-of-run breakdown: score, kills, best chain, max bounce kill,
@@ -85,10 +86,9 @@ class RunResultsOverlay extends StatelessWidget {
                           ),
                         ),
                       ),
-                    Text(
+                    FittedHeadline(
                       '${result.score}',
                       style: textTheme.displayMedium,
-                      textAlign: TextAlign.center,
                     ),
                     Text(
                       'SCORE',

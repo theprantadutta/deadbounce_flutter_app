@@ -6,6 +6,7 @@ import '../theme/app_colors.dart';
 import '../theme/app_dimens.dart';
 import 'animated_arena_background.dart';
 import 'db_logo.dart';
+import 'fitted_headline.dart';
 
 /// A full-screen loading scene: pulsing logo lockup, a styled progress
 /// bar, and rotating gameplay tips over the animated arena background.
@@ -78,11 +79,7 @@ class _DbLoadingSceneState extends State<DbLoadingScene>
                     child: const DbLogo(size: 104),
                   ),
                 const SizedBox(height: AppSpacing.lg),
-                Text(
-                  widget.title,
-                  style: textTheme.displaySmall,
-                  textAlign: TextAlign.center,
-                ),
+                FittedHeadline(widget.title, style: textTheme.displaySmall),
                 if (widget.subtitle != null) ...[
                   const SizedBox(height: AppSpacing.xs),
                   Text(
@@ -95,8 +92,11 @@ class _DbLoadingSceneState extends State<DbLoadingScene>
                 const Spacer(flex: 2),
                 const _IndeterminateBar(),
                 const SizedBox(height: AppSpacing.lg),
-                SizedBox(
-                  height: 44,
+                // Reserve space to stop layout jumping between tips, but
+                // allow growth so a long tip wrapping on a narrow screen
+                // never overflows.
+                ConstrainedBox(
+                  constraints: const BoxConstraints(minHeight: 48),
                   child: AnimatedSwitcher(
                     duration: const Duration(milliseconds: 400),
                     child: Text(
@@ -104,6 +104,8 @@ class _DbLoadingSceneState extends State<DbLoadingScene>
                       key: ValueKey(_tipIndex),
                       style: textTheme.bodyMedium,
                       textAlign: TextAlign.center,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
                 ),
