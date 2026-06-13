@@ -5,4 +5,5 @@ abstract final class Routes {
   static const String signup = '/signup';
   static const String home = '/home';
   static const String game = '/game';
+  static const String dailyChallengeRun = '/game/daily';
 }

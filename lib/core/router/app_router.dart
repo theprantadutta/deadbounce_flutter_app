@@ -34,6 +34,10 @@ GoRouter buildRouter() {
         path: Routes.game,
         builder: (context, state) => const GamePage(),
       ),
+      GoRoute(
+        path: Routes.dailyChallengeRun,
+        builder: (context, state) => const GamePage(dailyChallenge: true),
+      ),
     ],
   );
 }

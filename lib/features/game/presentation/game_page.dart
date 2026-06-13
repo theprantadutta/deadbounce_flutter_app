@@ -1,65 +1,93 @@
 import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../core/theme/app_dimens.dart';
-import '../../../core/theme/app_effects.dart';
-import 'game/deadbounce_game.dart';
+import '../../../app.dart';
+import '../../../core/router/routes.dart';
+import 'cubit/game_session_cubit.dart';
+import 'overlays/hud_overlay.dart';
+import 'overlays/pause_overlay.dart';
+import 'overlays/run_results_overlay.dart';
+import 'overlays/upgrade_picker_overlay.dart';
 
-/// Hosts the empty Flame arena. The GameWidget fills the screen; the
-/// game's fixed-resolution camera letterboxes so the arena keeps its
-/// proportions on every device.
-class GamePage extends StatefulWidget {
-  const GamePage({super.key});
+/// Hosts the arena. All chrome (HUD, pause, upgrade picker, results) is
+/// normal Flutter widgets stacked over the GameWidget, driven by the
+/// session cubit — the game pauses underneath the overlays.
+class GamePage extends StatelessWidget {
+  const GamePage({super.key, this.dailyChallenge = false});
 
-  @override
-  State<GamePage> createState() => _GamePageState();
-}
-
-class _GamePageState extends State<GamePage> {
-  // Keep one game instance across rebuilds — recreating a FlameGame in
-  // build() restarts the engine on every setState.
-  late final DeadbounceGame _game = DeadbounceGame();
+  final bool dailyChallenge;
 
   @override
   Widget build(BuildContext context) {
-    final effects = Theme.of(context).extension<AppEffects>()!;
-    final textTheme = Theme.of(context).textTheme;
+    final session = context.sessionDependencies;
+    return BlocProvider(
+      create: (_) => GameSessionCubit(
+        runsRepository: session.runsRepository,
+        syncWorker: session.syncWorker,
+        dailyChallenge: dailyChallenge,
+      )..startRun(),
+      child: const _GameView(),
+    );
+  }
+}
+
+class _GameView extends StatelessWidget {
+  const _GameView();
+
+  @override
+  Widget build(BuildContext context) {
+    final cubit = context.read<GameSessionCubit>();
 
     return Scaffold(
-      body: Stack(
-        children: [
-          Positioned.fill(
-            child: GameWidget(game: _game),
-          ),
-          SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.all(AppSpacing.md),
-              child: Row(
-                children: [
-                  DecoratedBox(
-                    decoration: effects.glassDecoration,
-                    child: IconButton(
-                      tooltip: 'Back to menu',
-                      onPressed: () => context.pop(),
-                      icon: const Icon(Icons.arrow_back),
-                    ),
+      body: BlocBuilder<GameSessionCubit, GameSessionState>(
+        builder: (context, state) {
+          final game = cubit.game;
+          if (state is SessionIdle || game == null) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          return Stack(
+            children: [
+              Positioned.fill(child: GameWidget(game: game)),
+              HudOverlay(hud: cubit.hud, onPause: cubit.pause),
+              if (state is SessionPaused)
+                Positioned.fill(
+                  child: PauseOverlay(
+                    onResume: cubit.resume,
+                    onRestart: () => _restart(context),
+                    onQuit: () => context.go(Routes.home),
                   ),
-                  const SizedBox(width: AppSpacing.md),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: AppSpacing.md,
-                      vertical: AppSpacing.xs,
-                    ),
-                    decoration: effects.glassDecoration,
-                    child: Text('THE ARENA', style: textTheme.labelMedium),
+                ),
+              if (state is SessionUpgradePicking)
+                Positioned.fill(
+                  child: UpgradePickerOverlay(
+                    waveCleared: state.waveCleared,
+                    choices: state.choices,
+                    onPick: cubit.selectUpgrade,
                   ),
-                ],
-              ),
-            ),
-          ),
-        ],
+                ),
+              if (state is SessionRunOver)
+                Positioned.fill(
+                  child: RunResultsOverlay(
+                    result: state.result,
+                    isNewBestScore: state.isNewBestScore,
+                    onRetry: () => _restart(context),
+                    onHome: () => context.go(Routes.home),
+                  ),
+                ),
+            ],
+          );
+        },
       ),
+    );
+  }
+
+  void _restart(BuildContext context) {
+    final dailyChallenge = context.read<GameSessionCubit>().dailyChallenge;
+    context.pushReplacement(
+      dailyChallenge ? Routes.dailyChallengeRun : Routes.game,
     );
   }
 }
