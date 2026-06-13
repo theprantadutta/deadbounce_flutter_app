@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../app.dart';
 import '../../../core/router/routes.dart';
+import '../../../core/widgets/db_loading_scene.dart';
 import 'cubit/game_session_cubit.dart';
 import 'overlays/hud_overlay.dart';
 import 'overlays/pause_overlay.dart';
@@ -46,7 +47,17 @@ class _GameView extends StatelessWidget {
         builder: (context, state) {
           final game = cubit.game;
           if (state is SessionIdle || game == null) {
-            return const Center(child: CircularProgressIndicator());
+            return const DbLoadingScene(
+              title: 'LOADING THE ARENA',
+              subtitle: 'Chalk your hands, partner.',
+              showLogo: false,
+              tips: [
+                'Drag to aim. Release to fire.',
+                'Tap a side to dash and dodge.',
+                'No damage until it bounces.',
+                'Line up shots behind the walls.',
+              ],
+            );
           }
 
           return Stack(

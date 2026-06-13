@@ -2,15 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../app.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/theme/app_dimens.dart';
-import '../../../core/theme/app_effects.dart';
-import '../../../core/widgets/db_logo.dart';
+import '../../../core/widgets/db_loading_scene.dart';
 import '../../auth/presentation/cubit/auth_cubit.dart';
 
-/// Brand splash: logo lockup fades in while [AuthCubit.restoreSession]
-/// decides whether the stored session is still valid, then routes to
-/// home or login.
+/// App boot loading screen: animated brand backdrop, rotating tips, and a
+/// progress bar while [AuthCubit.restoreSession] resolves the session and
+/// — for a signed-in account — the per-account database hydrates
+/// (one-time snapshot restore). Routes to home or login when ready.
 class SplashPage extends StatefulWidget {
   const SplashPage({super.key});
 
@@ -18,19 +19,20 @@ class SplashPage extends StatefulWidget {
   State<SplashPage> createState() => _SplashPageState();
 }
 
-class _SplashPageState extends State<SplashPage>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _controller = AnimationController(
-    vsync: this,
-    duration: AppDurations.slow,
-  )..forward();
-
-  late final Animation<double> _fade =
-      CurvedAnimation(parent: _controller, curve: Curves.easeOut);
-
+class _SplashPageState extends State<SplashPage> {
   /// Keep the brand on screen at least this long, even on a fast restore.
-  late final Future<void> _minimumHold =
+  final Future<void> _minimumHold =
       Future<void>.delayed(AppDurations.splash);
+  bool _routing = false;
+  bool _restoring = false;
+
+  static const _tips = [
+    'Bullets only bite after they bounce.',
+    'Wardens fear the third bounce.',
+    'Dash to dodge — aim to win.',
+    'A dampened wall is a dead wall. Kill the turret.',
+    'Every bounce: more damage, more speed.',
+  ];
 
   @override
   void initState() {
@@ -38,45 +40,49 @@ class _SplashPageState extends State<SplashPage>
     context.read<AuthCubit>().restoreSession();
   }
 
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
+  Future<void> _onAuthenticated() async {
+    if (_routing) return;
+    _routing = true;
+
+    // Capture the holder before any await so we never touch `context`
+    // across an async gap.
+    final holder = context.read<SessionHolder>();
+
+    // Wait for _SessionScope to construct the per-account session, then for
+    // its one-time restore + sync spin-up to finish.
+    var session = holder.maybeSession;
+    while (session == null && mounted) {
+      await Future<void>.delayed(const Duration(milliseconds: 16));
+      session = holder.maybeSession;
+    }
+    if (!mounted || session == null) return;
+
+    setState(() => _restoring = true);
+    await Future.wait([session.ready, _minimumHold]);
+    if (mounted) context.go(Routes.home);
   }
 
-  Future<void> _route(String location) async {
+  Future<void> _onUnauthenticated() async {
+    if (_routing) return;
+    _routing = true;
     await _minimumHold;
-    if (mounted) context.go(location);
+    if (mounted) context.go(Routes.login);
   }
 
   @override
   Widget build(BuildContext context) {
-    final effects = Theme.of(context).extension<AppEffects>()!;
-
     return BlocListener<AuthCubit, AuthState>(
       listener: (context, state) {
         if (state is AuthAuthenticated) {
-          _route(Routes.home);
+          _onAuthenticated();
         } else if (state is AuthUnauthenticated) {
-          _route(Routes.login);
+          _onUnauthenticated();
         }
       },
-      child: Scaffold(
-        body: Container(
-          decoration: BoxDecoration(gradient: effects.arenaGradient),
-          child: Center(
-            child: FadeTransition(
-              opacity: _fade,
-              child: LayoutBuilder(
-                builder: (context, constraints) {
-                  final logoSize =
-                      (constraints.maxWidth * 0.24).clamp(72.0, 120.0);
-                  return DbLogoLockup(logoSize: logoSize);
-                },
-              ),
-            ),
-          ),
-        ),
+      child: DbLoadingScene(
+        title: 'DEADBOUNCE',
+        subtitle: _restoring ? 'Restoring your gunslinger…' : null,
+        tips: _tips,
       ),
     );
   }

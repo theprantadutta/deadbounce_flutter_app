@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import '../../features/achievements/data/repositories/achievements_repository_impl.dart';
 import '../../features/achievements/domain/repositories/achievements_repository.dart';
 import '../../features/challenges/data/repositories/daily_challenge_repository_impl.dart';
@@ -110,6 +112,12 @@ class SessionDependencies {
   final SettingsRepository settingsRepository;
 
   bool _started = false;
+  final Completer<void> _ready = Completer<void>();
+
+  /// Completes once [start] has finished (snapshot restore + sync spin-up).
+  /// The boot screen awaits this before routing into the authenticated app
+  /// so screens never read a half-hydrated database.
+  Future<void> get ready => _ready.future;
 
   /// One-time restore (when needed) + start the sync engine. Safe to call
   /// once per session; the boot flow owns the call.
@@ -122,9 +130,12 @@ class SessionDependencies {
       // Offline at boot on an already-hydrated device is fine; a FRESH
       // device needs the network once — surfaced by the boot screen,
       // retried on next launch.
+    } finally {
+      syncTriggers.start();
+      // Don't block readiness on the first drain — fire and forget.
+      unawaited(syncWorker.start());
+      if (!_ready.isCompleted) _ready.complete();
     }
-    syncTriggers.start();
-    await syncWorker.start();
   }
 
   Future<void> dispose() async {

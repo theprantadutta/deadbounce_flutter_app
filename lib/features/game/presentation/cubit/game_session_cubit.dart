@@ -77,6 +77,10 @@ class GameSessionCubit extends Cubit<GameSessionState>
       challenge: challengeConfig,
     );
 
+    // Brief pre-game beat so the arena-flavored loading scene reads as
+    // intentional, not a stutter.
+    await Future<void>.delayed(const Duration(milliseconds: 1300));
+    if (isClosed) return;
     emit(const SessionPlaying());
   }
 

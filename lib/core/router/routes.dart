@@ -6,4 +6,9 @@ abstract final class Routes {
   static const String home = '/home';
   static const String game = '/game';
   static const String dailyChallengeRun = '/game/daily';
+  static const String dailyChallenge = '/daily-challenge';
+  static const String leaderboard = '/leaderboard';
+  static const String awards = '/awards';
+  static const String profile = '/profile';
+  static const String settings = '/settings';
 }
