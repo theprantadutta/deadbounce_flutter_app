@@ -4,6 +4,13 @@ import '../../features/challenges/data/repositories/daily_challenge_repository_i
 import '../../features/challenges/domain/repositories/daily_challenge_repository.dart';
 import '../../features/economy/data/repositories/wallet_repository_impl.dart';
 import '../../features/economy/domain/repositories/wallet_repository.dart';
+import '../../features/leaderboards/data/datasources/leaderboard_api.dart';
+import '../../features/leaderboards/data/repositories/leaderboard_repository_impl.dart';
+import '../../features/leaderboards/domain/repositories/leaderboard_repository.dart';
+import '../../features/profile/data/repositories/profile_repository_impl.dart';
+import '../../features/profile/domain/repositories/profile_repository.dart';
+import '../../features/settings/data/repositories/settings_repository_impl.dart';
+import '../../features/settings/domain/repositories/settings_repository.dart';
 import '../../features/runs/data/repositories/runs_repository_impl.dart';
 import '../../features/runs/domain/repositories/runs_repository.dart';
 import '../../features/streak/data/repositories/login_streak_repository_impl.dart';
@@ -36,6 +43,9 @@ class SessionDependencies {
     required this.loginStreakRepository,
     required this.dailyChallengeRepository,
     required this.achievementsRepository,
+    required this.leaderboardRepository,
+    required this.profileRepository,
+    required this.settingsRepository,
   });
 
   factory SessionDependencies.create({
@@ -74,6 +84,12 @@ class SessionDependencies {
         outboxWriter: outboxWriter,
         streakRepository: loginStreakRepository,
       ),
+      leaderboardRepository: LeaderboardRepositoryImpl(
+        db: db,
+        api: LeaderboardApi(apiClient),
+      ),
+      profileRepository: ProfileRepositoryImpl(db),
+      settingsRepository: SettingsRepositoryImpl(db),
     );
   }
 
@@ -89,6 +105,9 @@ class SessionDependencies {
   final LoginStreakRepository loginStreakRepository;
   final DailyChallengeRepository dailyChallengeRepository;
   final AchievementsRepository achievementsRepository;
+  final LeaderboardRepository leaderboardRepository;
+  final ProfileRepository profileRepository;
+  final SettingsRepository settingsRepository;
 
   bool _started = false;
 
