@@ -1,0 +1,18 @@
+# Deadbounce native splash — the static screen the OS shows from app launch
+# until Flutter's first frame, blending into the animated SplashPage.
+# Regenerate after changing the source or colors with:
+#   dart run flutter_native_splash:create --path=flutter_native_splash.yaml
+flutter_native_splash:
+  # Brand ink — matches the dark of the in-app splash so the handoff is seamless.
+  color: "#090A12"
+  image: assets/icon/splash_logo.png
+  android: true
+  ios: true
+  web: false
+
+  # Android 12+ uses the new splash-screen API: the logo floats on the
+  # window background (no icon background circle) and is masked to a circle —
+  # splash_logo.png is already sized to fit it.
+  android_12:
+    color: "#090A12"
+    image: assets/icon/splash_logo.png
