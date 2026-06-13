@@ -1,9 +1,8 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_dimens.dart';
+import '../../../../core/widgets/animated_arena_background.dart';
 import '../../engine/upgrades/upgrade_card.dart';
 
 /// Wave-clear pick: 3 animated cards with rarity-colored borders/glow.
@@ -45,21 +44,18 @@ class UpgradePickerOverlay extends StatelessWidget {
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
 
-    return BackdropFilter(
-      filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
-      child: ColoredBox(
-        color: Colors.black54,
-        child: SafeArea(
-          child: Center(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(AppSpacing.lg),
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 420),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text('WAVE $waveCleared CLEARED',
-                        style: textTheme.headlineMedium),
+    return AnimatedArenaBackground(
+      child: SafeArea(
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(AppSpacing.lg),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 420),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text('WAVE $waveCleared CLEARED',
+                      style: textTheme.headlineMedium),
                     const SizedBox(height: AppSpacing.xs),
                     Text(
                       'Pick your iron.',
@@ -80,8 +76,7 @@ class UpgradePickerOverlay extends StatelessWidget {
             ),
           ),
         ),
-      ),
-    );
+      );
   }
 }
 

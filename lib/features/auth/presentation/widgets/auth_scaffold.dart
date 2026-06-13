@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_dimens.dart';
-import '../../../../core/theme/app_effects.dart';
+import '../../../../core/widgets/animated_arena_background.dart';
 
-/// Shared chrome for the auth screens: deep arena-gradient background,
+/// Shared chrome for the auth screens: the living arena background,
 /// centered, width-constrained, scrollable content. Layout is driven by
 /// [LayoutBuilder] constraints so it holds up from small phones to
 /// tablets without hardcoded pixel layouts.
@@ -14,11 +14,8 @@ class AuthScaffold extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final effects = Theme.of(context).extension<AppEffects>()!;
-
     return Scaffold(
-      body: Container(
-        decoration: BoxDecoration(gradient: effects.arenaGradient),
+      body: AnimatedArenaBackground(
         child: SafeArea(
           child: LayoutBuilder(
             builder: (context, constraints) {

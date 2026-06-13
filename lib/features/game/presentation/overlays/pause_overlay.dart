@@ -1,12 +1,11 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_dimens.dart';
+import '../../../../core/widgets/animated_arena_background.dart';
 import '../../../../core/widgets/db_button.dart';
 import '../../../../core/widgets/db_logo.dart';
 
-/// Blur-dimmed pause menu over the frozen arena.
+/// Pause menu over the branded arena background.
 class PauseOverlay extends StatelessWidget {
   const PauseOverlay({
     super.key,
@@ -23,10 +22,8 @@ class PauseOverlay extends StatelessWidget {
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
 
-    return BackdropFilter(
-      filter: ImageFilter.blur(sigmaX: 6, sigmaY: 6),
-      child: ColoredBox(
-        color: Colors.black54,
+    return AnimatedArenaBackground(
+      child: SafeArea(
         child: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 360),
