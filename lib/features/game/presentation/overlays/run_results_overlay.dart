@@ -16,12 +16,14 @@ class RunResultsOverlay extends StatelessWidget {
     required this.isNewBestScore,
     required this.onRetry,
     required this.onHome,
+    this.unlockedAchievements = const [],
   });
 
   final RunResult result;
   final bool isNewBestScore;
   final VoidCallback onRetry;
   final VoidCallback onHome;
+  final List<String> unlockedAchievements;
 
   @override
   Widget build(BuildContext context) {
@@ -102,6 +104,10 @@ class RunResultsOverlay extends StatelessWidget {
                         value: '${result.maxBounceKill} bounces'),
                     const Divider(height: AppSpacing.lg),
                     _CoinCountUp(coins: result.coinsEarned),
+                    if (unlockedAchievements.isNotEmpty) ...[
+                      const SizedBox(height: AppSpacing.lg),
+                      _UnlockedAchievements(names: unlockedAchievements),
+                    ],
                     const SizedBox(height: AppSpacing.xl),
                     DbPrimaryButton(
                       label: 'RIDE AGAIN',
@@ -140,6 +146,48 @@ class _StatRow extends StatelessWidget {
         children: [
           Expanded(child: Text(label, style: textTheme.bodyMedium)),
           Text(value, style: textTheme.titleMedium),
+        ],
+      ),
+    );
+  }
+}
+
+class _UnlockedAchievements extends StatelessWidget {
+  const _UnlockedAchievements({required this.names});
+
+  final List<String> names;
+
+  @override
+  Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.md),
+      decoration: BoxDecoration(
+        color: AppColors.ink800.withValues(alpha: 0.85),
+        borderRadius: AppRadii.lgAll,
+        border: Border.all(color: AppColors.blue700),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.emoji_events,
+                  color: AppColors.amber400, size: 18),
+              const SizedBox(width: AppSpacing.xs),
+              Text('AWARD${names.length > 1 ? 'S' : ''} UNLOCKED',
+                  style: textTheme.labelMedium
+                      ?.copyWith(color: AppColors.amber300)),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          for (final name in names)
+            Padding(
+              padding: const EdgeInsets.only(top: 2),
+              child: Text(name, style: textTheme.bodyMedium),
+            ),
+          const SizedBox(height: 4),
+          Text('Claim them in Awards.', style: textTheme.labelSmall),
         ],
       ),
     );

@@ -49,12 +49,16 @@ lib/
 
 ```bash
 flutter pub get
+# Only needed after changing Drift tables/DAOs (generated *.g.dart is committed):
+dart run build_runner build --delete-conflicting-outputs
 flutter run          # debug → API_BASE_URL_DEV
 flutter build apk    # release → API_BASE_URL_PROD
 ```
 
 Configuration lives only in `.env` (read through
 `lib/core/config/app_config.dart`); nothing else hardcodes URLs or client IDs.
+See `CLAUDE.md` for the full architecture (offline-first Drift/outbox, the game
+engine, meta systems) and `SFX_WISHLIST.md` for the audio still to drop in.
 
 ## Verify
 

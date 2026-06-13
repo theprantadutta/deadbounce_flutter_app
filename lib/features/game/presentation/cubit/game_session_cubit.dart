@@ -7,6 +7,7 @@ import '../../../../core/util/calendar_day.dart';
 import '../../../achievements/domain/repositories/achievements_repository.dart';
 import '../../../runs/domain/entities/run_result.dart';
 import '../../../runs/domain/repositories/runs_repository.dart';
+import '../../../settings/domain/repositories/settings_repository.dart';
 import '../../engine/arena/arena_catalog.dart';
 import '../../engine/challenge/challenge_catalog.dart';
 import '../../engine/challenge/challenge_config.dart';
@@ -28,6 +29,7 @@ class GameSessionCubit extends Cubit<GameSessionState>
   GameSessionCubit({
     required this._runsRepository,
     required this._achievementsRepository,
+    required this._settingsRepository,
     required this._syncWorker,
     this.dailyChallenge = false,
     Uuid? uuid,
@@ -36,6 +38,7 @@ class GameSessionCubit extends Cubit<GameSessionState>
 
   final RunsRepository _runsRepository;
   final AchievementsRepository _achievementsRepository;
+  final SettingsRepository _settingsRepository;
   final SyncWorker _syncWorker;
   final bool dailyChallenge;
   final Uuid _uuid;
@@ -64,14 +67,15 @@ class GameSessionCubit extends Cubit<GameSessionState>
     }
 
     final arena = rng.fork('arena').pick(ArenaCatalog.all);
+    final settings = await _settingsRepository.load();
 
     game = DeadbounceGame(
       gateway: this,
       hud: hud,
       arenaDef: arena,
       runRng: rng,
-      sound: NoOpSoundManager(),
-      hapticsService: HapticsService(),
+      sound: NoOpSoundManager()..enabled = settings.soundEnabled,
+      hapticsService: HapticsService(enabled: settings.hapticsEnabled),
       isDailyChallenge: dailyChallenge,
       challengeDate: _challengeDate,
       challenge: challengeConfig,

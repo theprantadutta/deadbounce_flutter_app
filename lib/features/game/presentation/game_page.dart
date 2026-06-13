@@ -27,6 +27,7 @@ class GamePage extends StatelessWidget {
       create: (_) => GameSessionCubit(
         runsRepository: session.runsRepository,
         achievementsRepository: session.achievementsRepository,
+        settingsRepository: session.settingsRepository,
         syncWorker: session.syncWorker,
         dailyChallenge: dailyChallenge,
       )..startRun(),
@@ -85,6 +86,7 @@ class _GameView extends StatelessWidget {
                   child: RunResultsOverlay(
                     result: state.result,
                     isNewBestScore: state.isNewBestScore,
+                    unlockedAchievements: state.unlockedAchievements,
                     onRetry: () => _restart(context),
                     onHome: () => context.go(Routes.home),
                   ),
