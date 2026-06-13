@@ -34,12 +34,19 @@ class WaveRunner extends Component with HasGameReference<DeadbounceGame> {
     _clearBeat = 0;
     game.hud.wave.value = wave;
 
+    // A daily challenge may force a single enemy type. Wardens always pass
+    // through so boss waves still happen.
+    final forced = game.challenge?.forcedEnemyType;
+
     _schedule.clear();
     for (final group in _definition!.groups) {
+      final type = (forced != null && group.type != EnemyType.warden)
+          ? forced
+          : group.type;
       for (var i = 0; i < group.count; i++) {
         _schedule.add(_PendingGroupSpawn(
           at: group.delay + i * group.stagger,
-          type: group.type,
+          type: type,
         ));
       }
     }

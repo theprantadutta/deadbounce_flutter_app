@@ -6,6 +6,7 @@ import 'package:flame/game.dart';
 
 import '../../../../../core/theme/app_colors.dart';
 import '../../../engine/arena/arena_definition.dart';
+import '../../../engine/challenge/challenge_config.dart';
 import '../../../engine/combat/bullet_state.dart';
 import '../../../engine/combat/bullet_stats.dart';
 import '../../../engine/combat/score_system.dart';
@@ -49,6 +50,7 @@ class DeadbounceGame extends FlameGame implements GameWorldOps {
     required this.sound,
     this.isDailyChallenge = false,
     this.challengeDate,
+    this.challenge,
   })  : haptics = hapticsService,
         super(
           camera: CameraComponent.withFixedResolution(
@@ -68,6 +70,9 @@ class DeadbounceGame extends FlameGame implements GameWorldOps {
   final bool isDailyChallenge;
   final String? challengeDate;
 
+  /// Run-shaping config when this is a daily challenge (null otherwise).
+  final ChallengeConfig? challenge;
+
   final GameRng _runRng;
   late final GameRng _spawnRng = _runRng.fork('spawn');
   late final GameRng _wavesRng = _runRng.fork('waves');
@@ -78,8 +83,10 @@ class DeadbounceGame extends FlameGame implements GameWorldOps {
 
   late final List<WallSegment> segments = arenaDef.buildSegments();
   late final RicochetSolver solver = RicochetSolver(segments);
-  final RunModifiers modifiers = RunModifiers();
-  final ScoreSystem scoreSystem = ScoreSystem();
+  late final RunModifiers modifiers =
+      RunModifiers(bonusDamagePerBounce: challenge?.extraWallDamage ?? 0);
+  late final ScoreSystem scoreSystem =
+      ScoreSystem(scoreMultiplier: challenge?.scoreMultiplier ?? 1);
   late final SpawnDirector spawner;
   late final WaveRunner waveRunner;
   late final PlayerComponent player;
@@ -136,7 +143,10 @@ class DeadbounceGame extends FlameGame implements GameWorldOps {
       InputController(),
     ]);
 
-    hud.maxHearts.value = Tuning.player.maxHearts;
+    // A challenge may cap the player's hearts (e.g. one-life gauntlet).
+    final startingHearts = challenge?.startingHearts;
+    if (startingHearts != null) player.hearts = startingHearts;
+    hud.maxHearts.value = effectiveMaxHearts();
     hud.hearts.value = player.hearts;
 
     waveRunner.startWave(1);
@@ -247,6 +257,13 @@ class DeadbounceGame extends FlameGame implements GameWorldOps {
     hud.coins.value = coinsEarned;
   }
 
+  /// Base + Heart-Container max hearts. The base is the challenge cap when
+  /// present, else the tuning default — so a one-life challenge plus a
+  /// Heart Container still tops out at two, not four.
+  int effectiveMaxHearts() =>
+      (challenge?.startingHearts ?? Tuning.player.maxHearts) +
+      modifiers.stacksOf('heart_container');
+
   void onWaveCleared(int wave) {
     if (runEnded) return;
     scoreSystem.registerWaveClear(wave);
@@ -254,20 +271,33 @@ class DeadbounceGame extends FlameGame implements GameWorldOps {
     addRunCoins(Tuning.economy.waveClearBonus.toDouble());
     sound.play(Sfx.waveClear);
 
+    final choices = UpgradeDeck.draw3(_upgradesRng, modifiers);
+
+    // "Wild Draw" challenge: upgrades are dealt at random, no picker.
+    if (challenge?.randomUpgrades ?? false) {
+      _addUpgrade(choices[_upgradesRng.nextInt(choices.length)]);
+      waveRunner.startWave(wave + 1);
+      return;
+    }
+
     pauseEngine();
-    gateway.onWaveCleared(wave, UpgradeDeck.draw3(_upgradesRng, modifiers));
+    gateway.onWaveCleared(wave, choices);
   }
 
   /// Called by the cubit after the player picks a card.
   void applyUpgrade(UpgradeCard card) {
+    _addUpgrade(card);
+    resumeEngine();
+    waveRunner.startWave(waveRunner.currentWave + 1);
+  }
+
+  void _addUpgrade(UpgradeCard card) {
     modifiers.add(card);
     if (card.id == 'heart_container') {
       player.heal(1);
     }
-    hud.maxHearts.value = modifiers.effectivePlayerStats().maxHearts;
+    hud.maxHearts.value = effectiveMaxHearts();
     sound.play(Sfx.upgrade);
-    resumeEngine();
-    waveRunner.startWave(waveRunner.currentWave + 1);
   }
 
   void endRun() {

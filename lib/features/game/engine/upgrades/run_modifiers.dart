@@ -5,8 +5,15 @@ import 'upgrade_modifier.dart';
 
 /// The active upgrade stack for one run: stat folding (cached) + hook
 /// dispatch. Run-scoped — modifier instances may carry per-run state
-/// (Last Stand's consumed flag).
+/// (Last Stand's consumed flag). [bonusDamagePerBounce] is a run-wide
+/// flat bump applied after the upgrade fold (daily challenges).
 class RunModifiers {
+  RunModifiers({this.bonusDamagePerBounce = 0});
+
+  /// Flat damage-per-bounce added on top of all upgrades (e.g. the
+  /// "Hard Walls" challenge). Not an upgrade — never counts as a pick.
+  final int bonusDamagePerBounce;
+
   final List<UpgradeModifier> _active = [];
   final List<String> pickedIds = [];
 
@@ -35,9 +42,16 @@ class RunModifiers {
       _cachedPlayerStats ??= _active.fold<PlayerStats>(
           PlayerStats.base(), (s, m) => m.transformPlayerStats(s));
 
-  BulletStats effectiveBulletStats() =>
-      _cachedBulletStats ??= _active.fold<BulletStats>(
-          BulletStats.base(), (s, m) => m.transformBulletStats(s));
+  BulletStats effectiveBulletStats() {
+    if (_cachedBulletStats != null) return _cachedBulletStats!;
+    var stats = _active.fold<BulletStats>(
+        BulletStats.base(), (s, m) => m.transformBulletStats(s));
+    if (bonusDamagePerBounce != 0) {
+      stats = stats.copyWith(
+          damagePerBounce: stats.damagePerBounce + bonusDamagePerBounce);
+    }
+    return _cachedBulletStats = stats;
+  }
 
   void fire(FireContext ctx) {
     for (final m in _active) {

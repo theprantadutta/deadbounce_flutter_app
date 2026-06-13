@@ -3,9 +3,12 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../../../core/sync/sync_worker.dart';
+import '../../../../core/util/calendar_day.dart';
 import '../../../runs/domain/entities/run_result.dart';
 import '../../../runs/domain/repositories/runs_repository.dart';
 import '../../engine/arena/arena_catalog.dart';
+import '../../engine/challenge/challenge_catalog.dart';
+import '../../engine/challenge/challenge_config.dart';
 import '../../engine/game_rng.dart';
 import '../../engine/upgrades/upgrade_card.dart';
 import '../game/components/deadbounce_game.dart';
@@ -45,13 +48,13 @@ class GameSessionCubit extends Cubit<GameSessionState>
     _previousBestScore = best?.score ?? 0;
 
     final GameRng rng;
+    ChallengeConfig? challengeConfig;
     if (dailyChallenge) {
       final today = DateTime.now().toUtc();
       _challengeSeed = GameRng.dailySeed(today);
-      _challengeDate =
-          '${today.year.toString().padLeft(4, '0')}-'
-          '${today.month.toString().padLeft(2, '0')}-'
-          '${today.day.toString().padLeft(2, '0')}';
+      _challengeDate = CalendarDay.utc(today);
+      challengeConfig =
+          ChallengeCatalog.forUtcDate(_challengeDate!, _challengeSeed!).config;
       rng = GameRng(_challengeSeed!);
     } else {
       rng = GameRng(DateTime.now().microsecondsSinceEpoch);
@@ -68,6 +71,7 @@ class GameSessionCubit extends Cubit<GameSessionState>
       hapticsService: HapticsService(),
       isDailyChallenge: dailyChallenge,
       challengeDate: _challengeDate,
+      challenge: challengeConfig,
     );
 
     emit(const SessionPlaying());

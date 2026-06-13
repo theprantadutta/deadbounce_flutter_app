@@ -10,8 +10,14 @@ class _ChainEntry {
 
 /// Scoring: kill base × bounce multiplier, chain detection per bullet
 /// (kills by the same bullet within the chain window), wave-clear bonuses.
+/// [scoreMultiplier] applies a flat run-wide factor (daily challenges).
 /// Pure Dart — fully unit-tested.
 class ScoreSystem {
+  ScoreSystem({this.scoreMultiplier = 1});
+
+  /// Run-wide score factor (1 normally; challenges may double/triple it).
+  final double scoreMultiplier;
+
   int _score = 0;
   int _bestChain = 0;
   int _maxBounceKill = 0;
@@ -33,7 +39,7 @@ class ScoreSystem {
 
     final killScore =
         (t.killBase * (1 + t.bounceFactor * bounces)).round();
-    _score += killScore;
+    _addScore(killScore);
 
     if (bounces > _maxBounceKill) _maxBounceKill = bounces;
 
@@ -42,7 +48,7 @@ class ScoreSystem {
     if (entry != null && now - entry.time <= t.chainWindow) {
       entry.length += 1;
       chainLength = entry.length;
-      _score += t.chainBonus;
+      _addScore(t.chainBonus);
       _chains[bulletId] = _ChainEntry(bulletId, now, chainLength);
     } else {
       chainLength = 1;
@@ -54,7 +60,11 @@ class ScoreSystem {
   }
 
   void registerWaveClear(int wave) {
-    _score += Tuning.score.waveClearBase * wave;
+    _addScore(Tuning.score.waveClearBase * wave);
+  }
+
+  void _addScore(int raw) {
+    _score += (raw * scoreMultiplier).round();
   }
 
   /// Punchy chain copy, in the Deadbounce voice.

@@ -113,8 +113,7 @@ class PlayerComponent extends PositionComponent
   }
 
   void heal(int amount) {
-    final max = game.modifiers.effectivePlayerStats().maxHearts;
-    hearts = math.min(hearts + amount, max);
+    hearts = math.min(hearts + amount, game.effectiveMaxHearts());
     game.hud.hearts.value = hearts;
   }
 
