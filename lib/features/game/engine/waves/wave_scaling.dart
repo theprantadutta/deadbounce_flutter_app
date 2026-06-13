@@ -15,13 +15,20 @@ abstract final class WaveScaling {
       return WaveTable.authored[wave - 1];
     }
 
+    // Shallow-then-steep: growth scales with past^exponent (exponent > 1 keeps
+    // the curve near-flat just past the authored block, then accelerates).
+    // Continues from the authored wave-15 baseline (hp ×1.3, speed ×1.1).
     final past = wave - t.authoredWaves;
-    final hpMult = 1.3 + past * t.hpGrowthPerWave;
-    final speedMult =
-        1.1 + math.min(t.speedGrowthCap, past * t.speedGrowthPerWave);
+    final hpMult =
+        1.3 + t.hpGrowthPerWave * math.pow(past, t.hpCurveExponent);
+    final speedMult = 1.1 +
+        math.min(t.speedGrowthCap,
+            t.speedGrowthPerWave * math.pow(past, t.speedCurveExponent));
 
     final groups = <SpawnGroup>[];
-    final isWardenWave = wave % t.wardenEvery == 0;
+    // First Warden lands on firstWardenWave; thereafter every wardenEvery.
+    final isWardenWave = wave >= t.firstWardenWave &&
+        (wave - t.firstWardenWave) % t.wardenEvery == 0;
     if (isWardenWave) {
       groups.add(const SpawnGroup(type: EnemyType.warden, count: 1));
     }

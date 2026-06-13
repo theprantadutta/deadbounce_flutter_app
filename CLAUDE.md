@@ -33,13 +33,20 @@ CLAUDE.md / SETUP.md).
 | Enemy | HP | Behavior |
 |---|---|---|
 | Drifter | 1 | Slow seek + lateral wobble. Splitter children are the `small` variant. |
-| Charger | 2 | roam → telegraph (0.5s, dash vector locks here = dodge window) → raycast-clamped dash → recover |
+| Charger | 2 | roam → telegraph (0.7s, dash vector locks here = dodge window) → raycast-clamped dash → recover |
 | Splitter | 2 | Drifts; on death spawns 2 small Drifters via the SpawnDirector |
 | Turret | 4 | Claims a wall slot, dampens it, fires interceptable projectiles. Bulletproof release on remove. |
-| Warden (every 5th wave) | 3 phases × 14hp | Shield blocks <3-bounce bullets (CLANG reflect); phase break = hit-stop + shake + shield-down window |
+| Warden (first at wave 10, then every 5th) | 3 phases × 14hp | Shield blocks <3-bounce bullets (CLANG reflect); phase break = hit-stop + shake + shield-down window |
 
-Waves 1–15 are authored (`engine/waves/wave_table.dart`); past 15 `wave_scaling.dart`
-composes endless waves (count +0.8/wave, hp +8%/wave, capped speed), Warden every 5th.
+**Difficulty philosophy (do not undo): the first 3 waves must feel trivial** —
+only slow Drifters with generous spacing — then difficulty stays near-flat early
+and accelerates later. Enemy introductions: Drifter w1, Charger w4 (long, obvious
+telegraph), Splitter w6, Turret w8, **first Warden w10** (kept late so the early
+game is kind; every 5th thereafter — 15, 20, …). Waves 1–15 are authored
+(`engine/waves/wave_table.dart`); past 15 `wave_scaling.dart` composes endless
+waves where hp/speed grow as `growth × past^exponent` (shallow-then-steep, the
+exponent tunable). The on-ramp parameters (`firstWardenWave`, curve exponents,
+Charger telegraph, post-hit i-frames) live in `GameBalance` and are panel-tunable.
 
 ## Upgrades — composable modifier pipeline (`engine/upgrades/`)
 

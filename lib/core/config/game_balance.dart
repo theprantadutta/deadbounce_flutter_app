@@ -286,12 +286,21 @@ class GameBalance {
     _p('Waves', 'waves.hpGrowthPerWave', 'HP growth / wave',
         () => waves.hpGrowthPerWave, (v) => waves.hpGrowthPerWave = v,
         0, 0.3, 0.01, TuneScope.nextWave),
+    _p('Waves', 'waves.hpCurveExponent', 'HP curve steepness',
+        () => waves.hpCurveExponent, (v) => waves.hpCurveExponent = v,
+        0.5, 3, 0.05, TuneScope.nextWave),
     _p('Waves', 'waves.speedGrowthPerWave', 'Speed growth / wave',
         () => waves.speedGrowthPerWave, (v) => waves.speedGrowthPerWave = v,
         0, 0.1, 0.005, TuneScope.nextWave),
+    _p('Waves', 'waves.speedCurveExponent', 'Speed curve steepness',
+        () => waves.speedCurveExponent, (v) => waves.speedCurveExponent = v,
+        0.5, 3, 0.05, TuneScope.nextWave),
     _p('Waves', 'waves.speedGrowthCap', 'Speed growth cap',
         () => waves.speedGrowthCap, (v) => waves.speedGrowthCap = v,
         0, 2, 0.05, TuneScope.nextWave),
+    _pi('Waves', 'waves.firstWardenWave', 'First Warden wave',
+        () => waves.firstWardenWave.toDouble(),
+        (v) => waves.firstWardenWave = v.round(), 1, 30, 1, TuneScope.nextWave),
     _pi('Waves', 'waves.wardenEvery', 'Warden every N waves',
         () => waves.wardenEvery.toDouble(),
         (v) => waves.wardenEvery = v.round(), 2, 12, 1, TuneScope.nextWave),
@@ -438,7 +447,7 @@ class PlayerBalance {
   double fireCooldown = 0.55;
   double minFireCooldown = 0.18;
   double dashDuration = 0.12;
-  double invulnAfterHit = 1.0;
+  double invulnAfterHit = 1.2; // forgiving i-frames so early mistakes don't snowball
   double invulnAfterDash = 0.15;
   int previewBounces = 2;
   double radius = 26;
@@ -481,7 +490,7 @@ class ChargerBalance {
   int hp = 2;
   double roamSpeed = 46;
   double dashSpeed = 460;
-  double telegraphDuration = 0.5;
+  double telegraphDuration = 0.7; // long, obvious wind-up = generous dodge window
   double recoverDuration = 0.9;
   double dashRange = 520; // max dash distance before recovering
   double triggerRange = 360; // starts telegraphing within this
@@ -564,12 +573,22 @@ class WaveBalance {
   double interWaveDelay = 1.2;
   int authoredWaves = 15;
 
-  /// Past authored waves: count grows ~0.8/wave, hp +8%/wave, speed +1.5%
-  /// capped at +60%.
+  /// Difficulty philosophy: the first 3 waves must feel trivial; difficulty is
+  /// near-flat early then accelerates. The authored table (waves 1–15) hand-
+  /// crafts the gentle on-ramp; beyond it these formulas compose endless waves.
+  ///
+  /// Past authored waves, hp/speed grow as `growth * past^exponent` — exponent
+  /// > 1 keeps the curve shallow early and steepens it later. Speed is capped.
   double extraCountPerWave = 0.8;
   double hpGrowthPerWave = 0.08;
+  double hpCurveExponent = 1.3;
   double speedGrowthPerWave = 0.015;
+  double speedCurveExponent = 1.3;
   double speedGrowthCap = 0.6;
+
+  /// The first Warden appears on this wave (kept late so the early game stays
+  /// kind); after it, one shows every [wardenEvery] waves (15, 20, …).
+  int firstWardenWave = 10;
   int wardenEvery = 5;
 
   void copyFrom(WaveBalance o) {
@@ -578,8 +597,11 @@ class WaveBalance {
     authoredWaves = o.authoredWaves;
     extraCountPerWave = o.extraCountPerWave;
     hpGrowthPerWave = o.hpGrowthPerWave;
+    hpCurveExponent = o.hpCurveExponent;
     speedGrowthPerWave = o.speedGrowthPerWave;
+    speedCurveExponent = o.speedCurveExponent;
     speedGrowthCap = o.speedGrowthCap;
+    firstWardenWave = o.firstWardenWave;
     wardenEvery = o.wardenEvery;
   }
 }

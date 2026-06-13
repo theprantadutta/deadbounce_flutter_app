@@ -19,16 +19,18 @@ void main() {
       }
     });
 
-    test('warden appears on every 5th wave, authored and composed', () {
+    test('first Warden is wave 10, then every 5th (authored and composed)', () {
       final rng = GameRng(1).fork('waves');
-      for (final w in [5, 10, 15, 20, 25, 40]) {
+      for (final w in [10, 15, 20, 25, 40]) {
         final def = WaveScaling.forWave(w, rng);
         expect(def.groups.any((g) => g.type == EnemyType.warden), isTrue,
             reason: 'wave $w must include a Warden');
       }
-      for (final w in [16, 17, 23]) {
+      // The early game stays kind: no Warden before wave 10, none off-cadence.
+      for (final w in [5, 9, 16, 17, 23]) {
         final def = WaveScaling.forWave(w, rng);
-        expect(def.groups.any((g) => g.type == EnemyType.warden), isFalse);
+        expect(def.groups.any((g) => g.type == EnemyType.warden), isFalse,
+            reason: 'wave $w must NOT include a Warden');
       }
     });
 
