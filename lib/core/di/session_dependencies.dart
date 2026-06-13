@@ -1,3 +1,5 @@
+import '../../features/achievements/data/repositories/achievements_repository_impl.dart';
+import '../../features/achievements/domain/repositories/achievements_repository.dart';
 import '../../features/challenges/data/repositories/daily_challenge_repository_impl.dart';
 import '../../features/challenges/domain/repositories/daily_challenge_repository.dart';
 import '../../features/economy/data/repositories/wallet_repository_impl.dart';
@@ -33,6 +35,7 @@ class SessionDependencies {
     required this.walletRepository,
     required this.loginStreakRepository,
     required this.dailyChallengeRepository,
+    required this.achievementsRepository,
   });
 
   factory SessionDependencies.create({
@@ -50,6 +53,8 @@ class SessionDependencies {
       status: syncStatus,
       triggers: syncTriggers,
     );
+    final loginStreakRepository =
+        LoginStreakRepositoryImpl(db: db, outboxWriter: outboxWriter);
 
     return SessionDependencies._(
       db: db,
@@ -62,9 +67,13 @@ class SessionDependencies {
       runsRepository: RunsRepositoryImpl(db: db, outboxWriter: outboxWriter),
       walletRepository:
           WalletRepositoryImpl(db: db, outboxWriter: outboxWriter),
-      loginStreakRepository:
-          LoginStreakRepositoryImpl(db: db, outboxWriter: outboxWriter),
+      loginStreakRepository: loginStreakRepository,
       dailyChallengeRepository: DailyChallengeRepositoryImpl(db: db),
+      achievementsRepository: AchievementsRepositoryImpl(
+        db: db,
+        outboxWriter: outboxWriter,
+        streakRepository: loginStreakRepository,
+      ),
     );
   }
 
@@ -79,6 +88,7 @@ class SessionDependencies {
   final WalletRepository walletRepository;
   final LoginStreakRepository loginStreakRepository;
   final DailyChallengeRepository dailyChallengeRepository;
+  final AchievementsRepository achievementsRepository;
 
   bool _started = false;
 

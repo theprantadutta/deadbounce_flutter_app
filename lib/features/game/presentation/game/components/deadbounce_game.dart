@@ -99,6 +99,7 @@ class DeadbounceGame extends FlameGame implements GameWorldOps {
   double runTime = 0;
   int kills = 0;
   int coinsEarned = 0;
+  int hitsTaken = 0;
   final Map<String, int> enemyKills = {};
   bool runEnded = false;
 
@@ -315,6 +316,7 @@ class DeadbounceGame extends FlameGame implements GameWorldOps {
       durationSeconds: runTime,
       upgradesPicked: List.of(modifiers.pickedIds),
       enemyKills: Map.of(enemyKills),
+      hitsTaken: hitsTaken,
     ));
   }
 

@@ -30,11 +30,18 @@ final class SessionUpgradePicking extends GameSessionState {
 }
 
 final class SessionRunOver extends GameSessionState {
-  const SessionRunOver(this.result, {required this.isNewBestScore});
+  const SessionRunOver(
+    this.result, {
+    required this.isNewBestScore,
+    this.unlockedAchievements = const [],
+  });
 
   final RunResult result;
   final bool isNewBestScore;
 
+  /// Names of achievements unlocked by this run (for the results screen).
+  final List<String> unlockedAchievements;
+
   @override
-  List<Object?> get props => [result, isNewBestScore];
+  List<Object?> get props => [result, isNewBestScore, unlockedAchievements];
 }

@@ -4,6 +4,7 @@ import 'package:uuid/uuid.dart';
 
 import '../../../../core/sync/sync_worker.dart';
 import '../../../../core/util/calendar_day.dart';
+import '../../../achievements/domain/repositories/achievements_repository.dart';
 import '../../../runs/domain/entities/run_result.dart';
 import '../../../runs/domain/repositories/runs_repository.dart';
 import '../../engine/arena/arena_catalog.dart';
@@ -26,6 +27,7 @@ class GameSessionCubit extends Cubit<GameSessionState>
     implements GameSessionGateway {
   GameSessionCubit({
     required this._runsRepository,
+    required this._achievementsRepository,
     required this._syncWorker,
     this.dailyChallenge = false,
     Uuid? uuid,
@@ -33,6 +35,7 @@ class GameSessionCubit extends Cubit<GameSessionState>
         super(const SessionIdle());
 
   final RunsRepository _runsRepository;
+  final AchievementsRepository _achievementsRepository;
   final SyncWorker _syncWorker;
   final bool dailyChallenge;
   final Uuid _uuid;
@@ -123,14 +126,27 @@ class GameSessionCubit extends Cubit<GameSessionState>
     );
 
     // Drift first, synchronously with the UI; the backend hears about it
-    // whenever the outbox drains.
+    // whenever the outbox drains. Achievements evaluate AFTER the run is
+    // recorded so they see the freshly-updated lifetime stats.
     await _runsRepository.recordCompletedRun(result);
+    final unlocked = await _achievementsRepository.evaluateRun(
+      RunAchievementInput(
+        score: stats.score,
+        wave: stats.waveReached,
+        bestChain: stats.bestChain,
+        maxBounceKill: stats.maxBounceKill,
+        upgradesPicked: stats.upgradesPicked.length,
+        hitsTaken: stats.hitsTaken,
+        isDailyChallenge: dailyChallenge,
+      ),
+    );
     _syncWorker.requestSync();
 
     emit(SessionRunOver(
       result,
       isNewBestScore:
           result.score > _previousBestScore && result.score > 0,
+      unlockedAchievements: unlocked.map((a) => a.name).toList(),
     ));
   }
 

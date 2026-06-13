@@ -13,6 +13,7 @@ class RunStatsSnapshot {
     required this.durationSeconds,
     required this.upgradesPicked,
     required this.enemyKills,
+    required this.hitsTaken,
   });
 
   final int score;
@@ -24,6 +25,9 @@ class RunStatsSnapshot {
   final double durationSeconds;
   final List<String> upgradesPicked;
   final Map<String, int> enemyKills;
+
+  /// Times the player lost a heart this run (0 = flawless).
+  final int hitsTaken;
 }
 
 /// How the Flame game talks to the run lifecycle owner (GameSessionCubit)

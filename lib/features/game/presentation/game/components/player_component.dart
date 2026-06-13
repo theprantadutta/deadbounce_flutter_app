@@ -125,6 +125,7 @@ class PlayerComponent extends PositionComponent
     if (invulnRemaining > 0 || game.runEnded) return;
 
     hearts--;
+    game.hitsTaken++;
     final ctx = PlayerDamageContext(heartsAfter: hearts);
     game.modifiers.playerDamaged(ctx);
 

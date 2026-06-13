@@ -25,6 +25,7 @@ class GamePage extends StatelessWidget {
     return BlocProvider(
       create: (_) => GameSessionCubit(
         runsRepository: session.runsRepository,
+        achievementsRepository: session.achievementsRepository,
         syncWorker: session.syncWorker,
         dailyChallenge: dailyChallenge,
       )..startRun(),
