@@ -46,7 +46,7 @@ class _LeaderboardView extends StatelessWidget {
         child: BlocBuilder<LeaderboardCubit, LeaderboardState>(
           builder: (context, state) {
             return Padding(
-              padding: const EdgeInsets.only(top: kToolbarHeight + 48),
+              padding: const EdgeInsets.only(top: AppSpacing.md),
               child: switch (state.status) {
                 LeaderboardStatus.loading =>
                   const Center(child: CircularProgressIndicator()),

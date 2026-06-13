@@ -40,9 +40,8 @@ class _ProfileView extends StatelessWidget {
             ProfileError(:final message) =>
               Center(child: Text(message, style: textTheme.bodyLarge)),
             ProfileLoaded(:final data) => ListView(
-                padding: const EdgeInsets.symmetric(vertical: AppSpacing.xl),
+                padding: const EdgeInsets.symmetric(vertical: AppSpacing.lg),
                 children: [
-                  const SizedBox(height: kToolbarHeight),
                   Center(
                     child: Container(
                       width: 84,

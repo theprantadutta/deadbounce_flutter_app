@@ -41,9 +41,8 @@ class _DailyChallengeView extends StatelessWidget {
               const Center(child: CircularProgressIndicator()),
             DailyChallengeFailure(:final message) => _Message(message),
             DailyChallengeLoaded(:final overview) => ListView(
-                padding: const EdgeInsets.symmetric(vertical: AppSpacing.xl),
+                padding: const EdgeInsets.symmetric(vertical: AppSpacing.lg),
                 children: [
-                  const SizedBox(height: kToolbarHeight),
                   Center(
                     child: Container(
                       padding: const EdgeInsets.all(AppSpacing.sm),

@@ -36,9 +36,8 @@ class _SettingsView extends StatelessWidget {
       child: BlocBuilder<SettingsCubit, AppSettings>(
         builder: (context, settings) {
           return ListView(
-            padding: const EdgeInsets.symmetric(vertical: AppSpacing.xl),
+            padding: const EdgeInsets.symmetric(vertical: AppSpacing.lg),
             children: [
-              const SizedBox(height: kToolbarHeight),
               Text('GAME', style: textTheme.labelMedium),
               const SizedBox(height: AppSpacing.sm),
               _ToggleTile(

@@ -60,7 +60,7 @@ class _Grid extends StatelessWidget {
 
     return Column(
       children: [
-        SizedBox(height: kToolbarHeight + AppSpacing.xs),
+        const SizedBox(height: AppSpacing.md),
         Text('$unlocked / ${views.length} UNLOCKED',
             style: textTheme.labelMedium),
         const SizedBox(height: AppSpacing.sm),
