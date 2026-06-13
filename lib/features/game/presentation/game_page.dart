@@ -1,12 +1,18 @@
 import 'package:flame/game.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app.dart';
 import '../../../core/router/routes.dart';
+import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_dimens.dart';
 import '../../../core/widgets/db_loading_scene.dart';
 import 'cubit/game_session_cubit.dart';
+import 'debug/tuning_panel.dart';
+import 'game/components/deadbounce_game.dart';
+import 'game/hud_model.dart';
 import 'overlays/hud_overlay.dart';
 import 'overlays/pause_overlay.dart';
 import 'overlays/run_results_overlay.dart';
@@ -65,6 +71,21 @@ class _GameView extends StatelessWidget {
             children: [
               Positioned.fill(child: GameWidget(game: game)),
               HudOverlay(hud: cubit.hud, onPause: cubit.pause),
+              // Debug-only live tuning entry point. Compiled out of release.
+              if (kDebugMode)
+                Positioned(
+                  left: AppSpacing.sm,
+                  bottom: AppSpacing.sm,
+                  child: SafeArea(
+                    child: FloatingActionButton.small(
+                      heroTag: 'tuning-panel',
+                      backgroundColor: AppColors.ink800,
+                      foregroundColor: AppColors.amber300,
+                      onPressed: () => _openTuning(context, game, cubit.hud),
+                      child: const Icon(Icons.tune),
+                    ),
+                  ),
+                ),
               if (state is SessionPaused)
                 Positioned.fill(
                   child: PauseOverlay(
@@ -95,6 +116,15 @@ class _GameView extends StatelessWidget {
           );
         },
       ),
+    );
+  }
+
+  void _openTuning(BuildContext context, DeadbounceGame game, HudModel hud) {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => TuningPanel(game: game, hud: hud),
     );
   }
 
