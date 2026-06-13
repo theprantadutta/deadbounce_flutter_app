@@ -19,6 +19,9 @@ class FlameAudioSoundManager implements SoundManager {
   static const Map<Sfx, String> _files = {
     Sfx.fire: 'fire.wav',
     Sfx.bounce: 'bounce.wav',
+    Sfx.bounce1: 'bounce_1.wav',
+    Sfx.bounce2: 'bounce_2.wav',
+    Sfx.bounce3: 'bounce_3.wav',
     Sfx.kill: 'kill.wav',
     Sfx.chain: 'chain.wav',
     Sfx.hurt: 'hurt.wav',
@@ -36,6 +39,9 @@ class FlameAudioSoundManager implements SoundManager {
   static const Set<Sfx> _pooled = {
     Sfx.fire,
     Sfx.bounce,
+    Sfx.bounce1,
+    Sfx.bounce2,
+    Sfx.bounce3,
     Sfx.kill,
     Sfx.coin,
   };

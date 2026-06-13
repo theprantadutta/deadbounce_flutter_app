@@ -86,8 +86,12 @@ class BulletComponent extends PositionComponent
       state.bounces,
       dampened: bounce.dampened,
     );
-    game.juice.sound
-        .play(Sfx.bounce, volume: bounce.dampened ? 0.35 : 1.0);
+    // Dampened bounces don't count — dull generic thud, quiet. Real
+    // bounces climb in pitch with the bounce count.
+    game.juice.sound.play(
+      bounce.dampened ? Sfx.bounce : Sfx.bounceFor(state.bounces),
+      volume: bounce.dampened ? 0.35 : 1.0,
+    );
 
     if (!bounce.dampened && !bounce.ghosted) {
       game.modifiers.bounce(BounceContext(

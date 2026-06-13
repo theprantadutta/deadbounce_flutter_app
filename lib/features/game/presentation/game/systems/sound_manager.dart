@@ -1,9 +1,15 @@
 import 'package:flutter/foundation.dart';
 
-/// Every sound the game can make. The asset wishlist maps 1:1 to these.
+/// Every sound the game can make. Each maps 1:1 to an `assets/audio/` file.
 enum Sfx {
   fire,
+
+  /// Generic / dampened wall bounce. Real (counted) bounces use the
+  /// pitched [bounce1]/[bounce2]/[bounce3] variants instead.
   bounce,
+  bounce1,
+  bounce2,
+  bounce3,
   kill,
   chain,
   hurt,
@@ -14,7 +20,15 @@ enum Sfx {
   coin,
   waveClear,
   uiTap,
-  gameOver,
+  gameOver;
+
+  /// The pitched bounce that climbs with the bullet's bounce count:
+  /// 1 → low, 2 → mid, 3+ → high (deadlier = hotter).
+  static Sfx bounceFor(int bounceCount) => switch (bounceCount) {
+        <= 1 => bounce1,
+        2 => bounce2,
+        _ => bounce3,
+      };
 }
 
 /// Audio seam: gameplay calls [play]; the implementation is swappable.

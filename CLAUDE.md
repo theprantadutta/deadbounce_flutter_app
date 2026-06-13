@@ -155,13 +155,21 @@ composition, wave scaling, RNG/daily-seed determinism (golden), outbox
 batching/idempotency + atomicity, ledger balance, streak rollover, challenge-seed
 determinism, achievement evaluate/claim.
 
+## Audio
+
+Real SFX via `flame_audio` (`FlameAudioSoundManager`) behind the `SoundManager`
+seam — hot sounds (fire, bounce variants, kill, coin) use AudioPools; the rest
+play one-shot. Clips live in `assets/audio/` and preload during the pre-game beat;
+the Settings sound toggle gates playback; load failures fall back to silence.
+Wall bounces climb in pitch with the bounce count (`bounce_1/2/3.wav` via
+`Sfx.bounceFor`). Still open (optional): the two ambience/menu loops, and wiring
+`Sfx.uiTap` into menu buttons.
+
 ## Intentionally stubbed / next phase
 
-- **Sound**: `SoundManager` is a silent no-op behind an abstract class — see
-  `SFX_WISHLIST.md` for the asset list to drop in (one file per `Sfx` enum value).
 - **Account linking** (guest→Google): the architecture supports it (per-account
   file survives, `accountLinked` event exists), but the Profile CTA currently shows
   "coming soon". Real `linkWithCredential` is the next step.
 - **Apple Sign-In**: button placeholder (Phase 1).
-- Final art (the logo is a styled Material icon), shop/monetization (the ledger
-  prepares for it), PvP.
+- Final art (the logo is a styled Material icon, default launcher icon),
+  shop/monetization (the ledger prepares for it), PvP.

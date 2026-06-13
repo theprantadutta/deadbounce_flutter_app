@@ -58,7 +58,7 @@ flutter build apk    # release → API_BASE_URL_PROD
 Configuration lives only in `.env` (read through
 `lib/core/config/app_config.dart`); nothing else hardcodes URLs or client IDs.
 See `CLAUDE.md` for the full architecture (offline-first Drift/outbox, the game
-engine, meta systems) and `SFX_WISHLIST.md` for the audio still to drop in.
+engine, meta systems, audio).
 
 ## Verify
 
