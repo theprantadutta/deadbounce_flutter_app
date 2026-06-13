@@ -1,0 +1,16 @@
+# Deadbounce app launcher icons (kept out of pubspec.yaml to reduce clutter).
+# Sources live in assets/icon/. Regenerate after changing them with:
+#   dart run flutter_launcher_icons -f flutter_launcher_icons.yaml
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/icon/app_icon.png"
+  min_sdk_android: 21
+  # Android adaptive icon (8+): the gradient badge over the brand ink.
+  adaptive_icon_background: "#05060A"
+  adaptive_icon_foreground: "assets/icon/app_icon_foreground.png"
+  # Android 13+ themed (monochrome) icon.
+  adaptive_icon_monochrome: "assets/icon/app_icon_monochrome.png"
+  # iOS forbids transparency — strip alpha and flatten onto the brand ink.
+  remove_alpha_ios: true
+  background_color_ios: "#05060A"

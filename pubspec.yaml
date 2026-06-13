@@ -111,18 +111,4 @@ flutter:
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
 
-# App launcher icons. Regenerate after changing the source PNGs with:
-#   dart run flutter_launcher_icons
-flutter_launcher_icons:
-  android: true
-  ios: true
-  image_path: "assets/icon/app_icon.png"
-  min_sdk_android: 21
-  # Android adaptive icon (8+): our gradient badge over the brand ink.
-  adaptive_icon_background: "#05060A"
-  adaptive_icon_foreground: "assets/icon/app_icon_foreground.png"
-  # Android 13+ themed (monochrome) icon.
-  adaptive_icon_monochrome: "assets/icon/app_icon_monochrome.png"
-  # iOS forbids transparency — strip alpha and flatten onto the brand ink.
-  remove_alpha_ios: true
-  background_color_ios: "#05060A"
+# Launcher-icon config lives in flutter_launcher_icons.yaml (run with -f).
