@@ -85,9 +85,17 @@ leak across cases (keeps daily-challenge wave goldens deterministic).
 - **Coins are a ledger, never a mutated int.** Every change is a `coin_ledger`
   transaction (reason enum) in Drift; the cached `coin_balance` row is updated in
   the same transaction. Run earnings are one txn at run end (not per pickup).
+- **Earn amounts flow from `GameBalance.I.economy`** (coins/kill, wave-clear bonus,
+  chain bonus, drop chance/value) and the 7-day login table
+  (`economy.loginRewardsByDay`) — all panel-tunable. Tuning only changes the
+  *amounts* written to ledger txns; it never touches the ledger/transaction
+  structure or sync. **Achievement & daily-challenge reward amounts are NOT in
+  the live config** — they mirror the backend's validation catalog exactly and
+  must not drift, so they stay in their catalogs.
 - **Daily login streak**: keyed on the **device-local calendar date**. The absolute
   streak is derived by walking the trailing run of consecutive claim dates (correct
-  across week/month boundaries). 7-day escalating reward calendar (`login_rewards.dart`),
+  across week/month boundaries). 7-day escalating reward calendar (amounts in
+  `GameBalance.I.economy.loginRewardsByDay`, logic in `login_rewards.dart`),
   wraps while preserving the absolute count. Rule, verbatim: *a "day" is the device's
   local calendar date at claim time; the streak continues iff the last claim was the
   local day before today, else resets to 1; the server dedupes by date string and

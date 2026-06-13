@@ -320,6 +320,11 @@ class GameBalance {
     _pi('Economy', 'economy.chainBonusPerKill', 'Chain bonus / kill',
         () => economy.chainBonusPerKill.toDouble(),
         (v) => economy.chainBonusPerKill = v.round(), 0, 100, 1),
+    // 7-day login reward calendar (1-based day → coins).
+    for (var i = 0; i < economy.loginRewardsByDay.length; i++)
+      _pi('Economy', 'economy.loginRewardsByDay.$i', 'Login day ${i + 1}',
+          () => economy.loginRewardsByDay[i].toDouble(),
+          (v) => economy.loginRewardsByDay[i] = v.round(), 0, 1000, 5),
 
     // ---- Score ----
     _pi('Score', 'score.killBase', 'Kill base', () => score.killBase.toDouble(),
@@ -660,11 +665,19 @@ class TrajectoryBalance {
 }
 
 class EconomyBalance {
-  int coinPerKill = 2;
-  double dropChance = 0.35; // chance a kill also drops a pickup coin
-  int dropValue = 3;
-  int waveClearBonus = 10;
-  int chainBonusPerKill = 5; // per kill beyond the first in a chain
+  // In-run earn rates. Tuned so even the easy early waves give satisfying coin
+  // feedback (numbers going up) without a runaway curve.
+  int coinPerKill = 3;
+  double dropChance = 0.4; // chance a kill also drops a pickup coin
+  int dropValue = 4;
+  int waveClearBonus = 15;
+  int chainBonusPerKill = 4; // per kill beyond the first in a chain
+
+  /// 7-day login reward calendar (day 7 is the big haul). Indexed by the
+  /// 1-based calendar day; the cycle repeats. Lives here so earn rates are
+  /// panel-tunable. NOTE: achievement/challenge reward amounts are NOT here —
+  /// those mirror the backend's validation catalog and must not drift.
+  List<int> loginRewardsByDay = [25, 40, 60, 80, 110, 150, 300];
 
   void copyFrom(EconomyBalance o) {
     coinPerKill = o.coinPerKill;
@@ -672,6 +685,7 @@ class EconomyBalance {
     dropValue = o.dropValue;
     waveClearBonus = o.waveClearBonus;
     chainBonusPerKill = o.chainBonusPerKill;
+    loginRewardsByDay = List<int>.of(o.loginRewardsByDay);
   }
 }
 
