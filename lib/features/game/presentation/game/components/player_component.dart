@@ -7,7 +7,7 @@ import 'package:flutter/animation.dart' show Curves;
 
 import '../../../../../core/theme/app_colors.dart';
 import '../../../engine/combat/bullet_state.dart';
-import '../../../engine/tuning.dart';
+import 'package:deadbounce_flutter_app/core/config/game_balance.dart';
 import '../../../engine/upgrades/upgrade_modifier.dart';
 import '../systems/sound_manager.dart';
 import 'deadbounce_game.dart';
@@ -23,9 +23,9 @@ class PlayerComponent extends PositionComponent
       : super(anchor: Anchor.center, priority: 45);
 
   final List<Vector2> anchors;
-  double get bodyRadius => Tuning.player.radius;
+  double get bodyRadius => GameBalance.I.player.radius;
 
-  int hearts = Tuning.player.maxHearts;
+  int hearts = GameBalance.I.player.maxHearts;
   int anchorIndex = 1;
   double fireCooldownRemaining = 0;
   double invulnRemaining = 0;
@@ -60,7 +60,7 @@ class PlayerComponent extends PositionComponent
     anchorIndex = index.clamp(0, anchors.length - 1);
     _dashing = true;
     invulnRemaining =
-        math.max(invulnRemaining, Tuning.player.invulnAfterDash);
+        math.max(invulnRemaining, GameBalance.I.player.invulnAfterDash);
 
     game.juice.sound.play(Sfx.dash);
     game.juice.haptics.medium();
@@ -68,7 +68,7 @@ class PlayerComponent extends PositionComponent
     add(MoveToEffect(
       anchors[anchorIndex],
       EffectController(
-        duration: Tuning.player.dashDuration,
+        duration: GameBalance.I.player.dashDuration,
         curve: Curves.easeOutCubic,
       ),
       onComplete: () => _dashing = false,
@@ -86,8 +86,8 @@ class PlayerComponent extends PositionComponent
     game.hud.fireReady.value = false;
     shotCounter++;
 
-    final speed = Tuning.bullet.minSpeed +
-        (Tuning.bullet.maxSpeed - Tuning.bullet.minSpeed) * powerT;
+    final speed = GameBalance.I.bullet.minSpeed +
+        (GameBalance.I.bullet.maxSpeed - GameBalance.I.bullet.minSpeed) * powerT;
 
     final shots = [PendingShot(direction: direction, speed: speed)];
     game.modifiers.fire(FireContext(
@@ -136,7 +136,7 @@ class PlayerComponent extends PositionComponent
       game.juice.addTrauma(0.6);
       game.juice.sound.play(Sfx.wardenPhase);
     } else {
-      invulnRemaining = Tuning.player.invulnAfterHit;
+      invulnRemaining = GameBalance.I.player.invulnAfterHit;
     }
 
     game.hud.hearts.value = hearts;

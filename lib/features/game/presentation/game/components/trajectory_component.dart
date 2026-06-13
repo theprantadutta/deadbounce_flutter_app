@@ -3,8 +3,9 @@ import 'dart:ui';
 import 'package:flame/components.dart';
 
 import '../../../../../core/theme/app_colors.dart';
+import 'package:deadbounce_flutter_app/core/config/game_balance.dart';
+
 import '../../../engine/trajectory/trajectory_predictor.dart';
-import '../../../engine/tuning.dart';
 
 /// The premium aim line: dashed segments with an animated flow phase,
 /// color shifting per predicted bounce (dim → amber → blue → white-hot),
@@ -26,13 +27,13 @@ class TrajectoryComponent extends Component {
 
   @override
   void update(double dt) {
-    _dashPhase += dt * Tuning.trajectory.flowSpeed;
+    _dashPhase += dt * GameBalance.I.trajectory.flowSpeed;
   }
 
   @override
   void render(Canvas canvas) {
     if (!visible || nodes.length < 2) return;
-    const t = Tuning.trajectory;
+    final t = GameBalance.I.trajectory;
     final alpha = dimmed ? 0.25 : 0.9;
 
     for (var i = 1; i < nodes.length; i++) {
@@ -76,7 +77,7 @@ class TrajectoryComponent extends Component {
 
   void _drawFlowingDashes(
       Canvas canvas, Vector2 from, Vector2 to, Paint paint) {
-    const t = Tuning.trajectory;
+    final t = GameBalance.I.trajectory;
     final delta = to - from;
     final length = delta.length;
     if (length < 1) return;

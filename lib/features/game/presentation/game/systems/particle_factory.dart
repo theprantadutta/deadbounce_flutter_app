@@ -4,9 +4,10 @@ import 'dart:ui';
 import 'package:flame/components.dart';
 import 'package:flame/particles.dart';
 
+import 'package:deadbounce_flutter_app/core/config/game_balance.dart';
+
 import '../../../../../core/theme/app_colors.dart';
 import '../../../engine/physics/vector_utils.dart';
-import '../../../engine/tuning.dart';
 
 /// All procedural particle recipes, budgeted. Glow is faked with layered
 /// translucent circles — MaskFilter.blur is reserved for static walls and
@@ -21,7 +22,7 @@ class ParticleFactory {
 
   int _alive = 0;
 
-  bool get _overBudget => _alive >= Tuning.juice.particleBudget;
+  bool get _overBudget => _alive >= GameBalance.I.juice.particleBudget;
 
   void _spawn(Particle particle, Vector2 position, {int weight = 1}) {
     if (_overBudget) return;
@@ -70,7 +71,7 @@ class ParticleFactory {
     final color = dampened
         ? AppColors.ink300
         : Color.lerp(AppColors.amber500, const Color(0xFFFFFFFF),
-            (bounces / Tuning.bullet.maxBounces).clamp(0.0, 1.0))!;
+            (bounces / GameBalance.I.bullet.maxBounces).clamp(0.0, 1.0))!;
     _spawn(
       Particle.generate(
         count: count,

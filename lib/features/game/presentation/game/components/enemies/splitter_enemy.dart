@@ -1,7 +1,7 @@
 import 'dart:math' as math;
 import 'dart:ui';
 
-import '../../../../engine/tuning.dart';
+import 'package:deadbounce_flutter_app/core/config/game_balance.dart';
 import 'enemy_component.dart';
 
 /// Hexagon that splits into 2 small Drifters on death. 2 HP.
@@ -9,8 +9,8 @@ class SplitterEnemy extends EnemyComponent {
   SplitterEnemy({required super.position, super.speedMult, double hpMult = 1})
       : _hpMult = hpMult,
         super(
-          maxHp: (Tuning.splitter.hp * hpMult).ceil(),
-          bodyRadius: Tuning.splitter.radius,
+          maxHp: (GameBalance.I.splitter.hp * hpMult).ceil(),
+          bodyRadius: GameBalance.I.splitter.radius,
           color: const Color(0xFF9D5CFF), // violet
         );
 
@@ -23,7 +23,7 @@ class SplitterEnemy extends EnemyComponent {
   @override
   void updateBehavior(double dt) {
     _spin += dt * 0.8;
-    seekPlayer(dt, Tuning.splitter.speed);
+    seekPlayer(dt, GameBalance.I.splitter.speed);
     clampToArena();
     if (overlapsPlayer()) game.player.takeContactDamage(this);
   }

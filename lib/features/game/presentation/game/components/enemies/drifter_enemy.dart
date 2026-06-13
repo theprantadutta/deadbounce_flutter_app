@@ -4,7 +4,7 @@ import 'dart:ui';
 import 'package:flame/components.dart';
 
 import '../../../../../../core/theme/app_colors.dart';
-import '../../../../engine/tuning.dart';
+import 'package:deadbounce_flutter_app/core/config/game_balance.dart';
 import 'enemy_component.dart';
 
 /// Slow-floating orb that drifts toward the player with a lateral wobble.
@@ -17,10 +17,10 @@ class DrifterEnemy extends EnemyComponent {
     this.small = false,
   })  : _wobblePhase = 0,
         super(
-          maxHp: (Tuning.drifter.hp * hpMult).ceil(),
+          maxHp: (GameBalance.I.drifter.hp * hpMult).ceil(),
           bodyRadius: small
-              ? Tuning.drifter.radius * Tuning.drifter.smallScale
-              : Tuning.drifter.radius,
+              ? GameBalance.I.drifter.radius * GameBalance.I.drifter.smallScale
+              : GameBalance.I.drifter.radius,
           color: const Color(0xFFCC9544), // dim amber
         );
 
@@ -34,7 +34,7 @@ class DrifterEnemy extends EnemyComponent {
 
   @override
   void updateBehavior(double dt) {
-    const t = Tuning.drifter;
+    final t = GameBalance.I.drifter;
     _wobblePhase += dt * t.wobbleFrequency;
 
     final speed = t.speed * (small ? t.smallSpeedMult : 1.0);

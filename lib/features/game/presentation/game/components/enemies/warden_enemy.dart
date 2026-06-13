@@ -4,7 +4,7 @@ import 'dart:ui';
 
 import '../../../../../../core/theme/app_colors.dart';
 import '../../../../engine/combat/bullet_state.dart';
-import '../../../../engine/tuning.dart';
+import 'package:deadbounce_flutter_app/core/config/game_balance.dart';
 import '../../systems/sound_manager.dart';
 import '../bullet_component.dart';
 import '../popup_text_component.dart';
@@ -20,17 +20,17 @@ class WardenEnemy extends EnemyComponent {
     super.speedMult,
     double hpMult = 1,
     int appearance = 0,
-  })  : _phaseMaxHp = (Tuning.warden.phaseHp *
+  })  : _phaseMaxHp = (GameBalance.I.warden.phaseHp *
                 hpMult *
-                (1 + appearance * Tuning.warden.hpScalePerAppearance))
+                (1 + appearance * GameBalance.I.warden.hpScalePerAppearance))
             .ceil(),
         super(
-          maxHp: (Tuning.warden.phaseHp *
-                  Tuning.warden.phases *
+          maxHp: (GameBalance.I.warden.phaseHp *
+                  GameBalance.I.warden.phases *
                   hpMult *
-                  (1 + appearance * Tuning.warden.hpScalePerAppearance))
+                  (1 + appearance * GameBalance.I.warden.hpScalePerAppearance))
               .ceil(),
-          bodyRadius: Tuning.warden.radius,
+          bodyRadius: GameBalance.I.warden.radius,
           color: const Color(0xFFF7F3E9), // white-hot core
         );
 
@@ -41,7 +41,7 @@ class WardenEnemy extends EnemyComponent {
   double _speedBoost = 1;
 
   bool get shieldUp => _shieldDownTimer <= 0;
-  int get phasesTotal => Tuning.warden.phases;
+  int get phasesTotal => GameBalance.I.warden.phases;
 
   /// HP within the current phase.
   int get phaseHp => hp - (phasesTotal - 1 - _phase) * _phaseMaxHp;
@@ -51,7 +51,7 @@ class WardenEnemy extends EnemyComponent {
 
   @override
   bool canBeDamagedBy(BulletState bullet) =>
-      !shieldUp || bullet.bounces >= Tuning.warden.shieldMinBounces;
+      !shieldUp || bullet.bounces >= GameBalance.I.warden.shieldMinBounces;
 
   @override
   bool receiveHit(int damage, BulletComponent bullet) {
@@ -75,7 +75,7 @@ class WardenEnemy extends EnemyComponent {
     if (nowPhase < wasPhase) {
       // Phase break: big moment + shield-down punish window.
       _phase = phasesTotal - 1 - nowPhase;
-      _shieldDownTimer = Tuning.warden.shieldDownDuration;
+      _shieldDownTimer = GameBalance.I.warden.shieldDownDuration;
       _speedBoost += 0.35;
       game.juice.wardenFeedback(position.clone());
     }
@@ -84,10 +84,10 @@ class WardenEnemy extends EnemyComponent {
 
   @override
   void updateBehavior(double dt) {
-    _rotation += Tuning.warden.rotationSpeed * _speedBoost * dt;
+    _rotation += GameBalance.I.warden.rotationSpeed * _speedBoost * dt;
     if (_shieldDownTimer > 0) _shieldDownTimer -= dt;
 
-    seekPlayer(dt, Tuning.warden.speed * _speedBoost);
+    seekPlayer(dt, GameBalance.I.warden.speed * _speedBoost);
     clampToArena();
     if (overlapsPlayer()) game.player.takeContactDamage(this);
   }

@@ -3,7 +3,8 @@ import 'dart:ui';
 
 import 'package:flame/components.dart';
 
-import '../../../engine/tuning.dart';
+import 'package:deadbounce_flutter_app/core/config/game_balance.dart';
+
 import 'haptics_service.dart';
 import 'particle_factory.dart';
 import 'sound_manager.dart';
@@ -49,7 +50,7 @@ class JuiceController {
   void updateShake(double rawDt) {
     if (_trauma <= 0) return;
     _trauma =
-        (_trauma - Tuning.juice.shakeDecayPerSecond * rawDt).clamp(0.0, 1.0);
+        (_trauma - GameBalance.I.juice.shakeDecayPerSecond * rawDt).clamp(0.0, 1.0);
     _shakeTime += rawDt * 40;
 
     if (_trauma <= 0) {
@@ -58,7 +59,7 @@ class JuiceController {
       return;
     }
 
-    final magnitude = Tuning.juice.shakeMaxOffset * _trauma * _trauma;
+    final magnitude = GameBalance.I.juice.shakeMaxOffset * _trauma * _trauma;
     _camera.viewfinder.position = _restPosition +
         Vector2(
           magnitude * (math.sin(_shakeTime * 1.1) + math.sin(_shakeTime * 2.3)) / 2,
@@ -84,10 +85,10 @@ class JuiceController {
   }) {
     particles.deathShatter(position, color, radius);
     addTrauma(chainLength >= 2
-        ? Tuning.juice.shakeTraumaChain
-        : Tuning.juice.shakeTraumaKill);
+        ? GameBalance.I.juice.shakeTraumaChain
+        : GameBalance.I.juice.shakeTraumaKill);
     if (chainLength >= 2) {
-      hitStop(Tuning.juice.hitStopMultiKill);
+      hitStop(GameBalance.I.juice.hitStopMultiKill);
       sound.play(Sfx.chain);
       haptics.heavy();
     } else {
@@ -97,8 +98,8 @@ class JuiceController {
   }
 
   void wardenFeedback(Vector2 position) {
-    hitStop(Tuning.juice.hitStopWardenHit);
-    addTrauma(Tuning.juice.shakeTraumaBoss);
+    hitStop(GameBalance.I.juice.hitStopWardenHit);
+    addTrauma(GameBalance.I.juice.shakeTraumaBoss);
     sound.play(Sfx.wardenPhase);
     haptics.heavy();
   }

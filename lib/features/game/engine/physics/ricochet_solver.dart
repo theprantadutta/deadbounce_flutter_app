@@ -4,7 +4,8 @@ import 'package:flame/components.dart';
 
 import '../combat/bullet_state.dart';
 import '../combat/bullet_stats.dart';
-import '../tuning.dart';
+import 'package:deadbounce_flutter_app/core/config/game_balance.dart';
+
 import 'wall_segment.dart';
 
 /// Result of a raycast against the arena walls.
@@ -146,7 +147,7 @@ class RicochetSolver {
         // bounce increment — no damage gain off this surface.
         state.velocity
           ..setFrom(reflected)
-          ..scale(Tuning.turret.dampRestitution);
+          ..scale(GameBalance.I.turret.dampRestitution);
       } else {
         state.velocity
           ..setFrom(reflected)

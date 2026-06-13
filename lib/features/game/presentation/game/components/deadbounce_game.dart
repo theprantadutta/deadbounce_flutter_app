@@ -13,8 +13,9 @@ import '../../../engine/combat/score_system.dart';
 import '../../../engine/game_rng.dart';
 import '../../../engine/physics/ricochet_solver.dart';
 import '../../../engine/physics/wall_segment.dart';
+import 'package:deadbounce_flutter_app/core/config/game_balance.dart';
+
 import '../../../engine/trajectory/trajectory_predictor.dart';
-import '../../../engine/tuning.dart';
 import '../../../engine/upgrades/run_modifiers.dart';
 import '../../../engine/upgrades/upgrade_card.dart';
 import '../../../engine/upgrades/upgrade_catalog.dart';
@@ -175,8 +176,8 @@ class DeadbounceGame extends FlameGame implements GameWorldOps {
   void refreshTrajectory(Vector2 direction, double powerT) {
     final stats = modifiers.effectiveBulletStats();
     final playerStats = modifiers.effectivePlayerStats();
-    final speed = Tuning.bullet.minSpeed +
-        (Tuning.bullet.maxSpeed - Tuning.bullet.minSpeed) * powerT;
+    final speed = GameBalance.I.bullet.minSpeed +
+        (GameBalance.I.bullet.maxSpeed - GameBalance.I.bullet.minSpeed) * powerT;
     // Every 4th shot is the ghost shot when Ghost Round is held — show it.
     final ghostHeld = modifiers.stacksOf('ghost_round') > 0;
     final nextIsGhost =
@@ -223,12 +224,12 @@ class DeadbounceGame extends FlameGame implements GameWorldOps {
     }
 
     // Kill coins + chance of a dropped pickup.
-    addRunCoins(Tuning.economy.coinPerKill.toDouble() +
-        (chainLength > 1 ? Tuning.economy.chainBonusPerKill : 0));
-    if (_lootRng.chance(Tuning.economy.dropChance)) {
+    addRunCoins(GameBalance.I.economy.coinPerKill.toDouble() +
+        (chainLength > 1 ? GameBalance.I.economy.chainBonusPerKill : 0));
+    if (_lootRng.chance(GameBalance.I.economy.dropChance)) {
       world.add(CoinPickupComponent(
         position: enemy.position.clone(),
-        value: Tuning.economy.dropValue,
+        value: GameBalance.I.economy.dropValue,
       ));
     }
 
@@ -262,14 +263,14 @@ class DeadbounceGame extends FlameGame implements GameWorldOps {
   /// present, else the tuning default — so a one-life challenge plus a
   /// Heart Container still tops out at two, not four.
   int effectiveMaxHearts() =>
-      (challenge?.startingHearts ?? Tuning.player.maxHearts) +
+      (challenge?.startingHearts ?? GameBalance.I.player.maxHearts) +
       modifiers.stacksOf('heart_container');
 
   void onWaveCleared(int wave) {
     if (runEnded) return;
     scoreSystem.registerWaveClear(wave);
     hud.score.value = scoreSystem.score;
-    addRunCoins(Tuning.economy.waveClearBonus.toDouble());
+    addRunCoins(GameBalance.I.economy.waveClearBonus.toDouble());
     sound.play(Sfx.waveClear);
 
     final choices = UpgradeDeck.draw3(_upgradesRng, modifiers);

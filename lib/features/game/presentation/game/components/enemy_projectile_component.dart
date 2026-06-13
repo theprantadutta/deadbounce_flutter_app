@@ -3,7 +3,7 @@ import 'dart:ui';
 import 'package:flame/components.dart';
 
 import '../../../../../core/theme/app_colors.dart';
-import '../../../engine/tuning.dart';
+import 'package:deadbounce_flutter_app/core/config/game_balance.dart';
 import 'deadbounce_game.dart';
 
 /// A Turret's slow shot: dodge it or shoot it down — player bullets
@@ -16,7 +16,7 @@ class EnemyProjectileComponent extends PositionComponent
   }) : super(anchor: Anchor.center, priority: 35);
 
   final Vector2 velocity;
-  double get radius => Tuning.turret.projectileRadius;
+  double get radius => GameBalance.I.turret.projectileRadius;
 
   double _pulse = 0;
 

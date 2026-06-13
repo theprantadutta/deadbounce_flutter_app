@@ -2,8 +2,9 @@ import 'package:flame/components.dart';
 
 import '../combat/bullet_state.dart';
 import '../combat/bullet_stats.dart';
+import 'package:deadbounce_flutter_app/core/config/game_balance.dart';
+
 import '../physics/ricochet_solver.dart';
-import '../tuning.dart';
 
 /// One node of the predicted path.
 class TrajectoryNode {
@@ -63,7 +64,7 @@ abstract final class TrajectoryPredictor {
     );
 
     final dt =
-        Tuning.trajectory.maxTotalDistance / launchSpeed; // distance budget
+        GameBalance.I.trajectory.maxTotalDistance / launchSpeed; // distance budget
 
     solver.advance(
       state,

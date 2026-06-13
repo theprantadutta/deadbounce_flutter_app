@@ -1,4 +1,4 @@
-import '../tuning.dart';
+import 'package:deadbounce_flutter_app/core/config/game_balance.dart';
 
 /// One registered kill, for chain bookkeeping.
 class _ChainEntry {
@@ -35,7 +35,7 @@ class ScoreSystem {
     required int bounces,
     required double now,
   }) {
-    const t = Tuning.score;
+    final t = GameBalance.I.score;
 
     final killScore =
         (t.killBase * (1 + t.bounceFactor * bounces)).round();
@@ -60,7 +60,7 @@ class ScoreSystem {
   }
 
   void registerWaveClear(int wave) {
-    _addScore(Tuning.score.waveClearBase * wave);
+    _addScore(GameBalance.I.score.waveClearBase * wave);
   }
 
   void _addScore(int raw) {

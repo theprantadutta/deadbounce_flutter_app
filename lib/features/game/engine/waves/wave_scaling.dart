@@ -1,7 +1,7 @@
 import 'dart:math' as math;
 
 import '../game_rng.dart';
-import '../tuning.dart';
+import 'package:deadbounce_flutter_app/core/config/game_balance.dart';
 import 'wave_definition.dart';
 import 'wave_table.dart';
 
@@ -10,7 +10,7 @@ import 'wave_table.dart';
 /// identical waves worldwide.
 abstract final class WaveScaling {
   static WaveDefinition forWave(int wave, GameRng rng) {
-    const t = Tuning.waves;
+    final t = GameBalance.I.waves;
     if (wave <= t.authoredWaves) {
       return WaveTable.authored[wave - 1];
     }

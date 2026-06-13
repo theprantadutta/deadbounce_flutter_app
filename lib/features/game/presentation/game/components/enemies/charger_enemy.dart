@@ -3,7 +3,7 @@ import 'dart:ui';
 
 import 'package:flame/components.dart';
 
-import '../../../../engine/tuning.dart';
+import 'package:deadbounce_flutter_app/core/config/game_balance.dart';
 import 'enemy_component.dart';
 
 enum _ChargerPhase { roam, telegraph, dash, recover }
@@ -14,8 +14,8 @@ enum _ChargerPhase { roam, telegraph, dash, recover }
 class ChargerEnemy extends EnemyComponent {
   ChargerEnemy({required super.position, super.speedMult, double hpMult = 1})
       : super(
-          maxHp: (Tuning.charger.hp * hpMult).ceil(),
-          bodyRadius: Tuning.charger.radius,
+          maxHp: (GameBalance.I.charger.hp * hpMult).ceil(),
+          bodyRadius: GameBalance.I.charger.radius,
           color: const Color(0xFFFF6B35), // red-orange
         );
 
@@ -30,7 +30,7 @@ class ChargerEnemy extends EnemyComponent {
 
   @override
   void updateBehavior(double dt) {
-    const t = Tuning.charger;
+    final t = GameBalance.I.charger;
     _phaseTime += dt;
 
     switch (_phase) {

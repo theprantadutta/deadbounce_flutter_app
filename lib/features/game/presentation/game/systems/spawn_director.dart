@@ -5,8 +5,9 @@ import 'package:flame/components.dart';
 import '../../../../../core/theme/app_colors.dart';
 import '../../../engine/arena/arena_definition.dart';
 import '../../../engine/game_rng.dart';
+import 'package:deadbounce_flutter_app/core/config/game_balance.dart';
+
 import '../../../engine/physics/vector_utils.dart';
-import '../../../engine/tuning.dart';
 import '../../../engine/waves/wave_definition.dart';
 import '../components/deadbounce_game.dart';
 import '../components/enemies/charger_enemy.dart';
@@ -52,7 +53,7 @@ class SpawnDirector {
     _pendingSpawns++;
     _game.world.add(_SpawnTelegraph(
       position: position,
-      duration: Tuning.waves.spawnTelegraph,
+      duration: GameBalance.I.waves.spawnTelegraph,
       onSpawn: () {
         _pendingSpawns--;
         if (_game.runEnded) return;
@@ -67,7 +68,7 @@ class SpawnDirector {
       {required double speedMult, required double hpMult}) {
     const spread = 1.0;
     for (final side in [-1.0, 1.0]) {
-      final offset = Vector2(side * Tuning.splitter.childSpread / 2, 0)
+      final offset = Vector2(side * GameBalance.I.splitter.childSpread / 2, 0)
         ..rotateBy(_rng.range(-spread, spread));
       final child = DrifterEnemy(
         position: origin + offset,

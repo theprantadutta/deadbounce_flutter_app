@@ -54,12 +54,24 @@ Rarity weights common 100 / rare 40 / epic 12.
 > **Accepted divergence**: Magnet Rounds curves bullets after bounce 2; the aim
 > preview stays geometric (homing is a forgiveness mechanic, not an aiming one).
 
-## Tuning
+## Tuning — `GameBalance` is the balance source of truth
 
-All constants live in `engine/tuning.dart` (one file). Current values are starting
-points — tune by feel there. Highlights: bullet base/max speed 420/780, +12%/bounce,
-8 max bounces / 4s lifetime; player 3 hearts, 0.55s fire cooldown, 2 preview bounces;
-hit-stop 45/60ms; particle budget 600.
+Every tunable gameplay number lives in **`lib/core/config/game_balance.dart`** as a
+**mutable singleton** (`GameBalance.I`). Game systems read `GameBalance.I.<section>.<x>`
+live (no const-folding), so values can change at runtime and be felt on the next
+read (next shot / wave / event). It is pure Dart (no Flutter import) so the engine
+and tests stay testable. Sections: bullet, player, drifter, charger, splitter,
+turret, warden, waves, juice, input, trajectory, economy, score — field
+initializers ARE the shipped defaults; `resetToDefaults()` restores them.
+
+Highlights (defaults): bullet base/max speed 420/780, +12%/bounce, 8 max bounces /
+4s lifetime; player 3 hearts, 0.55s fire cooldown, 2 preview bounces; hit-stop
+45/60ms; particle budget 600.
+
+A flat `params` registry (each a `TuningParam` with get/set + min/max/step/scope)
+is the single source driving the debug tuning panel, JSON persistence, reset, and
+"copy config". Tests `resetToDefaults()` in `setUp` so a panel/test mutation can't
+leak across cases (keeps daily-challenge wave goldens deterministic).
 
 ## Economy & meta
 

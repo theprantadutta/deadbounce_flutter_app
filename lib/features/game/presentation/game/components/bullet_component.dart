@@ -7,7 +7,7 @@ import '../../../engine/combat/bullet_state.dart';
 import '../../../engine/combat/bullet_stats.dart';
 import '../../../engine/physics/ricochet_solver.dart';
 import '../../../engine/physics/swept_circle.dart';
-import '../../../engine/tuning.dart';
+import 'package:deadbounce_flutter_app/core/config/game_balance.dart';
 import '../../../engine/upgrades/upgrade_modifier.dart';
 import '../systems/sound_manager.dart';
 import 'deadbounce_game.dart';
@@ -149,7 +149,7 @@ class BulletComponent extends PositionComponent
   @override
   void render(Canvas canvas) {
     final heat =
-        (state.bounces / Tuning.bullet.maxBounces).clamp(0.0, 1.0);
+        (state.bounces / GameBalance.I.bullet.maxBounces).clamp(0.0, 1.0);
     final hot =
         Color.lerp(AppColors.amber500, const Color(0xFFFFFFFF), heat)!;
 

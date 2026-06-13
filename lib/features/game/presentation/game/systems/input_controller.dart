@@ -1,7 +1,8 @@
 import 'package:flame/components.dart';
 import 'package:flame/events.dart';
 
-import '../../../engine/tuning.dart';
+import 'package:deadbounce_flutter_app/core/config/game_balance.dart';
+
 import '../components/deadbounce_game.dart';
 
 /// One-thumb input over the whole arena:
@@ -24,7 +25,7 @@ class InputController extends PositionComponent
   final Vector2 _aim = Vector2.zero();
 
   bool get _aiming =>
-      _dragOrigin != null && _aim.length > Tuning.input.aimDeadzone;
+      _dragOrigin != null && _aim.length > GameBalance.I.input.aimDeadzone;
 
   @override
   void onTapUp(TapUpEvent event) {
@@ -54,7 +55,7 @@ class InputController extends PositionComponent
     game.trajectory.visible = false;
     if (origin == null || game.runEnded) return;
 
-    if (_aim.length <= Tuning.input.aimDeadzone) {
+    if (_aim.length <= GameBalance.I.input.aimDeadzone) {
       // Sloppy tap → still a dash; both paths converge.
       _dashToward(origin.x);
       return;
@@ -84,8 +85,8 @@ class InputController extends PositionComponent
     game.refreshTrajectory(_aim.normalized(), _powerT());
   }
 
-  double _powerT() => ((_aim.length - Tuning.input.aimDeadzone) /
-          (Tuning.input.maxDragLength - Tuning.input.aimDeadzone))
+  double _powerT() => ((_aim.length - GameBalance.I.input.aimDeadzone) /
+          (GameBalance.I.input.maxDragLength - GameBalance.I.input.aimDeadzone))
       .clamp(0.0, 1.0);
 
   void _dashToward(double x) {

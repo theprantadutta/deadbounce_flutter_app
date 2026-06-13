@@ -1,7 +1,8 @@
 import 'package:flame/components.dart';
 
+import 'package:deadbounce_flutter_app/core/config/game_balance.dart';
+
 import '../../../engine/game_rng.dart';
-import '../../../engine/tuning.dart';
 import '../../../engine/waves/wave_definition.dart';
 import '../../../engine/waves/wave_scaling.dart';
 import '../components/deadbounce_game.dart';
@@ -73,7 +74,7 @@ class WaveRunner extends Component with HasGameReference<DeadbounceGame> {
     if (_spawningDone && _spawner.activeCount == 0) {
       // Short beat before the upgrade picker so the last kill lands.
       _clearBeat += dt;
-      if (_clearBeat >= Tuning.waves.interWaveDelay) {
+      if (_clearBeat >= GameBalance.I.waves.interWaveDelay) {
         _waveActive = false;
         game.onWaveCleared(currentWave);
       }

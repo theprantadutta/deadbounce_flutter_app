@@ -1,6 +1,6 @@
-import '../tuning.dart';
+import 'package:deadbounce_flutter_app/core/config/game_balance.dart';
 
-/// Immutable per-shot stats, built from [Tuning] and folded through the
+/// Immutable per-shot stats, built from [GameBalance] and folded through the
 /// active upgrade modifiers at fire time.
 class BulletStats {
   const BulletStats({
@@ -12,7 +12,7 @@ class BulletStats {
   });
 
   factory BulletStats.base() {
-    const t = Tuning.bullet;
+    final t = GameBalance.I.bullet;
     return BulletStats(
       damagePerBounce: t.damagePerBounce,
       speedGainPerBounce: t.speedGainPerBounce,

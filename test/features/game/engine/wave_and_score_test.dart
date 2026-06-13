@@ -1,12 +1,16 @@
 import 'package:deadbounce_flutter_app/features/game/engine/combat/score_system.dart';
+import 'package:deadbounce_flutter_app/core/config/game_balance.dart';
 import 'package:deadbounce_flutter_app/features/game/engine/game_rng.dart';
-import 'package:deadbounce_flutter_app/features/game/engine/tuning.dart';
 import 'package:deadbounce_flutter_app/features/game/engine/waves/wave_definition.dart';
 import 'package:deadbounce_flutter_app/features/game/engine/waves/wave_scaling.dart';
 import 'package:deadbounce_flutter_app/features/game/engine/waves/wave_table.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  // Reset the live config before each test so a mutation in one test (or the
+  // debug tuning panel during a real session) can never leak into another.
+  setUp(GameBalance.I.resetToDefaults);
+
   group('waves', () {
     test('authored waves come from the table verbatim', () {
       final rng = GameRng(1).fork('waves');
@@ -38,7 +42,8 @@ void main() {
           expect(def.hpMult, greaterThan(lastHp));
         }
         lastHp = def.hpMult;
-        expect(def.speedMult, lessThanOrEqualTo(1.1 + Tuning.waves.speedGrowthCap + 1e-9));
+        expect(def.speedMult,
+            lessThanOrEqualTo(1.1 + GameBalance.I.waves.speedGrowthCap + 1e-9));
         expect(def.totalCount, greaterThan(0));
       }
     });
@@ -59,13 +64,13 @@ void main() {
     test('kill score scales with bounce multiplier', () {
       final s = ScoreSystem();
       s.registerKill(bulletId: 1, bounces: 0, now: 0);
-      final base = Tuning.score.killBase;
+      final base = GameBalance.I.score.killBase;
       expect(s.score, base);
 
       final s2 = ScoreSystem();
       s2.registerKill(bulletId: 1, bounces: 4, now: 0);
       expect(s2.score,
-          (base * (1 + Tuning.score.bounceFactor * 4)).round());
+          (base * (1 + GameBalance.I.score.bounceFactor * 4)).round());
       expect(s2.maxBounceKill, 4);
     });
 

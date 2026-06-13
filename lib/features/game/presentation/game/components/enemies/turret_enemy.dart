@@ -4,7 +4,7 @@ import 'dart:ui';
 
 import '../../../../../../core/theme/app_colors.dart';
 import '../../../../engine/physics/wall_segment.dart';
-import '../../../../engine/tuning.dart';
+import 'package:deadbounce_flutter_app/core/config/game_balance.dart';
 import '../enemy_projectile_component.dart';
 import 'enemy_component.dart';
 
@@ -14,8 +14,8 @@ import 'enemy_component.dart';
 class TurretEnemy extends EnemyComponent {
   TurretEnemy({required super.position, super.speedMult, double hpMult = 1})
       : super(
-          maxHp: (Tuning.turret.hp * hpMult).ceil(),
-          bodyRadius: Tuning.turret.radius,
+          maxHp: (GameBalance.I.turret.hp * hpMult).ceil(),
+          bodyRadius: GameBalance.I.turret.radius,
           color: const Color(0xFF1FA9FF), // hostile electric blue
         );
 
@@ -71,12 +71,12 @@ class TurretEnemy extends EnemyComponent {
   @override
   void updateBehavior(double dt) {
     _fireTimer += dt;
-    if (_fireTimer >= Tuning.turret.fireInterval) {
+    if (_fireTimer >= GameBalance.I.turret.fireInterval) {
       _fireTimer = 0;
       final dir = (game.player.position - position)..normalize();
       game.world.add(EnemyProjectileComponent(
         position: position + dir * (bodyRadius + 8),
-        velocity: dir * Tuning.turret.projectileSpeed * speedMult,
+        velocity: dir * GameBalance.I.turret.projectileSpeed * speedMult,
       ));
     }
     if (overlapsPlayer()) game.player.takeContactDamage(this);
@@ -99,7 +99,7 @@ class TurretEnemy extends EnemyComponent {
 
     // Charging glow toward the next shot.
     final charge =
-        (_fireTimer / Tuning.turret.fireInterval).clamp(0.0, 1.0);
+        (_fireTimer / GameBalance.I.turret.fireInterval).clamp(0.0, 1.0);
     if (charge > 0.6) {
       canvas.drawCircle(
         Offset(0, -r * 0.5),

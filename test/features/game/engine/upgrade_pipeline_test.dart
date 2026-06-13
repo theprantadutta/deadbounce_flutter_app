@@ -1,8 +1,8 @@
 import 'package:deadbounce_flutter_app/features/game/engine/combat/bullet_state.dart';
 import 'package:deadbounce_flutter_app/features/game/engine/combat/bullet_stats.dart';
 import 'package:deadbounce_flutter_app/features/game/engine/game_rng.dart';
+import 'package:deadbounce_flutter_app/core/config/game_balance.dart';
 import 'package:deadbounce_flutter_app/features/game/engine/physics/wall_segment.dart';
-import 'package:deadbounce_flutter_app/features/game/engine/tuning.dart';
 import 'package:deadbounce_flutter_app/features/game/engine/upgrades/run_modifiers.dart';
 import 'package:deadbounce_flutter_app/features/game/engine/upgrades/upgrade_card.dart';
 import 'package:deadbounce_flutter_app/features/game/engine/upgrades/upgrade_catalog.dart';
@@ -41,6 +41,7 @@ void main() {
   late RunModifiers mods;
 
   setUp(() {
+    GameBalance.I.resetToDefaults();
     world = FakeWorldOps(GameRng(42));
     mods = RunModifiers();
   });
@@ -56,10 +57,10 @@ void main() {
 
     final player = mods.effectivePlayerStats();
     expect(player.fireCooldown,
-        closeTo(Tuning.player.fireCooldown * 0.78 * 0.78, 1e-9));
+        closeTo(GameBalance.I.player.fireCooldown * 0.78 * 0.78, 1e-9));
 
     final bullet = mods.effectiveBulletStats();
-    expect(bullet.radius, closeTo(Tuning.bullet.radius * 1.4, 1e-9));
+    expect(bullet.radius, closeTo(GameBalance.I.bullet.radius * 1.4, 1e-9));
     expect(bullet.damagePerBounce, 2);
   });
 

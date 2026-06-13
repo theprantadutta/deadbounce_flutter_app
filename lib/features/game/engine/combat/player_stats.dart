@@ -1,4 +1,4 @@
-import '../tuning.dart';
+import 'package:deadbounce_flutter_app/core/config/game_balance.dart';
 
 /// Immutable player stats, folded through the active upgrade modifiers
 /// whenever a card is picked.
@@ -11,7 +11,7 @@ class PlayerStats {
   });
 
   factory PlayerStats.base() {
-    const t = Tuning.player;
+    final t = GameBalance.I.player;
     return PlayerStats(
       maxHearts: t.maxHearts,
       fireCooldown: t.fireCooldown,
@@ -35,7 +35,7 @@ class PlayerStats {
         maxHearts: maxHearts ?? this.maxHearts,
         fireCooldown:
             (fireCooldown ?? this.fireCooldown).clamp(
-                Tuning.player.minFireCooldown, double.infinity),
+                GameBalance.I.player.minFireCooldown, double.infinity),
         previewBounces: previewBounces ?? this.previewBounces,
         coinPickupRadius: coinPickupRadius ?? this.coinPickupRadius,
       );
