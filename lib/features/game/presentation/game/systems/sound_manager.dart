@@ -18,21 +18,25 @@ enum Sfx {
 }
 
 /// Audio seam: gameplay calls [play]; the implementation is swappable.
-/// Dropping in real SFX later means implementing this with flame_audio
-/// in ONE file — no gameplay code changes.
+/// [preload] warms the clips before a run; [dispose] releases players.
 abstract interface class SoundManager {
+  /// Loads the clips. Safe to call once per run; cached after first load.
+  Future<void> preload();
   void play(Sfx sfx, {double volume = 1.0});
   set enabled(bool value);
+  void dispose();
 }
 
-/// Phase-2 implementation: intentionally silent (real SFX are requested
-/// from the project owner at the end of the phase). Logs in debug so the
-/// hook points are visible during development.
+/// Silent fallback — used in tests and as a safe default if audio fails
+/// to load.
 class NoOpSoundManager implements SoundManager {
   bool _enabled = true;
 
   @override
   set enabled(bool value) => _enabled = value;
+
+  @override
+  Future<void> preload() async {}
 
   @override
   void play(Sfx sfx, {double volume = 1.0}) {
@@ -42,4 +46,7 @@ class NoOpSoundManager implements SoundManager {
       // debugPrint('SFX: ${sfx.name} @$volume');
     }
   }
+
+  @override
+  void dispose() {}
 }

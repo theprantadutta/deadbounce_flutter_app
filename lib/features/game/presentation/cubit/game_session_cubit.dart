@@ -16,6 +16,7 @@ import '../../engine/upgrades/upgrade_card.dart';
 import '../game/components/deadbounce_game.dart';
 import '../game/game_session_gateway.dart';
 import '../game/hud_model.dart';
+import '../game/systems/flame_audio_sound_manager.dart';
 import '../game/systems/haptics_service.dart';
 import '../game/systems/sound_manager.dart';
 
@@ -45,6 +46,7 @@ class GameSessionCubit extends Cubit<GameSessionState>
 
   final HudModel hud = HudModel();
   DeadbounceGame? game;
+  SoundManager? _sound;
   int? _challengeSeed;
   String? _challengeDate;
   int _previousBestScore = 0;
@@ -69,21 +71,28 @@ class GameSessionCubit extends Cubit<GameSessionState>
     final arena = rng.fork('arena').pick(ArenaCatalog.all);
     final settings = await _settingsRepository.load();
 
+    final sound = FlameAudioSoundManager(enabled: settings.soundEnabled);
+    _sound = sound;
+
     game = DeadbounceGame(
       gateway: this,
       hud: hud,
       arenaDef: arena,
       runRng: rng,
-      sound: NoOpSoundManager()..enabled = settings.soundEnabled,
+      sound: sound,
       hapticsService: HapticsService(enabled: settings.hapticsEnabled),
       isDailyChallenge: dailyChallenge,
       challengeDate: _challengeDate,
       challenge: challengeConfig,
     );
 
-    // Brief pre-game beat so the arena-flavored loading scene reads as
-    // intentional, not a stutter.
-    await Future<void>.delayed(const Duration(milliseconds: 1300));
+    // Warm the audio during the pre-game beat so the arena-flavored
+    // loading scene reads as intentional, not a stutter, and the first
+    // shot isn't silent.
+    await Future.wait([
+      sound.preload(),
+      Future<void>.delayed(const Duration(milliseconds: 1300)),
+    ]);
     if (isClosed) return;
     emit(const SessionPlaying());
   }
@@ -161,6 +170,7 @@ class GameSessionCubit extends Cubit<GameSessionState>
   @override
   Future<void> close() {
     hud.dispose();
+    _sound?.dispose();
     return super.close();
   }
 }
