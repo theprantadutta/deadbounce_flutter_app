@@ -47,6 +47,7 @@ app.*.map.json
 # Firebase config (contains API keys — re-download from console)
 **/google-services.json
 ios/Runner/GoogleService-Info.plist
+lib/firebase_options.dart
 
 # Signing / secrets
 *.keystore
