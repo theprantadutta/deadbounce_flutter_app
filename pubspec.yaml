@@ -51,6 +51,7 @@ dependencies:
   uuid: ^4.5.3
   flame_audio: ^2.12.1
   shared_preferences: ^2.3.2 # dev-only: persists debug tuning-panel tweaks
+  url_launcher: ^6.3.1 # opens the credits website link
 
 dev_dependencies:
   flutter_test:

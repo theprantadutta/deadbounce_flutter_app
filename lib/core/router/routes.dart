@@ -11,4 +11,7 @@ abstract final class Routes {
   static const String awards = '/awards';
   static const String profile = '/profile';
   static const String settings = '/settings';
+  static const String statistics = '/statistics';
+  static const String howToPlay = '/how-to-play';
+  static const String credits = '/credits';
 }

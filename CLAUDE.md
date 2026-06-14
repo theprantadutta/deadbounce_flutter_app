@@ -147,8 +147,15 @@ lib/
   features/<f>/  domain (entities/repositories/usecases) → data (datasources/
                models/repositoryimpl) → presentation (cubits/pages)
                f ∈ auth, game, runs, economy, streak, challenges, achievements,
-                   leaderboards, profile, settings, home, splash
+                   leaderboards, profile, settings, statistics, about, home, splash
 ```
+
+The home menu links to: Play, Daily Challenge, Boards, Awards, **Statistics**,
+**How to Play**, plus a "Made by Pranta Dutta" footer → **Credits**. The
+`statistics` feature reads lifetime aggregates + the per-enemy kill breakdown from
+`statsDao` (its own `StatisticsRepository` in `SessionDependencies`). `about` holds
+the static How-to-Play rulebook and Credits (author + `https://pranta.dev`, opened
+via `url_launcher` with a clipboard fallback).
 
 `app.dart` is the composition root: app-wide graph (auth, ApiClient) built once;
 `SessionDependencies` (per-account DB + sync engine + game-data repositories) built

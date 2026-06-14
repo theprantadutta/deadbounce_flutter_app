@@ -1,0 +1,22 @@
+import 'package:equatable/equatable.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+
+import '../../domain/entities/game_statistics.dart';
+import '../../domain/repositories/statistics_repository.dart';
+
+part 'statistics_state.dart';
+
+class StatisticsCubit extends Cubit<StatisticsState> {
+  StatisticsCubit(this._repository) : super(const StatisticsLoading());
+
+  final StatisticsRepository _repository;
+
+  Future<void> load() async {
+    emit(const StatisticsLoading());
+    try {
+      emit(StatisticsLoaded(await _repository.getStatistics()));
+    } catch (_) {
+      emit(const StatisticsError('Could not load your statistics.'));
+    }
+  }
+}

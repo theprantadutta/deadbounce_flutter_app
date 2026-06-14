@@ -13,6 +13,8 @@ import '../../features/profile/data/repositories/profile_repository_impl.dart';
 import '../../features/profile/domain/repositories/profile_repository.dart';
 import '../../features/settings/data/repositories/settings_repository_impl.dart';
 import '../../features/settings/domain/repositories/settings_repository.dart';
+import '../../features/statistics/data/repositories/statistics_repository_impl.dart';
+import '../../features/statistics/domain/repositories/statistics_repository.dart';
 import '../../features/runs/data/repositories/runs_repository_impl.dart';
 import '../../features/runs/domain/repositories/runs_repository.dart';
 import '../../features/streak/data/repositories/login_streak_repository_impl.dart';
@@ -48,6 +50,7 @@ class SessionDependencies {
     required this.leaderboardRepository,
     required this.profileRepository,
     required this.settingsRepository,
+    required this.statisticsRepository,
   });
 
   factory SessionDependencies.create({
@@ -92,6 +95,7 @@ class SessionDependencies {
       ),
       profileRepository: ProfileRepositoryImpl(db),
       settingsRepository: SettingsRepositoryImpl(db),
+      statisticsRepository: StatisticsRepositoryImpl(db),
     );
   }
 
@@ -110,6 +114,7 @@ class SessionDependencies {
   final LeaderboardRepository leaderboardRepository;
   final ProfileRepository profileRepository;
   final SettingsRepository settingsRepository;
+  final StatisticsRepository statisticsRepository;
 
   bool _started = false;
   final Completer<void> _ready = Completer<void>();

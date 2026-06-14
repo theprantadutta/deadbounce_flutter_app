@@ -3,6 +3,8 @@ import 'package:go_router/go_router.dart';
 import '../../features/achievements/presentation/awards_screen.dart';
 import '../../features/auth/presentation/pages/login_page.dart';
 import '../../features/auth/presentation/pages/signup_page.dart';
+import '../../features/about/presentation/credits_screen.dart';
+import '../../features/about/presentation/how_to_play_screen.dart';
 import '../../features/challenges/presentation/daily_challenge_screen.dart';
 import '../../features/game/presentation/game_page.dart';
 import '../../features/home/presentation/home_page.dart';
@@ -10,6 +12,7 @@ import '../../features/leaderboards/presentation/leaderboard_screen.dart';
 import '../../features/profile/presentation/profile_screen.dart';
 import '../../features/settings/presentation/settings_screen.dart';
 import '../../features/splash/presentation/splash_page.dart';
+import '../../features/statistics/presentation/statistics_screen.dart';
 import 'routes.dart';
 
 /// App navigation. Splash owns the initial auth decision; login/home
@@ -63,6 +66,18 @@ GoRouter buildRouter() {
       GoRoute(
         path: Routes.settings,
         builder: (context, state) => const SettingsScreen(),
+      ),
+      GoRoute(
+        path: Routes.statistics,
+        builder: (context, state) => const StatisticsScreen(),
+      ),
+      GoRoute(
+        path: Routes.howToPlay,
+        builder: (context, state) => const HowToPlayScreen(),
+      ),
+      GoRoute(
+        path: Routes.credits,
+        builder: (context, state) => const CreditsScreen(),
       ),
     ],
   );
