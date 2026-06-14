@@ -8,7 +8,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_dimens.dart';
 import '../../../core/theme/app_effects.dart';
 import '../../../core/widgets/animated_arena_background.dart';
-import '../../../core/widgets/db_button.dart';
+import '../../../core/widgets/db_launch_button.dart';
 import '../../../core/widgets/db_logo.dart';
 import '../../../core/widgets/fitted_headline.dart';
 import '../../../core/widgets/utc_midnight_countdown.dart';
@@ -94,25 +94,27 @@ class _HomeViewState extends State<_HomeView> {
                             // Logo scales down on short screens so the
                             // Spacer layout never overflows vertically.
                             DbLogo(
-                              size: (constraints.maxHeight * 0.13)
-                                  .clamp(64.0, 96.0),
+                              size: (constraints.maxHeight * 0.11)
+                                  .clamp(56.0, 80.0),
                             ),
-                            const SizedBox(height: AppSpacing.md),
+                            const SizedBox(height: AppSpacing.sm),
                             FittedHeadline('DEADBOUNCE',
-                                style: textTheme.displayMedium),
+                                style: textTheme.headlineLarge),
                             const SizedBox(height: AppSpacing.xs),
                             Text('Bullets only bite after they bounce.',
                                 style: textTheme.bodyMedium,
                                 textAlign: TextAlign.center),
                             const Spacer(flex: 2),
-                            DbPrimaryButton(
-                              label: 'PLAY',
-                              icon: Icons.play_arrow_rounded,
+                            // The launch orb scales with available height so the
+                            // Spacer layout never overflows on short screens.
+                            DbLaunchButton(
+                              diameter: (constraints.maxHeight * 0.16)
+                                  .clamp(112.0, 144.0),
                               onPressed: () => context.push(Routes.game),
                             ),
-                            const SizedBox(height: AppSpacing.md),
+                            const SizedBox(height: AppSpacing.sm),
                             const _DailyChallengeEntry(),
-                            const SizedBox(height: AppSpacing.md),
+                            const SizedBox(height: AppSpacing.sm),
                             Row(
                               children: [
                                 Expanded(

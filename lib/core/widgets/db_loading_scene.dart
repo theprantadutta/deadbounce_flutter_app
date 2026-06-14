@@ -80,15 +80,27 @@ class _DbLoadingSceneState extends State<DbLoadingScene>
                   ),
                 const SizedBox(height: AppSpacing.lg),
                 FittedHeadline(widget.title, style: textTheme.displaySmall),
-                if (widget.subtitle != null) ...[
-                  const SizedBox(height: AppSpacing.xs),
-                  Text(
-                    widget.subtitle!,
-                    style: textTheme.bodyMedium
-                        ?.copyWith(color: AppColors.blue300),
-                    textAlign: TextAlign.center,
+                const SizedBox(height: AppSpacing.xs),
+                // Always reserve the subtitle line so a status message (e.g.
+                // "Restoring your gunslinger…") can fade in without reflowing
+                // the rest of the scene.
+                SizedBox(
+                  height: 24,
+                  child: AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 350),
+                    child: widget.subtitle == null
+                        ? const SizedBox.shrink()
+                        : Text(
+                            widget.subtitle!,
+                            key: ValueKey(widget.subtitle),
+                            style: textTheme.bodyMedium
+                                ?.copyWith(color: AppColors.blue300),
+                            textAlign: TextAlign.center,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
                   ),
-                ],
+                ),
                 const Spacer(flex: 2),
                 const _IndeterminateBar(),
                 const SizedBox(height: AppSpacing.lg),
