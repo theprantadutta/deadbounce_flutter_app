@@ -23,6 +23,13 @@ Future<void> main() async {
     DeviceOrientation.portraitUp,
   ]);
 
+  // Hide the top status bar for the whole app, from launch — keep the bottom
+  // system nav. Neon arena, no clock/notifications bar anywhere.
+  await SystemChrome.setEnabledSystemUIMode(
+    SystemUiMode.manual,
+    overlays: [SystemUiOverlay.bottom],
+  );
+
   // Debug-only: restore any tuning-panel tweaks from a previous session.
   // Release builds never touch this, so they run on the shipped defaults.
   if (kDebugMode) await GameBalanceStore.load();

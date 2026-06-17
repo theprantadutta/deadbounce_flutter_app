@@ -24,14 +24,34 @@ Future<void> showDailyRewardSheet(
   );
 }
 
-class _DailyRewardSheet extends StatelessWidget {
+class _DailyRewardSheet extends StatefulWidget {
   const _DailyRewardSheet();
+
+  @override
+  State<_DailyRewardSheet> createState() => _DailyRewardSheetState();
+}
+
+class _DailyRewardSheetState extends State<_DailyRewardSheet> {
+  bool _closing = false;
+
+  void _onState(BuildContext context, DailyRewardState state) {
+    // Single-tap flow: once the claim lands, let the coin count-up play
+    // briefly, then dismiss automatically — no second button to press.
+    if (state is DailyRewardClaimed && !_closing) {
+      _closing = true;
+      final navigator = Navigator.of(context);
+      Future.delayed(const Duration(milliseconds: 1300), () {
+        if (mounted) navigator.maybePop();
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
 
-    return BlocBuilder<DailyRewardCubit, DailyRewardState>(
+    return BlocConsumer<DailyRewardCubit, DailyRewardState>(
+      listener: _onState,
       builder: (context, state) {
         final claimed = state is DailyRewardClaimed;
         final reward = switch (state) {
@@ -81,10 +101,7 @@ class _DailyRewardSheet extends StatelessWidget {
                 _RewardCalendar(activeDay: activeDay, claimed: claimed),
                 const SizedBox(height: AppSpacing.xl),
                 if (claimed)
-                  _ClaimedBanner(
-                    coins: (state).result.coinsAwarded,
-                    onClose: () => Navigator.of(context).pop(),
-                  )
+                  _ClaimedBanner(coins: (state).result.coinsAwarded)
                 else
                   DbPrimaryButton(
                     label: reward == null
@@ -189,34 +206,27 @@ class _DayChip extends StatelessWidget {
 }
 
 class _ClaimedBanner extends StatelessWidget {
-  const _ClaimedBanner({required this.coins, required this.onClose});
+  const _ClaimedBanner({required this.coins});
 
   final int coins;
-  final VoidCallback onClose;
 
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
-    return Column(
-      children: [
-        TweenAnimationBuilder<double>(
-          tween: Tween(begin: 0, end: coins.toDouble()),
-          duration: const Duration(milliseconds: 900),
-          curve: Curves.easeOutCubic,
-          builder: (context, value, _) => Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(Icons.paid, color: AppColors.amber400, size: 26),
-              const SizedBox(width: AppSpacing.xs),
-              Text('+${value.round()}',
-                  style: textTheme.headlineMedium
-                      ?.copyWith(color: AppColors.amber300)),
-            ],
-          ),
-        ),
-        const SizedBox(height: AppSpacing.md),
-        DbPrimaryButton(label: 'RIDE ON', onPressed: onClose),
-      ],
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0, end: coins.toDouble()),
+      duration: const Duration(milliseconds: 900),
+      curve: Curves.easeOutCubic,
+      builder: (context, value, _) => Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(Icons.paid, color: AppColors.amber400, size: 26),
+          const SizedBox(width: AppSpacing.xs),
+          Text('+${value.round()}',
+              style: textTheme.headlineMedium
+                  ?.copyWith(color: AppColors.amber300)),
+        ],
+      ),
     );
   }
 }
