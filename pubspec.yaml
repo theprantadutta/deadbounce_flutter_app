@@ -52,6 +52,9 @@ dependencies:
   flame_audio: ^2.12.1
   shared_preferences: ^2.3.2 # dev-only: persists debug tuning-panel tweaks
   url_launcher: ^6.3.1 # opens the credits website link
+  talker_flutter: ^5.1.17
+  talker_dio_logger: ^5.1.17
+  talker_bloc_logger: ^5.1.17
 
 dev_dependencies:
   flutter_test:

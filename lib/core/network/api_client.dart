@@ -1,6 +1,9 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
+import 'package:talker_dio_logger/talker_dio_logger.dart';
 
 import '../config/app_config.dart';
+import '../logging/app_logger.dart';
 import '../storage/token_storage.dart';
 
 /// Exception surfaced by the network layer with a message safe to show
@@ -40,6 +43,20 @@ class ApiClient {
         },
       ),
     );
+
+    // Debug-only: log every request/response/error through Talker.
+    if (kDebugMode) {
+      _dio.interceptors.add(
+        TalkerDioLogger(
+          talker: AppLogger.talker,
+          settings: const TalkerDioLoggerSettings(
+            printRequestHeaders: false,
+            printResponseHeaders: false,
+            printResponseData: false,
+          ),
+        ),
+      );
+    }
   }
 
   final Dio _dio;

@@ -1,5 +1,8 @@
+import 'package:flutter/foundation.dart';
 import 'package:go_router/go_router.dart';
+import 'package:talker_flutter/talker_flutter.dart';
 
+import '../logging/app_logger.dart';
 import '../../features/about/presentation/credits_screen.dart';
 import '../../features/about/presentation/how_to_play_screen.dart';
 import '../../features/achievements/presentation/awards_screen.dart';
@@ -96,6 +99,18 @@ GoRouter buildRouter() {
         pageBuilder: (context, state) =>
             dbPage(state: state, child: const CreditsScreen()),
       ),
+      // Debug-only in-app log viewer.
+      if (kDebugMode)
+        GoRoute(
+          path: Routes.logs,
+          pageBuilder: (context, state) => dbPage(
+            state: state,
+            child: TalkerScreen(
+              talker: AppLogger.talker,
+              appBarTitle: 'LOGS',
+            ),
+          ),
+        ),
     ],
   );
 }

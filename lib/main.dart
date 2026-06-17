@@ -2,10 +2,13 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:talker_bloc_logger/talker_bloc_logger.dart';
 
 import 'app.dart';
 import 'core/config/game_balance_store.dart';
+import 'core/logging/app_logger.dart';
 import 'firebase_options.dart';
 
 Future<void> main() async {
@@ -30,9 +33,22 @@ Future<void> main() async {
     overlays: [SystemUiOverlay.bottom],
   );
 
-  // Debug-only: restore any tuning-panel tweaks from a previous session.
-  // Release builds never touch this, so they run on the shipped defaults.
-  if (kDebugMode) await GameBalanceStore.load();
+  // Debug-only setup: logging engine wiring + tuning-panel tweaks. Release
+  // builds skip all of this and run with logging fully off (no overhead).
+  if (kDebugMode) {
+    // Route every Cubit state change/error through Talker.
+    Bloc.observer = TalkerBlocObserver(talker: AppLogger.talker);
+    // Capture framework + platform errors instead of losing them.
+    FlutterError.onError = (details) {
+      AppLogger.talker.handle(details.exception, details.stack, '[flutter]');
+      FlutterError.presentError(details);
+    };
+    WidgetsBinding.instance.platformDispatcher.onError = (error, stack) {
+      AppLogger.talker.handle(error, stack, '[platform]');
+      return false;
+    };
+    await GameBalanceStore.load();
+  }
 
   runApp(const DeadbounceApp());
 }

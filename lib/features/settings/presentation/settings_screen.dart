@@ -1,7 +1,10 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../app.dart';
+import '../../../core/router/routes.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_dimens.dart';
 import '../../../core/widgets/meta_scaffold.dart';
@@ -64,6 +67,17 @@ class _SettingsView extends StatelessWidget {
                 destructive: true,
                 onTap: () => _confirmSignOut(context),
               ),
+              // Debug-only diagnostics: in-app Talker log viewer.
+              if (kDebugMode) ...[
+                const SizedBox(height: AppSpacing.lg),
+                Text('DIAGNOSTICS', style: textTheme.labelMedium),
+                const SizedBox(height: AppSpacing.sm),
+                _ActionTile(
+                  icon: Icons.bug_report_outlined,
+                  label: 'View logs',
+                  onTap: () => context.push(Routes.logs),
+                ),
+              ],
               const SizedBox(height: AppSpacing.xl),
               Center(
                 child: Text(SettingsScreen.appVersion,
