@@ -150,12 +150,19 @@ lib/
                    leaderboards, profile, settings, statistics, about, home, splash
 ```
 
-The home menu links to: Play, Daily Challenge, Boards, Awards, **Statistics**,
-**How to Play**, plus a "Made by Pranta Dutta" footer → **Credits**. The
-`statistics` feature reads lifetime aggregates + the per-enemy kill breakdown from
-`statsDao` (its own `StatisticsRepository` in `SessionDependencies`). `about` holds
-the static How-to-Play rulebook and Credits (author + `https://pranta.dev`, opened
-via `url_launcher` with a clipboard fallback).
+**Home — "living arena" menu** (`features/home/`): a cinematic, personalized
+main menu over `ArenaHomeBackdrop` (neon perspective floor grid, bouncing
+ricochet tracers, drifting enemy silhouettes, embers, vignette). `HomeCubit`
+loads an offline-first `HomeSummary` (name, best score, kills, cached all-time
+rank, western tier) for the identity bar + BEST/KILLS/RANK chips; the hero is
+the `DbLaunchButton` wrapped in `HeroOrbRig`; a neon-sign `NeonWordmark`; a daily
+challenge event card; and a one-row nav (Boards / Awards / Stats / Guide). Blocks
+animate in on a staggered entrance via **`flutter_animate`**. Must stay
+**no-scroll / no-overflow** (responsive clamps). Nav targets: Boards, Awards,
+**Statistics**, **How to Play**. `statistics` reads lifetime aggregates + the
+per-enemy kill breakdown from `statsDao` (its own `StatisticsRepository`).
+`about` holds the How-to-Play rulebook and Credits (author + `https://pranta.dev`,
+`url_launcher` with clipboard fallback) — Credits is currently unlinked.
 
 `app.dart` is the composition root: app-wide graph (auth, ApiClient) built once;
 `SessionDependencies` (per-account DB + sync engine + game-data repositories) built
