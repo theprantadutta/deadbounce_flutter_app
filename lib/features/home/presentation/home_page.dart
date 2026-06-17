@@ -157,9 +157,7 @@ class _HomeViewState extends State<_HomeView> {
                                 ),
                               ],
                             ),
-                            const Spacer(flex: 2),
-                            _CreditsFooter(),
-                            const SizedBox(height: AppSpacing.xs),
+                            const Spacer(flex: 3),
                           ],
                         ),
                       ),
@@ -298,25 +296,6 @@ class _DailyChallengeEntry extends StatelessWidget {
           ),
         ),
       ),
-    );
-  }
-}
-
-class _CreditsFooter extends StatelessWidget {
-  const _CreditsFooter();
-
-  @override
-  Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-    return TextButton(
-      onPressed: () => context.push(Routes.credits),
-      style: TextButton.styleFrom(
-        foregroundColor: AppColors.ink300,
-        padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.sm, vertical: AppSpacing.xs),
-      ),
-      child: Text('Made by Pranta Dutta',
-          style: textTheme.labelMedium?.copyWith(color: AppColors.ink300)),
     );
   }
 }

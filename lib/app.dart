@@ -63,6 +63,19 @@ class _DeadbounceAppState extends State<DeadbounceApp> {
               debugShowCheckedModeBanner: false,
               theme: AppTheme.dark,
               routerConfig: _router,
+              builder: (context, child) {
+                // The status bar is hidden app-wide, but the OS can still
+                // report its height as top padding — leaving an empty band.
+                // Zero the top inset so SafeArea/AppBar reclaim that space.
+                final mq = MediaQuery.of(context);
+                return MediaQuery(
+                  data: mq.copyWith(
+                    padding: mq.padding.copyWith(top: 0),
+                    viewPadding: mq.viewPadding.copyWith(top: 0),
+                  ),
+                  child: child!,
+                );
+              },
             ),
           ),
         ),
