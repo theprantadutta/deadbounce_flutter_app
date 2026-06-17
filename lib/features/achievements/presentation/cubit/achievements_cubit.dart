@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:deadbounce_flutter_app/core/logging/app_logger.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -24,8 +25,10 @@ class AchievementsCubit extends Cubit<AchievementsState> {
     _sub?.cancel();
     _sub = _repository.watchAll().listen(
       (views) => emit(AchievementsLoaded(views)),
-      onError: (_) =>
-          emit(const AchievementsError('Could not load your awards.')),
+      onError: (Object e, StackTrace st) {
+        AppLogger.talker.handle(e, st, '[achievements] load failed');
+        emit(const AchievementsError('Could not load your awards.'));
+      },
     );
   }
 

@@ -1,3 +1,5 @@
+import 'package:deadbounce_flutter_app/core/logging/app_logger.dart';
+
 import '../../../../core/network/api_client.dart';
 import '../../../../core/storage/token_storage.dart';
 import '../../domain/entities/auth_user.dart';
@@ -61,6 +63,7 @@ class AuthRepositoryImpl implements AuthRepository {
       final user = await _remote.getCurrentUser();
       return user.toEntity();
     } on ApiException catch (e) {
+      AppLogger.talker.warning('[auth] restoreSession failed: ${e.message}');
       if (e.isUnauthorized) {
         // Stale/expired token — wipe it so the next launch goes straight
         // to login instead of retrying a dead session.
@@ -86,8 +89,10 @@ class AuthRepositoryImpl implements AuthRepository {
     try {
       final session = await _remote.authenticateWithFirebase(firebaseIdToken);
       await _tokenStorage.saveAccessToken(session.accessToken);
+      AppLogger.talker.info('[auth] session established (anon=$isAnonymous)');
       return session.toEntity(isAnonymous: isAnonymous);
     } on ApiException catch (e) {
+      AppLogger.talker.warning('[auth] firebase exchange failed: ${e.message}');
       throw AuthFailure(e.message);
     }
   }

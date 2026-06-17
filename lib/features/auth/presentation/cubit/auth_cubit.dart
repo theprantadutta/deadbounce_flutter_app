@@ -1,3 +1,4 @@
+import 'package:deadbounce_flutter_app/core/logging/app_logger.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -35,7 +36,8 @@ class AuthCubit extends Cubit<AuthState> {
     try {
       final user = await _restoreSession();
       emit(user != null ? AuthAuthenticated(user) : const AuthUnauthenticated());
-    } catch (_) {
+    } catch (e, st) {
+      AppLogger.talker.handle(e, st, '[auth] restoreSession failed');
       emit(const AuthUnauthenticated());
     }
   }
@@ -83,7 +85,8 @@ class AuthCubit extends Cubit<AuthState> {
     } on AuthFailure catch (e) {
       emit(AuthError(e.message, action: action));
       emit(const AuthUnauthenticated());
-    } catch (_) {
+    } catch (e, st) {
+      AppLogger.talker.handle(e, st, '[auth] sign-in flow failed');
       emit(AuthError('Something went wrong. Please try again.', action: action));
       emit(const AuthUnauthenticated());
     }

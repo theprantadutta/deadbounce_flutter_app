@@ -1,3 +1,4 @@
+import 'package:deadbounce_flutter_app/core/logging/app_logger.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../../../core/database/app_database.dart';
@@ -100,6 +101,7 @@ class LoginStreakRepositoryImpl implements LoginStreakRepository {
       });
     });
 
+    AppLogger.talker.info('[streak] daily claim: streak=$newStreak coins=$coins');
     return StreakClaimResult(
       calendarDay: calendarDay,
       coinsAwarded: coins,

@@ -1,3 +1,4 @@
+import 'package:deadbounce_flutter_app/core/logging/app_logger.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../../../core/database/app_database.dart';
@@ -63,6 +64,7 @@ class AchievementsRepositoryImpl implements AchievementsRepository {
         final wasUnlocked = existing[def.id]?.unlockedAt != null;
         if (!wasUnlocked && progress >= def.target) {
           await _db.achievementsDao.markUnlocked(def.id, nowMs);
+          AppLogger.talker.info('[achievements] unlocked ${def.id}');
           newlyUnlocked.add(def);
         }
       }
@@ -118,6 +120,10 @@ class AchievementsRepositoryImpl implements AchievementsRepository {
             .toIso8601String(),
       });
     });
+
+    AppLogger.talker.info(
+      '[achievements] claimed $achievementId (reward ${def.coinReward})',
+    );
   }
 
   Future<AchievementContext> _buildContext(RunAchievementInput run) async {

@@ -1,3 +1,4 @@
+import 'package:deadbounce_flutter_app/core/logging/app_logger.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../../../core/database/app_database.dart';
@@ -47,6 +48,7 @@ class WalletRepositoryImpl implements WalletRepository {
       );
     });
 
+    AppLogger.talker.info('[economy] coin txn ${txn.amount} (${reason.name})');
     return txn;
   }
 

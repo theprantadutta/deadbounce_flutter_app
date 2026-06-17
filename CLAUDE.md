@@ -199,6 +199,30 @@ Wall bounces climb in pitch with the bounce count (`bounce_1/2/3.wav` via
 `Sfx.bounceFor`). Still open (optional): the two ambience/menu loops, and wiring
 `Sfx.uiTap` into menu buttons.
 
+## Logging (Talker)
+
+End-to-end logging via **Talker**, **debug-only** (zero cost in release):
+
+- **`AppLogger.talker`** (`core/logging/app_logger.dart`) is the one global instance,
+  configured `enabled: kDebugMode` — so every `info/warning/error/handle` call is a
+  no-op in release and needs no call-site guard.
+- **Automatic** (wired in `main.dart` / `api_client.dart`, all behind `kDebugMode`):
+  `TalkerBlocObserver` logs every Cubit state change/error; `TalkerDioLogger` logs
+  every HTTP request/response/error; `FlutterError.onError` +
+  `PlatformDispatcher.onError` capture uncaught framework/platform errors.
+- **Manual** instrumentation at the key boundaries — sync engine (`core/sync/*`),
+  the run-end transaction (`runs_repository_impl`), game session, auth, economy,
+  streak, achievements, leaderboards, audio, config. Silent `catch (_)` blocks were
+  converted to `catch (e, st) { AppLogger.talker.handle(e, st, '[area] …'); … }`
+  (behavior unchanged — they just log now).
+- **Convention:** prefix messages with a short area tag, e.g. `[sync]`, `[run]`,
+  `[auth]`, `[game]`, `[economy]`, `[streak]`, `[achievements]`, `[leaderboard]`,
+  `[audio]`, `[config]`.
+- **Viewer:** debug builds only — Settings → **Diagnostics → View logs** opens
+  `TalkerScreen` (`/logs` route, registered only under `kDebugMode`). No Riverpod in
+  this app, so `talker_bloc_logger` is the state-management integration (not
+  `talker_riverpod_logger`).
+
 ## Intentionally stubbed / next phase
 
 - **Account linking** (guest→Google): the architecture supports it (per-account

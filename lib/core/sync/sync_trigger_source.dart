@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/widgets.dart';
 
+import '../logging/app_logger.dart';
+
 /// Why a sync was requested — useful in logs.
 enum SyncTrigger { foreground, connectivityRegained, periodic, manual }
 
@@ -26,6 +28,11 @@ class SyncTriggerSource with WidgetsBindingObserver {
 
   Stream<SyncTrigger> get triggers => _controller.stream;
 
+  void _emit(SyncTrigger trigger) {
+    AppLogger.talker.debug('[sync] trigger: ${trigger.name}');
+    _controller.add(trigger);
+  }
+
   void start() {
     WidgetsBinding.instance.addObserver(this);
 
@@ -33,7 +40,7 @@ class SyncTriggerSource with WidgetsBindingObserver {
       final offline =
           results.isEmpty || results.every((r) => r == ConnectivityResult.none);
       if (_wasOffline && !offline) {
-        _controller.add(SyncTrigger.connectivityRegained);
+        _emit(SyncTrigger.connectivityRegained);
       }
       _wasOffline = offline;
     });
@@ -41,12 +48,12 @@ class SyncTriggerSource with WidgetsBindingObserver {
     _startPeriodic();
   }
 
-  void requestManual() => _controller.add(SyncTrigger.manual);
+  void requestManual() => _emit(SyncTrigger.manual);
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
-      _controller.add(SyncTrigger.foreground);
+      _emit(SyncTrigger.foreground);
       _startPeriodic();
     } else if (state == AppLifecycleState.paused) {
       // No background timers — battery first; foreground re-arms it.
@@ -58,7 +65,7 @@ class SyncTriggerSource with WidgetsBindingObserver {
   void _startPeriodic() {
     _periodicTimer ??= Timer.periodic(
       periodicInterval,
-      (_) => _controller.add(SyncTrigger.periodic),
+      (_) => _emit(SyncTrigger.periodic),
     );
   }
 

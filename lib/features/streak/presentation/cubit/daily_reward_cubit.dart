@@ -1,3 +1,4 @@
+import 'package:deadbounce_flutter_app/core/logging/app_logger.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -16,7 +17,8 @@ class DailyRewardCubit extends Cubit<DailyRewardState> {
     try {
       final streak = await _repository.getState();
       emit(DailyRewardReady(streak));
-    } catch (_) {
+    } catch (e, st) {
+      AppLogger.talker.handle(e, st, '[streak] load failed');
       emit(const DailyRewardError('Could not load your streak.'));
     }
   }
@@ -31,7 +33,8 @@ class DailyRewardCubit extends Cubit<DailyRewardState> {
       emit(DailyRewardClaimed(refreshed, result));
     } on AlreadyClaimedToday {
       emit(DailyRewardReady(await _repository.getState()));
-    } catch (_) {
+    } catch (e, st) {
+      AppLogger.talker.handle(e, st, '[streak] claim failed');
       emit(DailyRewardReady(current.streak));
     }
   }

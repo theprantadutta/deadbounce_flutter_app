@@ -1,3 +1,4 @@
+import 'package:deadbounce_flutter_app/core/logging/app_logger.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -15,7 +16,8 @@ class StatisticsCubit extends Cubit<StatisticsState> {
     emit(const StatisticsLoading());
     try {
       emit(StatisticsLoaded(await _repository.getStatistics()));
-    } catch (_) {
+    } catch (e, st) {
+      AppLogger.talker.handle(e, st, '[stats] load failed');
       emit(const StatisticsError('Could not load your statistics.'));
     }
   }

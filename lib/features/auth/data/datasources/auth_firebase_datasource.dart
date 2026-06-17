@@ -1,3 +1,4 @@
+import 'package:deadbounce_flutter_app/core/logging/app_logger.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
@@ -30,8 +31,10 @@ class AuthFirebaseDataSource {
         email: email,
         password: password,
       );
+      AppLogger.talker.info('[auth] email sign-in succeeded');
       return _idTokenOf(credential);
     } on FirebaseAuthException catch (e) {
+      AppLogger.talker.warning('[auth] email sign-in failed: ${e.code}');
       throw AuthFailure(_friendlyMessage(e));
     }
   }
@@ -45,8 +48,10 @@ class AuthFirebaseDataSource {
         email: email,
         password: password,
       );
+      AppLogger.talker.info('[auth] email sign-up succeeded');
       return _idTokenOf(credential);
     } on FirebaseAuthException catch (e) {
+      AppLogger.talker.warning('[auth] email sign-up failed: ${e.code}');
       throw AuthFailure(_friendlyMessage(e));
     }
   }
@@ -75,13 +80,17 @@ class AuthFirebaseDataSource {
       final credential = GoogleAuthProvider.credential(idToken: idToken);
       final userCredential =
           await _firebaseAuth.signInWithCredential(credential);
+      AppLogger.talker.info('[auth] google sign-in succeeded');
       return _idTokenOf(userCredential);
     } on GoogleSignInException catch (e) {
       if (e.code == GoogleSignInExceptionCode.canceled) {
+        AppLogger.talker.debug('[auth] google sign-in canceled by user');
         throw const AuthCancelled();
       }
+      AppLogger.talker.warning('[auth] google sign-in failed: ${e.code.name}');
       throw AuthFailure('Google sign-in failed: ${e.description ?? e.code.name}');
     } on FirebaseAuthException catch (e) {
+      AppLogger.talker.warning('[auth] google sign-in failed: ${e.code}');
       throw AuthFailure(_friendlyMessage(e));
     }
   }
@@ -89,8 +98,10 @@ class AuthFirebaseDataSource {
   Future<String> signInAnonymously() async {
     try {
       final credential = await _firebaseAuth.signInAnonymously();
+      AppLogger.talker.info('[auth] anonymous sign-in succeeded');
       return _idTokenOf(credential);
     } on FirebaseAuthException catch (e) {
+      AppLogger.talker.warning('[auth] anonymous sign-in failed: ${e.code}');
       throw AuthFailure(_friendlyMessage(e));
     }
   }

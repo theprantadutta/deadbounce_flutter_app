@@ -1,5 +1,5 @@
+import 'package:deadbounce_flutter_app/core/logging/app_logger.dart';
 import 'package:flame_audio/flame_audio.dart';
-import 'package:flutter/foundation.dart';
 
 import 'sound_manager.dart';
 
@@ -62,8 +62,9 @@ class FlameAudioSoundManager implements SoundManager {
         );
       }
       _ready = true;
-    } catch (e) {
-      if (kDebugMode) debugPrint('Audio preload failed: $e');
+      AppLogger.talker.info('[audio] preloaded');
+    } catch (e, st) {
+      AppLogger.talker.handle(e, st, '[audio] preload failed');
       // Leave _ready false → play() becomes a no-op rather than throwing.
     }
   }

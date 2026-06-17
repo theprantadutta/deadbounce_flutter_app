@@ -1,3 +1,4 @@
+import 'package:deadbounce_flutter_app/core/logging/app_logger.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -16,7 +17,8 @@ class DailyChallengeCubit extends Cubit<DailyChallengeState> {
     emit(const DailyChallengeLoading());
     try {
       emit(DailyChallengeLoaded(await _repository.getTodaysChallenge()));
-    } catch (_) {
+    } catch (e, st) {
+      AppLogger.talker.handle(e, st, '[challenge] load failed');
       emit(const DailyChallengeFailure(
           "Couldn't load today's challenge. Try again."));
     }

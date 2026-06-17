@@ -1,3 +1,5 @@
+import 'package:deadbounce_flutter_app/core/logging/app_logger.dart';
+
 import '../../../../core/database/app_database.dart';
 import '../../domain/entities/leaderboard_board.dart';
 import '../../domain/repositories/leaderboard_repository.dart';
@@ -72,6 +74,9 @@ class LeaderboardRepositoryImpl implements LeaderboardRepository {
       ),
     );
 
+    AppLogger.talker.info(
+      '[leaderboard] refreshed ${tab.cacheKey} (${dto.rows.length} rows)',
+    );
     return (await getCached(tab))!;
   }
 }

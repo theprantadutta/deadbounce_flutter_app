@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:deadbounce_flutter_app/core/logging/app_logger.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'game_balance.dart';
@@ -25,7 +26,8 @@ abstract final class GameBalanceStore {
     try {
       final decoded = jsonDecode(raw);
       if (decoded is Map<String, dynamic>) GameBalance.I.applyJson(decoded);
-    } catch (_) {
+    } catch (e) {
+      AppLogger.talker.warning('[config] dropped unreadable tuning blob: $e');
       // Stored blob is unreadable (schema drift / corruption) — drop it.
       await prefs.remove(_key);
     }

@@ -1,3 +1,4 @@
+import 'package:deadbounce_flutter_app/core/logging/app_logger.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -15,7 +16,8 @@ class ProfileCubit extends Cubit<ProfileState> {
     emit(const ProfileLoading());
     try {
       emit(ProfileLoaded(await _repository.getProfile()));
-    } catch (_) {
+    } catch (e, st) {
+      AppLogger.talker.handle(e, st, '[profile] load failed');
       emit(const ProfileError('Could not load your profile.'));
     }
   }

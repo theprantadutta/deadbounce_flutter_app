@@ -3,6 +3,7 @@ import 'dart:math';
 
 import '../database/app_database.dart';
 import '../database/daos/sync_outbox_dao.dart';
+import '../logging/app_logger.dart';
 import '../network/api_client.dart';
 import 'backoff.dart';
 import 'sync_api.dart';
@@ -50,6 +51,9 @@ class SyncWorker {
 
     _triggerSub = _triggers.triggers.listen((_) => requestSync());
     await _refreshCounts();
+    AppLogger.talker.info(
+        '[sync] worker started (${_status.value.pendingCount} pending, '
+        '${_status.value.failedCount} failed)');
     requestSync();
   }
 
@@ -104,12 +108,17 @@ class SyncWorker {
 
   Future<void> _sendBatch(List<SyncOutboxRow> batch) async {
     List<SyncEventResult> results;
+    AppLogger.talker.debug('[sync] sending batch (${batch.length} events)');
     try {
       results = await _api.sendBatch(batch);
-    } on ApiException {
+    } on ApiException catch (e) {
+      AppLogger.talker
+          .warning('[sync] batch send failed (${e.message}) — rescheduling');
       await _rescheduleBatch(batch);
       return;
-    } catch (_) {
+    } catch (e, st) {
+      AppLogger.talker
+          .handle(e, st, '[sync] batch send failed (unexpected) — rescheduling');
       await _rescheduleBatch(batch);
       return;
     }
@@ -117,6 +126,7 @@ class SyncWorker {
     final byId = {for (final r in results) r.id: r};
     final settled = <String>[];
     final retry = <String>[];
+    var rejected = 0;
 
     for (final row in batch) {
       final result = byId[row.id];
@@ -126,6 +136,9 @@ class SyncWorker {
       } else if (result.isSettled) {
         settled.add(row.id);
       } else if (result.isRejected) {
+        rejected++;
+        AppLogger.talker.warning(
+            '[sync] event ${row.id} rejected: ${result.error ?? 'rejected by server'}');
         await _db.syncOutboxDao.markFailed(
           row.id,
           result.error ?? 'rejected by server',
@@ -136,6 +149,8 @@ class SyncWorker {
     }
 
     await _db.syncOutboxDao.markDone(settled);
+    AppLogger.talker.info('[sync] batch settled: ${settled.length} done, '
+        '$rejected rejected, ${retry.length} retry');
     if (retry.isNotEmpty) {
       await _rescheduleRows(retry, attemptsHint: batch.first.attempts);
     }

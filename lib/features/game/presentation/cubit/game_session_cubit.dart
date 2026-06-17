@@ -1,3 +1,4 @@
+import 'package:deadbounce_flutter_app/core/logging/app_logger.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:uuid/uuid.dart';
@@ -69,6 +70,9 @@ class GameSessionCubit extends Cubit<GameSessionState>
     }
 
     final arena = rng.fork('arena').pick(ArenaCatalog.all);
+    AppLogger.talker.info(
+      '[game] startRun dailyChallenge=$dailyChallenge arena=${arena.id}',
+    );
     final settings = await _settingsRepository.load();
 
     final sound = FlameAudioSoundManager(enabled: settings.soundEnabled);
@@ -145,6 +149,10 @@ class GameSessionCubit extends Cubit<GameSessionState>
     // Drift first, synchronously with the UI; the backend hears about it
     // whenever the outbox drains. Achievements evaluate AFTER the run is
     // recorded so they see the freshly-updated lifetime stats.
+    AppLogger.talker.info(
+      '[game] run ended score=${stats.score} wave=${stats.waveReached}',
+    );
+
     await _runsRepository.recordCompletedRun(result);
     final unlocked = await _achievementsRepository.evaluateRun(
       RunAchievementInput(
@@ -157,6 +165,7 @@ class GameSessionCubit extends Cubit<GameSessionState>
         isDailyChallenge: dailyChallenge,
       ),
     );
+    AppLogger.talker.info('[game] achievements unlocked: ${unlocked.length}');
     _syncWorker.requestSync();
 
     emit(SessionRunOver(

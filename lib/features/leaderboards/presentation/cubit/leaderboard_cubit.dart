@@ -1,3 +1,4 @@
+import 'package:deadbounce_flutter_app/core/logging/app_logger.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -46,7 +47,8 @@ class LeaderboardCubit extends Cubit<LeaderboardState> {
         refreshing: false,
         clearError: true,
       ));
-    } catch (_) {
+    } catch (e, st) {
+      AppLogger.talker.handle(e, st, '[leaderboard] load failed');
       if (state.tab != tab) return;
       emit(state.copyWith(
         status: state.board == null
