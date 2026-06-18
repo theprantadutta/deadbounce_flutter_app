@@ -14,5 +14,6 @@ abstract final class Routes {
   static const String statistics = '/statistics';
   static const String howToPlay = '/how-to-play';
   static const String credits = '/credits';
+  static const String gunsmith = '/gunsmith';
   static const String logs = '/logs'; // debug-only diagnostics viewer
 }

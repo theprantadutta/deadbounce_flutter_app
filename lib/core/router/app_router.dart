@@ -12,6 +12,7 @@ import '../../features/challenges/presentation/daily_challenge_screen.dart';
 import '../../features/game/presentation/game_page.dart';
 import '../../features/home/presentation/home_page.dart';
 import '../../features/leaderboards/presentation/leaderboard_screen.dart';
+import '../../features/meta/presentation/gunsmith_screen.dart';
 import '../../features/profile/presentation/profile_screen.dart';
 import '../../features/settings/presentation/settings_screen.dart';
 import '../../features/splash/presentation/splash_page.dart';
@@ -98,6 +99,11 @@ GoRouter buildRouter() {
         path: Routes.credits,
         pageBuilder: (context, state) =>
             dbPage(state: state, child: const CreditsScreen()),
+      ),
+      GoRoute(
+        path: Routes.gunsmith,
+        pageBuilder: (context, state) =>
+            dbPage(state: state, child: const GunsmithScreen()),
       ),
       // Debug-only in-app log viewer.
       if (kDebugMode)

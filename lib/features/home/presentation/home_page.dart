@@ -17,6 +17,7 @@ import '../../streak/presentation/widgets/daily_reward_sheet.dart';
 import '../domain/entities/home_summary.dart';
 import 'cubit/home_cubit.dart';
 import 'widgets/daily_challenge_feature_card.dart';
+import 'widgets/gunsmith_feature_card.dart';
 import 'widgets/hero_orb_rig.dart';
 import 'widgets/home_identity_bar.dart';
 import 'widgets/home_stat_chips.dart';
@@ -104,7 +105,7 @@ class _HomeViewState extends State<_HomeView> {
                       ? AppSpacing.xxl
                       : AppSpacing.md;
                   final orbD =
-                      (constraints.maxHeight * 0.18).clamp(112.0, 180.0);
+                      (constraints.maxHeight * 0.165).clamp(104.0, 164.0);
                   return Center(
                     child: ConstrainedBox(
                       constraints: const BoxConstraints(maxWidth: 480),
@@ -161,6 +162,8 @@ class _HomeViewState extends State<_HomeView> {
                               Column(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
+                                  const GunsmithFeatureCard(),
+                                  const SizedBox(height: AppSpacing.sm),
                                   const DailyChallengeFeatureCard(),
                                   const SizedBox(height: AppSpacing.sm),
                                   Row(
