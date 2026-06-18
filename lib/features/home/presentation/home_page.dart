@@ -8,6 +8,7 @@ import '../../../core/router/routes.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_dimens.dart';
 import '../../../core/theme/app_effects.dart';
+import '../../../core/widgets/animated_arena_background.dart';
 import '../../../core/widgets/db_launch_button.dart';
 import '../../auth/presentation/cubit/auth_cubit.dart';
 import '../../economy/presentation/cubit/wallet_cubit.dart';
@@ -15,7 +16,6 @@ import '../../streak/presentation/cubit/daily_reward_cubit.dart';
 import '../../streak/presentation/widgets/daily_reward_sheet.dart';
 import '../domain/entities/home_summary.dart';
 import 'cubit/home_cubit.dart';
-import 'widgets/arena_home_backdrop.dart';
 import 'widgets/daily_challenge_feature_card.dart';
 import 'widgets/hero_orb_rig.dart';
 import 'widgets/home_identity_bar.dart';
@@ -96,7 +96,7 @@ class _HomeViewState extends State<_HomeView> {
       child: BlocListener<DailyRewardCubit, DailyRewardState>(
         listener: (context, state) => _maybePromptReward(state),
         child: Scaffold(
-          body: ArenaHomeBackdrop(
+          body: AnimatedArenaBackground(
             child: SafeArea(
               child: LayoutBuilder(
                 builder: (context, constraints) {

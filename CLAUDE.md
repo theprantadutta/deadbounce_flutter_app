@@ -150,9 +150,17 @@ lib/
                    leaderboards, profile, settings, statistics, about, home, splash
 ```
 
+**Living backdrop, app-wide:** `core/widgets/animated_arena_background.dart`
+(`AnimatedArenaBackground`) is the shared cinematic background used by **every**
+screen — home, meta screens (`MetaScaffold`), auth (`AuthScaffold`), loading
+(`DbLoadingScene`), and the game overlays: the arena gradient + a neon
+perspective floor grid scrolling toward the viewer, two seamless ricochet tracer
+bullets bouncing off the edges, drifting enemy silhouettes, rising embers, and a
+vignette for contrast. Render it **outside `SafeArea`** (full-bleed behind the
+dynamic island/camera) with content inside `SafeArea`.
+
 **Home — "living arena" menu** (`features/home/`): a cinematic, personalized
-main menu over `ArenaHomeBackdrop` (neon perspective floor grid, bouncing
-ricochet tracers, drifting enemy silhouettes, embers, vignette). `HomeCubit`
+main menu over the shared `AnimatedArenaBackground`. `HomeCubit`
 loads an offline-first `HomeSummary` (name, best score, kills, cached all-time
 rank, western tier) for the identity bar + BEST/KILLS/RANK chips; the hero is
 the `DbLaunchButton` wrapped in `HeroOrbRig`; a neon-sign `NeonWordmark`; a daily
