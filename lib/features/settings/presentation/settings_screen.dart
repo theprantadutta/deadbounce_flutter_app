@@ -58,6 +58,13 @@ class _SettingsView extends StatelessWidget {
                 onChanged: (v) =>
                     context.read<SettingsCubit>().toggleHaptics(v),
               ),
+              const SizedBox(height: AppSpacing.xs),
+              _ToggleTile(
+                icon: Icons.music_note_outlined,
+                label: 'Music',
+                value: settings.musicEnabled,
+                onChanged: (v) => context.read<SettingsCubit>().toggleMusic(v),
+              ),
               const SizedBox(height: AppSpacing.lg),
               Text('ACCOUNT', style: textTheme.labelMedium),
               const SizedBox(height: AppSpacing.sm),

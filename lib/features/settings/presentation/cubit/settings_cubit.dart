@@ -1,5 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../../core/audio/music_manager.dart';
 import '../../domain/entities/app_settings.dart';
 import '../../domain/repositories/settings_repository.dart';
 
@@ -20,5 +21,11 @@ class SettingsCubit extends Cubit<AppSettings> {
   Future<void> toggleHaptics(bool enabled) async {
     emit(state.copyWith(hapticsEnabled: enabled));
     await _repository.setHapticsEnabled(enabled);
+  }
+
+  Future<void> toggleMusic(bool enabled) async {
+    emit(state.copyWith(musicEnabled: enabled));
+    MusicManager.instance.enabled = enabled;
+    await _repository.setMusicEnabled(enabled);
   }
 }

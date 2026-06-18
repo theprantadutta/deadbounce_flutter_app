@@ -4,4 +4,5 @@ abstract interface class SettingsRepository {
   Future<AppSettings> load();
   Future<void> setSoundEnabled(bool enabled);
   Future<void> setHapticsEnabled(bool enabled);
+  Future<void> setMusicEnabled(bool enabled);
 }

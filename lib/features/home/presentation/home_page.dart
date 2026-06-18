@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app.dart';
+import '../../../core/audio/music_manager.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_dimens.dart';
@@ -61,6 +62,18 @@ class _HomeView extends StatefulWidget {
 
 class _HomeViewState extends State<_HomeView> {
   bool _rewardPrompted = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _startMenuMusic();
+  }
+
+  Future<void> _startMenuMusic() async {
+    final settings = await context.sessionDependencies.settingsRepository.load();
+    MusicManager.instance.enabled = settings.musicEnabled;
+    MusicManager.instance.play(MusicTrack.menu);
+  }
 
   void _maybePromptReward(DailyRewardState state) {
     if (_rewardPrompted) return;

@@ -9,14 +9,17 @@ class SettingsRepositoryImpl implements SettingsRepository {
 
   static const _soundKey = 'sound_enabled';
   static const _hapticsKey = 'haptics_enabled';
+  static const _musicKey = 'music_enabled';
 
   @override
   Future<AppSettings> load() async {
     final sound = await _db.settingsDao.get(_soundKey);
     final haptics = await _db.settingsDao.get(_hapticsKey);
+    final music = await _db.settingsDao.get(_musicKey);
     return AppSettings(
       soundEnabled: sound != 'false', // default on
       hapticsEnabled: haptics != 'false',
+      musicEnabled: music != 'false',
     );
   }
 
@@ -27,4 +30,8 @@ class SettingsRepositoryImpl implements SettingsRepository {
   @override
   Future<void> setHapticsEnabled(bool enabled) =>
       _db.settingsDao.set(_hapticsKey, enabled.toString());
+
+  @override
+  Future<void> setMusicEnabled(bool enabled) =>
+      _db.settingsDao.set(_musicKey, enabled.toString());
 }

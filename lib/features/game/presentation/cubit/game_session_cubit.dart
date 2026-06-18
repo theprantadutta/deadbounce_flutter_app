@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:deadbounce_flutter_app/core/audio/music_manager.dart';
 import 'package:deadbounce_flutter_app/core/logging/app_logger.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -87,6 +88,9 @@ class GameSessionCubit extends Cubit<GameSessionState>
       '[game] startRun dailyChallenge=$dailyChallenge arena=${arena.id}',
     );
     final settings = await _settingsRepository.load();
+
+    MusicManager.instance.enabled = settings.musicEnabled;
+    MusicManager.instance.play(MusicTrack.combat);
 
     final sound = FlameAudioSoundManager(enabled: settings.soundEnabled);
     _sound = sound;
