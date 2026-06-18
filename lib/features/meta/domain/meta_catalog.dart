@@ -53,7 +53,6 @@ abstract final class MetaCatalog {
   static const quickHands = 'quick_hands';
   static const keenEye = 'keen_eye';
   static const luckyStrike = 'lucky_strike';
-  static const magnetCoil = 'magnet_coil';
   static const secondWind = 'second_wind';
 
   static const List<MetaPerk> all = [
@@ -100,15 +99,6 @@ abstract final class MetaCatalog {
       icon: Icons.savings,
       maxLevel: 3,
       baseCost: 100,
-      costStep: 140,
-    ),
-    MetaPerk(
-      id: magnetCoil,
-      name: 'Magnet Coil',
-      blurb: 'Wider coin pickup radius.',
-      icon: Icons.adjust,
-      maxLevel: 2,
-      baseCost: 80,
       costStep: 140,
     ),
     MetaPerk(

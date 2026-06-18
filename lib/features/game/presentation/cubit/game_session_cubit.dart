@@ -8,6 +8,9 @@ import 'package:uuid/uuid.dart';
 import '../../../../core/sync/sync_worker.dart';
 import '../../../../core/util/calendar_day.dart';
 import '../../../achievements/domain/repositories/achievements_repository.dart';
+import '../../../meta/domain/meta_catalog.dart';
+import '../../../meta/domain/meta_loadout.dart';
+import '../../../meta/domain/repositories/meta_repository.dart';
 import '../../../runs/domain/entities/run_result.dart';
 import '../../../runs/domain/repositories/runs_repository.dart';
 import '../../../settings/domain/repositories/settings_repository.dart';
@@ -35,6 +38,7 @@ class GameSessionCubit extends Cubit<GameSessionState>
     required this._achievementsRepository,
     required this._settingsRepository,
     required this._syncWorker,
+    required this._metaRepository,
     this.dailyChallenge = false,
     Uuid? uuid,
   })  : _uuid = uuid ?? const Uuid(),
@@ -44,6 +48,7 @@ class GameSessionCubit extends Cubit<GameSessionState>
   final AchievementsRepository _achievementsRepository;
   final SettingsRepository _settingsRepository;
   final SyncWorker _syncWorker;
+  final MetaRepository _metaRepository;
   final bool dailyChallenge;
   final Uuid _uuid;
 
@@ -86,6 +91,12 @@ class GameSessionCubit extends Cubit<GameSessionState>
     final sound = FlameAudioSoundManager(enabled: settings.soundEnabled);
     _sound = sound;
 
+    // Permanent Gunsmith perks apply to normal runs only — daily challenges
+    // stay fair and identical for everyone.
+    final loadout = dailyChallenge
+        ? MetaLoadout.empty
+        : _buildLoadout(await _metaRepository.ownedLevels());
+
     game = DeadbounceGame(
       gateway: this,
       hud: hud,
@@ -96,6 +107,7 @@ class GameSessionCubit extends Cubit<GameSessionState>
       isDailyChallenge: dailyChallenge,
       challengeDate: _challengeDate,
       challenge: challengeConfig,
+      metaLoadout: loadout,
     );
 
     // Warm the audio during the pre-game beat so the arena-flavored
@@ -107,6 +119,28 @@ class GameSessionCubit extends Cubit<GameSessionState>
     ]);
     if (isClosed) return;
     emit(const SessionPlaying());
+  }
+
+  /// Maps owned perk levels into the run's [MetaLoadout]. Most perks reuse
+  /// existing upgrade-card modifiers (so they fold through the normal
+  /// pipeline); Iron Resolve and Second Wind are handled by the game.
+  MetaLoadout _buildLoadout(Map<String, int> owned) {
+    final cards = <String, int>{};
+    void mapToCard(String perkId, String cardId) {
+      final level = owned[perkId] ?? 0;
+      if (level > 0) cards[cardId] = level;
+    }
+
+    mapToCard(MetaCatalog.reinforcedHeart, 'heart_container');
+    mapToCard(MetaCatalog.quickHands, 'quickdraw');
+    mapToCard(MetaCatalog.keenEye, 'longer_sight');
+    mapToCard(MetaCatalog.luckyStrike, 'coin_magnet');
+
+    return MetaLoadout(
+      permanentCards: cards,
+      invulnBonus: 0.25 * (owned[MetaCatalog.ironResolve] ?? 0),
+      grantFreeCard: (owned[MetaCatalog.secondWind] ?? 0) > 0,
+    );
   }
 
   void pause() {

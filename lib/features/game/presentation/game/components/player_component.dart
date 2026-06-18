@@ -138,7 +138,8 @@ class PlayerComponent extends PositionComponent
       game.juice.addTrauma(0.6);
       game.juice.sound.play(Sfx.wardenPhase);
     } else {
-      invulnRemaining = GameBalance.I.player.invulnAfterHit;
+      invulnRemaining =
+          GameBalance.I.player.invulnAfterHit + game.metaInvulnBonus;
     }
 
     game.hud.hearts.value = hearts;

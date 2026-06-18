@@ -36,6 +36,7 @@ class GamePage extends StatelessWidget {
         achievementsRepository: session.achievementsRepository,
         settingsRepository: session.settingsRepository,
         syncWorker: session.syncWorker,
+        metaRepository: session.metaRepository,
         dailyChallenge: dailyChallenge,
       )..startRun(),
       child: const _GameView(),

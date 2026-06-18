@@ -28,6 +28,16 @@ class RunModifiers {
 
   void add(UpgradeCard card) {
     pickedIds.add(card.id);
+    _stack(card);
+  }
+
+  /// Pre-loads a permanent ("Gunsmith") modifier: it folds into stats and
+  /// fires hooks exactly like a picked card, but is NOT counted as a wave
+  /// pick (kept out of [pickedIds]). Permanent stacks DO count toward the
+  /// card's max-stacks cap via [stacksOf].
+  void addPermanent(UpgradeCard card) => _stack(card);
+
+  void _stack(UpgradeCard card) {
     final existing = _active.where((m) => m.id == card.id).firstOrNull;
     if (existing != null) {
       existing.stacks++;

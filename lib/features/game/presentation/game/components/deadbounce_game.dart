@@ -14,6 +14,7 @@ import '../../../engine/game_rng.dart';
 import '../../../engine/physics/ricochet_solver.dart';
 import '../../../engine/physics/wall_segment.dart';
 import 'package:deadbounce_flutter_app/core/config/game_balance.dart';
+import 'package:deadbounce_flutter_app/features/meta/domain/meta_loadout.dart';
 
 import '../../../engine/trajectory/trajectory_predictor.dart';
 import '../../../engine/upgrades/run_modifiers.dart';
@@ -52,6 +53,7 @@ class DeadbounceGame extends FlameGame implements GameWorldOps {
     this.isDailyChallenge = false,
     this.challengeDate,
     this.challenge,
+    this.metaLoadout = const MetaLoadout(),
   })  : haptics = hapticsService,
         super(
           camera: CameraComponent.withFixedResolution(
@@ -73,6 +75,12 @@ class DeadbounceGame extends FlameGame implements GameWorldOps {
 
   /// Run-shaping config when this is a daily challenge (null otherwise).
   final ChallengeConfig? challenge;
+
+  /// Permanent Gunsmith bonuses for this run (empty for daily challenges).
+  final MetaLoadout metaLoadout;
+
+  /// Extra i-frame seconds after a hit, from the Iron Resolve perk.
+  double metaInvulnBonus = 0;
 
   final GameRng _runRng;
   late final GameRng _spawnRng = _runRng.fork('spawn');
@@ -116,6 +124,9 @@ class DeadbounceGame extends FlameGame implements GameWorldOps {
     camera.viewfinder.anchor = Anchor.center;
     camera.viewfinder.position = Vector2(arenaWidth / 2, arenaHeight / 2);
 
+    // Permanent Gunsmith perks fold in before hearts/stats are read.
+    _applyMetaLoadout();
+
     particles = ParticleFactory(world, _vfxRandom);
     juice = JuiceController(
       particles: particles,
@@ -148,9 +159,9 @@ class DeadbounceGame extends FlameGame implements GameWorldOps {
       InputController(),
     ]);
 
-    // A challenge may cap the player's hearts (e.g. one-life gauntlet).
-    final startingHearts = challenge?.startingHearts;
-    if (startingHearts != null) player.hearts = startingHearts;
+    // A challenge may cap the player's hearts (e.g. one-life gauntlet);
+    // otherwise start full, including any permanent +heart perk.
+    player.hearts = challenge?.startingHearts ?? effectiveMaxHearts();
     hud.maxHearts.value = effectiveMaxHearts();
     hud.hearts.value = player.hearts;
 
@@ -268,6 +279,29 @@ class DeadbounceGame extends FlameGame implements GameWorldOps {
   int effectiveMaxHearts() =>
       (challenge?.startingHearts ?? GameBalance.I.player.maxHearts) +
       modifiers.stacksOf('heart_container');
+
+  /// Folds the permanent Gunsmith perks into this run: card-shaped perks
+  /// become pre-loaded modifier stacks, Iron Resolve adds i-frame seconds,
+  /// and Second Wind grants one free random common upgrade.
+  void _applyMetaLoadout() {
+    metaLoadout.permanentCards.forEach((cardId, stacks) {
+      final card = UpgradeCatalog.byId(cardId);
+      for (var i = 0; i < stacks; i++) {
+        modifiers.addPermanent(card);
+      }
+    });
+    metaInvulnBonus = metaLoadout.invulnBonus;
+    if (metaLoadout.grantFreeCard) {
+      final commons = UpgradeCatalog.all
+          .where((c) =>
+              c.rarity == UpgradeRarity.common &&
+              modifiers.stacksOf(c.id) < c.maxStacks)
+          .toList();
+      if (commons.isNotEmpty) {
+        modifiers.addPermanent(_runRng.fork('meta').pick(commons));
+      }
+    }
+  }
 
   void onWaveCleared(int wave) {
     if (runEnded) return;
