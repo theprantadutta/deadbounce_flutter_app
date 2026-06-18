@@ -4,6 +4,7 @@ import 'daos/achievements_dao.dart';
 import 'daos/challenge_dao.dart';
 import 'daos/coin_ledger_dao.dart';
 import 'daos/leaderboard_cache_dao.dart';
+import 'daos/meta_upgrades_dao.dart';
 import 'daos/profile_dao.dart';
 import 'daos/runs_dao.dart';
 import 'daos/settings_dao.dart';
@@ -16,6 +17,7 @@ import 'tables/coin_balance_table.dart';
 import 'tables/coin_ledger_table.dart';
 import 'tables/daily_login_claims_table.dart';
 import 'tables/leaderboard_cache_table.dart';
+import 'tables/meta_upgrades_table.dart';
 import 'tables/player_profile_table.dart';
 import 'tables/player_stats_table.dart';
 import 'tables/runs_table.dart';
@@ -44,6 +46,7 @@ part 'app_database.g.dart';
     LeaderboardSyncMeta,
     SettingsEntries,
     SyncOutbox,
+    MetaUpgrades,
   ],
   daos: [
     ProfileDao,
@@ -56,13 +59,14 @@ part 'app_database.g.dart';
     LeaderboardCacheDao,
     SettingsDao,
     SyncOutboxDao,
+    MetaUpgradesDao,
   ],
 )
 class AppDatabase extends _$AppDatabase {
   AppDatabase(super.e);
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -85,7 +89,11 @@ class AppDatabase extends _$AppDatabase {
             'ON challenge_attempts (challenge_date, score DESC)',
           );
         },
-        // schemaVersion 1 — add stepwise migrations here from v2 on.
-        onUpgrade: (m, from, to) async {},
+        // Stepwise migrations from v2 on.
+        onUpgrade: (m, from, to) async {
+          if (from < 2) {
+            await m.createTable(metaUpgrades);
+          }
+        },
       );
 }

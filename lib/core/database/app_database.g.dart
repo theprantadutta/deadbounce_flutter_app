@@ -5575,6 +5575,266 @@ class SyncOutboxCompanion extends UpdateCompanion<SyncOutboxRow> {
   }
 }
 
+class $MetaUpgradesTable extends MetaUpgrades
+    with TableInfo<$MetaUpgradesTable, MetaUpgradeRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $MetaUpgradesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _perkIdMeta = const VerificationMeta('perkId');
+  @override
+  late final GeneratedColumn<String> perkId = GeneratedColumn<String>(
+    'perk_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _levelMeta = const VerificationMeta('level');
+  @override
+  late final GeneratedColumn<int> level = GeneratedColumn<int>(
+    'level',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<int> updatedAt = GeneratedColumn<int>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [perkId, level, updatedAt];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'meta_upgrades';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<MetaUpgradeRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('perk_id')) {
+      context.handle(
+        _perkIdMeta,
+        perkId.isAcceptableOrUnknown(data['perk_id']!, _perkIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_perkIdMeta);
+    }
+    if (data.containsKey('level')) {
+      context.handle(
+        _levelMeta,
+        level.isAcceptableOrUnknown(data['level']!, _levelMeta),
+      );
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {perkId};
+  @override
+  MetaUpgradeRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return MetaUpgradeRow(
+      perkId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}perk_id'],
+      )!,
+      level: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}level'],
+      )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}updated_at'],
+      )!,
+    );
+  }
+
+  @override
+  $MetaUpgradesTable createAlias(String alias) {
+    return $MetaUpgradesTable(attachedDatabase, alias);
+  }
+}
+
+class MetaUpgradeRow extends DataClass implements Insertable<MetaUpgradeRow> {
+  final String perkId;
+  final int level;
+  final int updatedAt;
+  const MetaUpgradeRow({
+    required this.perkId,
+    required this.level,
+    required this.updatedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['perk_id'] = Variable<String>(perkId);
+    map['level'] = Variable<int>(level);
+    map['updated_at'] = Variable<int>(updatedAt);
+    return map;
+  }
+
+  MetaUpgradesCompanion toCompanion(bool nullToAbsent) {
+    return MetaUpgradesCompanion(
+      perkId: Value(perkId),
+      level: Value(level),
+      updatedAt: Value(updatedAt),
+    );
+  }
+
+  factory MetaUpgradeRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return MetaUpgradeRow(
+      perkId: serializer.fromJson<String>(json['perkId']),
+      level: serializer.fromJson<int>(json['level']),
+      updatedAt: serializer.fromJson<int>(json['updatedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'perkId': serializer.toJson<String>(perkId),
+      'level': serializer.toJson<int>(level),
+      'updatedAt': serializer.toJson<int>(updatedAt),
+    };
+  }
+
+  MetaUpgradeRow copyWith({String? perkId, int? level, int? updatedAt}) =>
+      MetaUpgradeRow(
+        perkId: perkId ?? this.perkId,
+        level: level ?? this.level,
+        updatedAt: updatedAt ?? this.updatedAt,
+      );
+  MetaUpgradeRow copyWithCompanion(MetaUpgradesCompanion data) {
+    return MetaUpgradeRow(
+      perkId: data.perkId.present ? data.perkId.value : this.perkId,
+      level: data.level.present ? data.level.value : this.level,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('MetaUpgradeRow(')
+          ..write('perkId: $perkId, ')
+          ..write('level: $level, ')
+          ..write('updatedAt: $updatedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(perkId, level, updatedAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is MetaUpgradeRow &&
+          other.perkId == this.perkId &&
+          other.level == this.level &&
+          other.updatedAt == this.updatedAt);
+}
+
+class MetaUpgradesCompanion extends UpdateCompanion<MetaUpgradeRow> {
+  final Value<String> perkId;
+  final Value<int> level;
+  final Value<int> updatedAt;
+  final Value<int> rowid;
+  const MetaUpgradesCompanion({
+    this.perkId = const Value.absent(),
+    this.level = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  MetaUpgradesCompanion.insert({
+    required String perkId,
+    this.level = const Value.absent(),
+    required int updatedAt,
+    this.rowid = const Value.absent(),
+  }) : perkId = Value(perkId),
+       updatedAt = Value(updatedAt);
+  static Insertable<MetaUpgradeRow> custom({
+    Expression<String>? perkId,
+    Expression<int>? level,
+    Expression<int>? updatedAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (perkId != null) 'perk_id': perkId,
+      if (level != null) 'level': level,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  MetaUpgradesCompanion copyWith({
+    Value<String>? perkId,
+    Value<int>? level,
+    Value<int>? updatedAt,
+    Value<int>? rowid,
+  }) {
+    return MetaUpgradesCompanion(
+      perkId: perkId ?? this.perkId,
+      level: level ?? this.level,
+      updatedAt: updatedAt ?? this.updatedAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (perkId.present) {
+      map['perk_id'] = Variable<String>(perkId.value);
+    }
+    if (level.present) {
+      map['level'] = Variable<int>(level.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<int>(updatedAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('MetaUpgradesCompanion(')
+          ..write('perkId: $perkId, ')
+          ..write('level: $level, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -5602,6 +5862,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     this,
   );
   late final $SyncOutboxTable syncOutbox = $SyncOutboxTable(this);
+  late final $MetaUpgradesTable metaUpgrades = $MetaUpgradesTable(this);
   late final ProfileDao profileDao = ProfileDao(this as AppDatabase);
   late final StatsDao statsDao = StatsDao(this as AppDatabase);
   late final CoinLedgerDao coinLedgerDao = CoinLedgerDao(this as AppDatabase);
@@ -5616,6 +5877,9 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   );
   late final SettingsDao settingsDao = SettingsDao(this as AppDatabase);
   late final SyncOutboxDao syncOutboxDao = SyncOutboxDao(this as AppDatabase);
+  late final MetaUpgradesDao metaUpgradesDao = MetaUpgradesDao(
+    this as AppDatabase,
+  );
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -5634,6 +5898,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     leaderboardSyncMeta,
     settingsEntries,
     syncOutbox,
+    metaUpgrades,
   ];
 }
 
@@ -8661,6 +8926,168 @@ typedef $$SyncOutboxTableProcessedTableManager =
       SyncOutboxRow,
       PrefetchHooks Function()
     >;
+typedef $$MetaUpgradesTableCreateCompanionBuilder =
+    MetaUpgradesCompanion Function({
+      required String perkId,
+      Value<int> level,
+      required int updatedAt,
+      Value<int> rowid,
+    });
+typedef $$MetaUpgradesTableUpdateCompanionBuilder =
+    MetaUpgradesCompanion Function({
+      Value<String> perkId,
+      Value<int> level,
+      Value<int> updatedAt,
+      Value<int> rowid,
+    });
+
+class $$MetaUpgradesTableFilterComposer
+    extends Composer<_$AppDatabase, $MetaUpgradesTable> {
+  $$MetaUpgradesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get perkId => $composableBuilder(
+    column: $table.perkId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get level => $composableBuilder(
+    column: $table.level,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$MetaUpgradesTableOrderingComposer
+    extends Composer<_$AppDatabase, $MetaUpgradesTable> {
+  $$MetaUpgradesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get perkId => $composableBuilder(
+    column: $table.perkId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get level => $composableBuilder(
+    column: $table.level,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$MetaUpgradesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $MetaUpgradesTable> {
+  $$MetaUpgradesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get perkId =>
+      $composableBuilder(column: $table.perkId, builder: (column) => column);
+
+  GeneratedColumn<int> get level =>
+      $composableBuilder(column: $table.level, builder: (column) => column);
+
+  GeneratedColumn<int> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+}
+
+class $$MetaUpgradesTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $MetaUpgradesTable,
+          MetaUpgradeRow,
+          $$MetaUpgradesTableFilterComposer,
+          $$MetaUpgradesTableOrderingComposer,
+          $$MetaUpgradesTableAnnotationComposer,
+          $$MetaUpgradesTableCreateCompanionBuilder,
+          $$MetaUpgradesTableUpdateCompanionBuilder,
+          (
+            MetaUpgradeRow,
+            BaseReferences<_$AppDatabase, $MetaUpgradesTable, MetaUpgradeRow>,
+          ),
+          MetaUpgradeRow,
+          PrefetchHooks Function()
+        > {
+  $$MetaUpgradesTableTableManager(_$AppDatabase db, $MetaUpgradesTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$MetaUpgradesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$MetaUpgradesTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$MetaUpgradesTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> perkId = const Value.absent(),
+                Value<int> level = const Value.absent(),
+                Value<int> updatedAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => MetaUpgradesCompanion(
+                perkId: perkId,
+                level: level,
+                updatedAt: updatedAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String perkId,
+                Value<int> level = const Value.absent(),
+                required int updatedAt,
+                Value<int> rowid = const Value.absent(),
+              }) => MetaUpgradesCompanion.insert(
+                perkId: perkId,
+                level: level,
+                updatedAt: updatedAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$MetaUpgradesTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $MetaUpgradesTable,
+      MetaUpgradeRow,
+      $$MetaUpgradesTableFilterComposer,
+      $$MetaUpgradesTableOrderingComposer,
+      $$MetaUpgradesTableAnnotationComposer,
+      $$MetaUpgradesTableCreateCompanionBuilder,
+      $$MetaUpgradesTableUpdateCompanionBuilder,
+      (
+        MetaUpgradeRow,
+        BaseReferences<_$AppDatabase, $MetaUpgradesTable, MetaUpgradeRow>,
+      ),
+      MetaUpgradeRow,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -8693,4 +9120,6 @@ class $AppDatabaseManager {
       $$SettingsEntriesTableTableManager(_db, _db.settingsEntries);
   $$SyncOutboxTableTableManager get syncOutbox =>
       $$SyncOutboxTableTableManager(_db, _db.syncOutbox);
+  $$MetaUpgradesTableTableManager get metaUpgrades =>
+      $$MetaUpgradesTableTableManager(_db, _db.metaUpgrades);
 }

@@ -9,6 +9,8 @@ import '../../features/economy/domain/repositories/wallet_repository.dart';
 import '../../features/leaderboards/data/datasources/leaderboard_api.dart';
 import '../../features/leaderboards/data/repositories/leaderboard_repository_impl.dart';
 import '../../features/leaderboards/domain/repositories/leaderboard_repository.dart';
+import '../../features/meta/data/repositories/meta_repository_impl.dart';
+import '../../features/meta/domain/repositories/meta_repository.dart';
 import '../../features/profile/data/repositories/profile_repository_impl.dart';
 import '../../features/profile/domain/repositories/profile_repository.dart';
 import '../../features/settings/data/repositories/settings_repository_impl.dart';
@@ -51,6 +53,7 @@ class SessionDependencies {
     required this.profileRepository,
     required this.settingsRepository,
     required this.statisticsRepository,
+    required this.metaRepository,
   });
 
   factory SessionDependencies.create({
@@ -96,6 +99,7 @@ class SessionDependencies {
       profileRepository: ProfileRepositoryImpl(db),
       settingsRepository: SettingsRepositoryImpl(db),
       statisticsRepository: StatisticsRepositoryImpl(db),
+      metaRepository: MetaRepositoryImpl(db: db, outboxWriter: outboxWriter),
     );
   }
 
@@ -115,6 +119,7 @@ class SessionDependencies {
   final ProfileRepository profileRepository;
   final SettingsRepository settingsRepository;
   final StatisticsRepository statisticsRepository;
+  final MetaRepository metaRepository;
 
   bool _started = false;
   final Completer<void> _ready = Completer<void>();

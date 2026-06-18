@@ -12,6 +12,7 @@ enum CoinReason {
   achievementClaim,
   snapshotRestore,
   adjustment,
+  shopPurchase,
 }
 
 /// One ledger entry. Balance is never a mutated integer — it is the sum
