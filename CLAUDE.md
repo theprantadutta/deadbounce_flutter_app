@@ -109,6 +109,17 @@ leak across cases (keeps daily-challenge wave goldens deterministic).
   seed (`engine/challenge/`), identical worldwide and offline — forced enemy type,
   +wall damage, heart cap, score multiplier, or random-dealt upgrades. Scores submit
   to a separate daily-challenge board.
+- **The Gunsmith** (`features/meta/`): the coin SINK / permanent meta-progression.
+  Spend coins on tiered perks that apply to **every normal run** (not daily
+  challenges — those stay fair): Reinforced Heart, Iron Resolve, Quick Hands, Keen
+  Eye, Lucky Strike, Second Wind. **Guardrail: perks never add flat bullet damage**
+  (that would break "no damage till it bounces") — survivability/utility/economy only.
+  Catalog in Dart (`meta_catalog.dart`); ownership LEVEL per perk in the local
+  `meta_upgrades` Drift table (local-only for now; the coin *spend* syncs via the
+  ledger as `shopPurchase`). `RunModifiers.addPermanent` pre-loads the perk as a
+  modifier (reusing existing card modifiers: heart_container/quickdraw/longer_sight/
+  coin_magnet) without counting it as a wave pick; permanent stacks still respect each
+  card's max-stacks cap. Applied in `game_session_cubit.startRun` via `MetaLoadout`.
 - **Achievements** (24, `features/achievements/domain/achievement_catalog.dart`):
   in-app definitions; ids + coin rewards mirror the backend's validation catalog
   exactly. Evaluated locally after each run against lifetime stats. **Unlock and
@@ -216,8 +227,15 @@ seam — hot sounds (fire, bounce variants, kill, coin) use AudioPools; the rest
 play one-shot. Clips live in `assets/audio/` and preload during the pre-game beat;
 the Settings sound toggle gates playback; load failures fall back to silence.
 Wall bounces climb in pitch with the bounce count (`bounce_1/2/3.wav` via
-`Sfx.bounceFor`). Still open (optional): the two ambience/menu loops, and wiring
-`Sfx.uiTap` into menu buttons.
+`Sfx.bounceFor`).
+
+**Music**: `core/audio/music_manager.dart` (`MusicManager`, a `FlameAudio.bgm`
+wrapper) plays one looping track at a time — `menu` on Home, `combat` on run start
+(`boss` reserved). Gated by the **Music** settings toggle (`AppSettings.musicEnabled`)
+and **gracefully silent if a track file is absent**, so the game runs fine before the
+loops exist. Add `assets/audio/menu_loop.mp3` / `combat_loop.mp3` / `boss_loop.mp3`
+to bring it to life. Still open (optional): the boss-loop swap on Warden waves, and
+wiring `Sfx.uiTap` into menu buttons.
 
 ## Logging (Talker)
 
