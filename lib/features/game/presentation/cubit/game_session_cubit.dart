@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:deadbounce_flutter_app/core/logging/app_logger.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -51,6 +53,12 @@ class GameSessionCubit extends Cubit<GameSessionState>
   int? _challengeSeed;
   String? _challengeDate;
   int _previousBestScore = 0;
+
+  /// Completes early when the player taps to skip the death beat.
+  Completer<void>? _skipBeat;
+
+  /// How long the death beat holds before the results appear.
+  static const Duration _beatDuration = Duration(milliseconds: 1400);
 
   Future<void> startRun() async {
     final best = await _runsRepository.bestRun();
@@ -126,6 +134,13 @@ class GameSessionCubit extends Cubit<GameSessionState>
     emit(SessionUpgradePicking(wave, choices));
   }
 
+  /// Cuts the death beat short — straight to the results.
+  void skipEnding() {
+    if (state is! SessionRunEnding) return;
+    final c = _skipBeat;
+    if (c != null && !c.isCompleted) c.complete();
+  }
+
   @override
   Future<void> onRunEnded(RunStatsSnapshot stats) async {
     final result = RunResult(
@@ -146,34 +161,73 @@ class GameSessionCubit extends Cubit<GameSessionState>
       challengeSeed: _challengeSeed,
     );
 
-    // Drift first, synchronously with the UI; the backend hears about it
-    // whenever the outbox drains. Achievements evaluate AFTER the run is
-    // recorded so they see the freshly-updated lifetime stats.
     AppLogger.talker.info(
-      '[game] run ended score=${stats.score} wave=${stats.waveReached}',
+      '[game] run ended score=${stats.score} wave=${stats.waveReached} '
+      'cause=${stats.causeOfDeath ?? 'unknown'}',
     );
 
-    await _runsRepository.recordCompletedRun(result);
-    final unlocked = await _achievementsRepository.evaluateRun(
-      RunAchievementInput(
-        score: stats.score,
-        wave: stats.waveReached,
-        bestChain: stats.bestChain,
-        maxBounceKill: stats.maxBounceKill,
-        upgradesPicked: stats.upgradesPicked.length,
-        hitsTaken: stats.hitsTaken,
-        isDailyChallenge: dailyChallenge,
-      ),
-    );
-    AppLogger.talker.info('[game] achievements unlocked: ${unlocked.length}');
-    _syncWorker.requestSync();
+    // 1) The death beat: tell the player what happened, hold for a moment.
+    final death = _describeDeath(stats);
+    _skipBeat = Completer<void>();
+    emit(SessionRunEnding(
+      headline: death.$1,
+      detail: death.$2,
+      wave: stats.waveReached,
+    ));
 
+    // 2) Persist + evaluate achievements in parallel with the beat (Drift
+    // first; the outbox carries it to the backend). Names captured for the
+    // results screen.
+    var unlockedNames = const <String>[];
+    final work = () async {
+      await _runsRepository.recordCompletedRun(result);
+      final unlocked = await _achievementsRepository.evaluateRun(
+        RunAchievementInput(
+          score: stats.score,
+          wave: stats.waveReached,
+          bestChain: stats.bestChain,
+          maxBounceKill: stats.maxBounceKill,
+          upgradesPicked: stats.upgradesPicked.length,
+          hitsTaken: stats.hitsTaken,
+          isDailyChallenge: dailyChallenge,
+        ),
+      );
+      AppLogger.talker.info('[game] achievements unlocked: ${unlocked.length}');
+      unlockedNames = unlocked.map((a) => a.name).toList();
+      _syncWorker.requestSync();
+    }();
+
+    await Future.wait([
+      work,
+      Future.any([
+        Future<void>.delayed(_beatDuration),
+        _skipBeat!.future,
+      ]),
+    ]);
+
+    // 3) Results.
+    if (isClosed) return;
     emit(SessionRunOver(
       result,
-      isNewBestScore:
-          result.score > _previousBestScore && result.score > 0,
-      unlockedAchievements: unlocked.map((a) => a.name).toList(),
+      isNewBestScore: result.score > _previousBestScore && result.score > 0,
+      unlockedAchievements: unlockedNames,
     ));
+  }
+
+  /// (headline, detail) for the death beat, in the Deadbounce voice.
+  (String, String) _describeDeath(RunStatsSnapshot stats) {
+    if (dailyChallenge) {
+      return ('CHALLENGE OVER', 'Your daily run ends here.');
+    }
+    final detail = switch (stats.causeOfDeath) {
+      'drifter' || 'smallDrifter' => 'A Drifter drifted right into you.',
+      'charger' => 'A Charger ran you down.',
+      'splitter' => 'A Splitter swarmed you.',
+      'turret' => "A Turret's shot found you.",
+      'warden' => 'The Warden broke you.',
+      _ => 'The arena claimed you.',
+    };
+    return ('YOU FELL', detail);
   }
 
   @override

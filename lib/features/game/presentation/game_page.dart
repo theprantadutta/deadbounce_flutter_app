@@ -15,6 +15,7 @@ import 'game/components/deadbounce_game.dart';
 import 'game/hud_model.dart';
 import 'overlays/hud_overlay.dart';
 import 'overlays/pause_overlay.dart';
+import 'overlays/run_ending_overlay.dart';
 import 'overlays/run_results_overlay.dart';
 import 'overlays/upgrade_picker_overlay.dart';
 
@@ -100,6 +101,15 @@ class _GameView extends StatelessWidget {
                     waveCleared: state.waveCleared,
                     choices: state.choices,
                     onPick: cubit.selectUpgrade,
+                  ),
+                ),
+              if (state is SessionRunEnding)
+                Positioned.fill(
+                  child: RunEndingOverlay(
+                    headline: state.headline,
+                    detail: state.detail,
+                    wave: state.wave,
+                    onSkip: cubit.skipEnding,
                   ),
                 ),
               if (state is SessionRunOver)

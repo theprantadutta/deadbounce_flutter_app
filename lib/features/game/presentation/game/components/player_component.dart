@@ -117,15 +117,17 @@ class PlayerComponent extends PositionComponent
     game.hud.hearts.value = hearts;
   }
 
-  void takeContactDamage(EnemyComponent from) => _takeDamage();
+  void takeContactDamage(EnemyComponent from) => _takeDamage(from.enemyId);
 
-  void takeProjectileDamage(EnemyProjectileComponent from) => _takeDamage();
+  void takeProjectileDamage(EnemyProjectileComponent from) =>
+      _takeDamage('turret');
 
-  void _takeDamage() {
+  void _takeDamage(String cause) {
     if (invulnRemaining > 0 || game.runEnded) return;
 
     hearts--;
     game.hitsTaken++;
+    game.lastDamageSource = cause;
     final ctx = PlayerDamageContext(heartsAfter: hearts);
     game.modifiers.playerDamaged(ctx);
 

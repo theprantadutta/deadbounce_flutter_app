@@ -104,6 +104,9 @@ class DeadbounceGame extends FlameGame implements GameWorldOps {
   final Map<String, int> enemyKills = {};
   bool runEnded = false;
 
+  /// Enemy id behind the most recent hit — read at run end for the death beat.
+  String? lastDamageSource;
+
   @override
   Color backgroundColor() => AppColors.ink950;
 
@@ -306,6 +309,9 @@ class DeadbounceGame extends FlameGame implements GameWorldOps {
     if (runEnded) return;
     runEnded = true;
     sound.play(Sfx.gameOver);
+    // A punchy freeze-frame so the kill lands before the death beat fades in.
+    juice.hitStop(0.45);
+    juice.addTrauma(0.6);
 
     gateway.onRunEnded(RunStatsSnapshot(
       score: scoreSystem.score,
@@ -318,6 +324,7 @@ class DeadbounceGame extends FlameGame implements GameWorldOps {
       upgradesPicked: List.of(modifiers.pickedIds),
       enemyKills: Map.of(enemyKills),
       hitsTaken: hitsTaken,
+      causeOfDeath: lastDamageSource,
     ));
   }
 

@@ -14,6 +14,7 @@ class RunStatsSnapshot {
     required this.upgradesPicked,
     required this.enemyKills,
     required this.hitsTaken,
+    this.causeOfDeath,
   });
 
   final int score;
@@ -28,6 +29,11 @@ class RunStatsSnapshot {
 
   /// Times the player lost a heart this run (0 = flawless).
   final int hitsTaken;
+
+  /// Source of the fatal blow — an enemy id (drifter/charger/splitter/
+  /// turret/warden/smallDrifter) — used only for the death-beat copy.
+  /// Null when unknown.
+  final String? causeOfDeath;
 }
 
 /// How the Flame game talks to the run lifecycle owner (GameSessionCubit)

@@ -29,6 +29,22 @@ final class SessionUpgradePicking extends GameSessionState {
   List<Object?> get props => [waveCleared, choices.map((c) => c.id).toList()];
 }
 
+/// The brief death beat: a freeze + "what happened" before the results.
+final class SessionRunEnding extends GameSessionState {
+  const SessionRunEnding({
+    required this.headline,
+    required this.detail,
+    required this.wave,
+  });
+
+  final String headline;
+  final String detail;
+  final int wave;
+
+  @override
+  List<Object?> get props => [headline, detail, wave];
+}
+
 final class SessionRunOver extends GameSessionState {
   const SessionRunOver(
     this.result, {

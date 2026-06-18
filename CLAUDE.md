@@ -27,6 +27,11 @@ CLAUDE.md / SETUP.md).
   0.55 restitution and **grants no bounce** — kill the turret to make it lethal again.
 - Clear a wave → pick 1 of 3 rarity-weighted upgrade cards → next wave is harder.
   3 hearts; enemy contact costs a heart + i-frames; 0 hearts ends the run.
+- **Run-end flow**: `endRun()` freezes the kill (hit-stop + shake), then the cubit
+  emits a transient **`SessionRunEnding`** "death beat" (`RunEndingOverlay`) — a
+  ~1.4s pause naming what felled you (the fatal enemy via `causeOfDeath` on the
+  run snapshot) and the wave, tap-to-skip — and records the run + evaluates
+  achievements in parallel, before emitting `SessionRunOver` (the results screen).
 
 ## Enemy roster (`features/game/presentation/game/components/enemies/`)
 
