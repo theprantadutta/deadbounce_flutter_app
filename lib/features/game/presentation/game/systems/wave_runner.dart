@@ -1,5 +1,6 @@
 import 'package:flame/components.dart';
 
+import 'package:deadbounce_flutter_app/core/audio/music_manager.dart';
 import 'package:deadbounce_flutter_app/core/config/game_balance.dart';
 
 import '../../../engine/game_rng.dart';
@@ -34,6 +35,11 @@ class WaveRunner extends Component with HasGameReference<DeadbounceGame> {
     _waveActive = true;
     _clearBeat = 0;
     game.hud.wave.value = wave;
+
+    // Swap to the boss loop on a Warden wave; otherwise (re)assert the combat
+    // loop, so it returns to normal on the wave after the Warden falls.
+    MusicManager.instance
+        .play(_definition!.hasBoss ? MusicTrack.boss : MusicTrack.combat);
 
     // A daily challenge may force a single enemy type. Wardens always pass
     // through so boss waves still happen.

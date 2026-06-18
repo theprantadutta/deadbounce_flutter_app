@@ -13,9 +13,9 @@ class MusicManager {
   static final MusicManager instance = MusicManager._();
 
   static const Map<MusicTrack, String> _files = {
-    MusicTrack.menu: 'menu_loop.mp3',
-    MusicTrack.combat: 'combat_loop.mp3',
-    MusicTrack.boss: 'boss_loop.mp3',
+    MusicTrack.menu: 'menu_loop.wav',
+    MusicTrack.combat: 'combat_loop.wav',
+    MusicTrack.boss: 'boss_loop.wav',
   };
 
   bool _enabled = true;

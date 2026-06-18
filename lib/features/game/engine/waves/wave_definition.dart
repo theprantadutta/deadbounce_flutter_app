@@ -35,4 +35,7 @@ class WaveDefinition {
 
   int get totalCount =>
       groups.fold(0, (sum, g) => sum + g.count);
+
+  /// True when this wave fields a Warden — a boss wave (cues boss music).
+  bool get hasBoss => groups.any((g) => g.type == EnemyType.warden);
 }
