@@ -102,9 +102,9 @@ class _HomeViewState extends State<_HomeView> {
                 builder: (context, constraints) {
                   final pad = constraints.maxWidth > 600
                       ? AppSpacing.xxl
-                      : AppSpacing.lg;
+                      : AppSpacing.md;
                   final orbD =
-                      (constraints.maxHeight * 0.135).clamp(104.0, 132.0);
+                      (constraints.maxHeight * 0.18).clamp(112.0, 180.0);
                   return Center(
                     child: ConstrainedBox(
                       constraints: const BoxConstraints(maxWidth: 480),
@@ -112,7 +112,8 @@ class _HomeViewState extends State<_HomeView> {
                         padding: EdgeInsets.symmetric(horizontal: pad),
                         child: Column(
                           children: [
-                            const SizedBox(height: AppSpacing.sm),
+                            const SizedBox(height: AppSpacing.xs),
+                            // A — identity bar.
                             _enter(
                               BlocBuilder<HomeCubit, HomeState>(
                                 builder: (context, state) => HomeIdentityBar(
@@ -121,28 +122,29 @@ class _HomeViewState extends State<_HomeView> {
                               ),
                               0,
                             ),
-                            const Spacer(flex: 2),
+                            const Spacer(),
+                            // B — title group: wordmark + tagline + stat chips.
                             _enter(
-                              NeonWordmark(style: textTheme.headlineLarge),
+                              Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  NeonWordmark(style: textTheme.headlineLarge),
+                                  const SizedBox(height: AppSpacing.xs),
+                                  Text('Bullets only bite after they bounce.',
+                                      style: textTheme.bodyMedium,
+                                      textAlign: TextAlign.center),
+                                  const SizedBox(height: AppSpacing.sm),
+                                  BlocBuilder<HomeCubit, HomeState>(
+                                    builder: (context, state) => HomeStatChips(
+                                      summary: _summaryOf(state),
+                                    ),
+                                  ),
+                                ],
+                              ),
                               1,
                             ),
-                            const SizedBox(height: AppSpacing.xs),
-                            _enter(
-                              Text('Bullets only bite after they bounce.',
-                                  style: textTheme.bodyMedium,
-                                  textAlign: TextAlign.center),
-                              2,
-                            ),
-                            const SizedBox(height: AppSpacing.md),
-                            _enter(
-                              BlocBuilder<HomeCubit, HomeState>(
-                                builder: (context, state) => HomeStatChips(
-                                  summary: _summaryOf(state),
-                                ),
-                              ),
-                              3,
-                            ),
-                            const Spacer(flex: 2),
+                            const Spacer(),
+                            // C — hero launch orb.
                             _enter(
                               HeroOrbRig(
                                 diameter: orbD,
@@ -151,53 +153,60 @@ class _HomeViewState extends State<_HomeView> {
                                   onPressed: () => context.push(Routes.game),
                                 ),
                               ),
-                              4,
+                              2,
                             ),
-                            const SizedBox(height: AppSpacing.sm),
-                            _enter(const DailyChallengeFeatureCard(), 5),
-                            const SizedBox(height: AppSpacing.sm),
+                            const Spacer(),
+                            // D — bottom group: daily challenge + nav.
                             _enter(
-                              Row(
+                              Column(
+                                mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  Expanded(
-                                    child: _NavTile(
-                                      icon: Icons.leaderboard,
-                                      label: 'BOARDS',
-                                      onTap: () =>
-                                          context.push(Routes.leaderboard),
-                                    ),
-                                  ),
-                                  const SizedBox(width: AppSpacing.sm),
-                                  Expanded(
-                                    child: _NavTile(
-                                      icon: Icons.emoji_events,
-                                      label: 'AWARDS',
-                                      onTap: () => context.push(Routes.awards),
-                                    ),
-                                  ),
-                                  const SizedBox(width: AppSpacing.sm),
-                                  Expanded(
-                                    child: _NavTile(
-                                      icon: Icons.query_stats,
-                                      label: 'STATS',
-                                      onTap: () =>
-                                          context.push(Routes.statistics),
-                                    ),
-                                  ),
-                                  const SizedBox(width: AppSpacing.sm),
-                                  Expanded(
-                                    child: _NavTile(
-                                      icon: Icons.help_outline,
-                                      label: 'GUIDE',
-                                      onTap: () =>
-                                          context.push(Routes.howToPlay),
-                                    ),
+                                  const DailyChallengeFeatureCard(),
+                                  const SizedBox(height: AppSpacing.sm),
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        child: _NavTile(
+                                          icon: Icons.leaderboard,
+                                          label: 'BOARDS',
+                                          onTap: () =>
+                                              context.push(Routes.leaderboard),
+                                        ),
+                                      ),
+                                      const SizedBox(width: AppSpacing.sm),
+                                      Expanded(
+                                        child: _NavTile(
+                                          icon: Icons.emoji_events,
+                                          label: 'AWARDS',
+                                          onTap: () =>
+                                              context.push(Routes.awards),
+                                        ),
+                                      ),
+                                      const SizedBox(width: AppSpacing.sm),
+                                      Expanded(
+                                        child: _NavTile(
+                                          icon: Icons.query_stats,
+                                          label: 'STATS',
+                                          onTap: () =>
+                                              context.push(Routes.statistics),
+                                        ),
+                                      ),
+                                      const SizedBox(width: AppSpacing.sm),
+                                      Expanded(
+                                        child: _NavTile(
+                                          icon: Icons.help_outline,
+                                          label: 'GUIDE',
+                                          onTap: () =>
+                                              context.push(Routes.howToPlay),
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ],
                               ),
-                              6,
+                              3,
                             ),
-                            const Spacer(flex: 2),
+                            const SizedBox(height: AppSpacing.xs),
                           ],
                         ),
                       ),

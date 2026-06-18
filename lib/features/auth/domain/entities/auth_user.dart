@@ -21,7 +21,7 @@ class AuthUser extends Equatable {
 
   /// Best display label for UI greetings.
   String get label =>
-      displayName ?? username ?? (isAnonymous ? 'Drifter' : 'Gunslinger');
+      displayName ?? username ?? (isAnonymous ? 'Stranger' : 'Gunslinger');
 
   @override
   List<Object?> get props =>

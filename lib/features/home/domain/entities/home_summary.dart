@@ -13,7 +13,7 @@ class HomeSummary extends Equatable {
   });
 
   const HomeSummary.empty()
-      : displayName = 'Drifter',
+      : displayName = 'Stranger',
         isGuest = true,
         bestScore = 0,
         totalKills = 0,

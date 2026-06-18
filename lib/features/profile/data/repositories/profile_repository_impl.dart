@@ -25,7 +25,7 @@ class ProfileRepositoryImpl implements ProfileRepository {
     return ProfileData(
       displayName: profile?.displayName ??
           profile?.username ??
-          (profile?.isGuest ?? false ? 'Drifter' : 'Gunslinger'),
+          (profile?.isGuest ?? false ? 'Stranger' : 'Gunslinger'),
       isGuest: profile?.isGuest ?? false,
       runsPlayed: stats?.runsPlayed ?? 0,
       totalKills: stats?.totalKills ?? 0,
