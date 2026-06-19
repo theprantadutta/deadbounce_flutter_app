@@ -19,12 +19,20 @@ class JuiceController {
     required this.sound,
     required this.haptics,
     required this._camera,
+    this.screenShake = true,
+    this.hitStopEnabled = true,
   });
 
   final ParticleFactory particles;
   final SoundManager sound;
   final HapticsService haptics;
   final CameraComponent _camera;
+
+  /// When false, camera trauma is never accumulated (no screen shake).
+  final bool screenShake;
+
+  /// When false, hit-stop time-freeze is suppressed.
+  final bool hitStopEnabled;
 
   double _hitStopRemaining = 0;
   double _trauma = 0;
@@ -68,10 +76,12 @@ class JuiceController {
   }
 
   void hitStop(double seconds) {
+    if (!hitStopEnabled) return;
     _hitStopRemaining = math.max(_hitStopRemaining, seconds);
   }
 
   void addTrauma(double amount) {
+    if (!screenShake) return;
     _trauma = (_trauma + amount).clamp(0.0, 1.0);
   }
 

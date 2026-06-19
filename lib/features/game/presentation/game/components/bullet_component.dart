@@ -103,7 +103,9 @@ class BulletComponent extends PositionComponent
       ));
 
       // Bounce counter popup once per new bounce ("x2", "x3"...).
-      if (state.bounces >= 2 && state.bounces != _lastPopupBounce) {
+      if (state.bounces >= 2 &&
+          state.bounces != _lastPopupBounce &&
+          game.gameFeel.combatText) {
         _lastPopupBounce = state.bounces;
         game.world.add(PopupTextComponent.bounceCounter(
           'x${state.bounces}',

@@ -22,6 +22,7 @@ import '../../../engine/upgrades/upgrade_card.dart';
 import '../../../engine/upgrades/upgrade_catalog.dart';
 import '../../../engine/upgrades/upgrade_deck.dart';
 import '../../../engine/upgrades/upgrade_modifier.dart';
+import '../game_feel.dart';
 import '../game_session_gateway.dart';
 import '../hud_model.dart';
 import '../systems/haptics_service.dart';
@@ -54,6 +55,7 @@ class DeadbounceGame extends FlameGame implements GameWorldOps {
     this.challengeDate,
     this.challenge,
     this.metaLoadout = const MetaLoadout(),
+    this.gameFeel = const GameFeel(),
   })  : haptics = hapticsService,
         super(
           camera: CameraComponent.withFixedResolution(
@@ -78,6 +80,10 @@ class DeadbounceGame extends FlameGame implements GameWorldOps {
 
   /// Permanent Gunsmith bonuses for this run (empty for daily challenges).
   final MetaLoadout metaLoadout;
+
+  /// Player-chosen feel/accessibility options (shake, hit-stop, aim guide,
+  /// combat text, particle budget). Read by the systems below.
+  final GameFeel gameFeel;
 
   /// Extra i-frame seconds after a hit, from the Iron Resolve perk.
   double metaInvulnBonus = 0;
@@ -127,12 +133,14 @@ class DeadbounceGame extends FlameGame implements GameWorldOps {
     // Permanent Gunsmith perks fold in before hearts/stats are read.
     _applyMetaLoadout();
 
-    particles = ParticleFactory(world, _vfxRandom);
+    particles = ParticleFactory(world, _vfxRandom, budget: gameFeel.particleBudget);
     juice = JuiceController(
       particles: particles,
       sound: sound,
       haptics: haptics,
       camera: camera,
+      screenShake: gameFeel.screenShake,
+      hitStopEnabled: gameFeel.hitStop,
     );
     // Shake oscillates around the look-at point.
     juice.setRestPosition(Vector2(arenaWidth / 2, arenaHeight / 2));
@@ -230,7 +238,7 @@ class DeadbounceGame extends FlameGame implements GameWorldOps {
     );
 
     final label = ScoreSystem.chainLabel(chainLength);
-    if (label != null) {
+    if (label != null && gameFeel.combatText) {
       world.add(PopupTextComponent.chainLabel(
         label,
         enemy.position + Vector2(0, -enemy.bodyRadius - 30),

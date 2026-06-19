@@ -13,16 +13,21 @@ import '../../../engine/physics/vector_utils.dart';
 /// translucent circles — MaskFilter.blur is reserved for static walls and
 /// rare big moments (it's the real perf cliff, not particle count).
 class ParticleFactory {
-  ParticleFactory(this._world, this._vfxRandom);
+  ParticleFactory(this._world, this._vfxRandom, {int? budget})
+      : _budget = budget ?? GameBalance.I.juice.particleBudget;
 
   /// VFX randomness is unseeded on purpose: juice must never consume
   /// gameplay entropy.
   final math.Random _vfxRandom;
   final World _world;
 
+  /// Max simultaneous particles (the player's Particle Quality preset; falls
+  /// back to the balance default when not supplied).
+  final int _budget;
+
   int _alive = 0;
 
-  bool get _overBudget => _alive >= GameBalance.I.juice.particleBudget;
+  bool get _overBudget => _alive >= _budget;
 
   void _spawn(Particle particle, Vector2 position, {int weight = 1}) {
     if (_overBudget) return;

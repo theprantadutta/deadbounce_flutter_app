@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_dimens.dart';
+import '../../../core/util/open_external_link.dart';
 import '../../../core/widgets/db_logo.dart';
 import '../../../core/widgets/meta_scaffold.dart';
 
@@ -86,30 +85,13 @@ class _WebsiteButton extends StatelessWidget {
   final String label;
   final String url;
 
-  Future<void> _open(BuildContext context) async {
-    final messenger = ScaffoldMessenger.of(context);
-    final uri = Uri.parse(url);
-    var launched = false;
-    try {
-      launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
-    } catch (_) {
-      launched = false;
-    }
-    if (launched) return;
-    // Fallback: no browser could be opened — copy it so it's still useful.
-    await Clipboard.setData(ClipboardData(text: url));
-    messenger
-      ..clearSnackBars()
-      ..showSnackBar(SnackBar(content: Text('Link copied: $url')));
-  }
-
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
     return Material(
       color: Colors.transparent,
       child: InkWell(
-        onTap: () => _open(context),
+        onTap: () => openExternalLink(context, url),
         borderRadius: AppRadii.pillAll,
         child: Container(
           padding: const EdgeInsets.symmetric(

@@ -61,8 +61,10 @@ class WardenEnemy extends EnemyComponent {
       final v = bullet.state.velocity;
       v.setFrom(v - normal * (2 * v.dot(normal)));
       bullet.state.position.addScaled(normal, 4);
-      game.world.add(PopupTextComponent.bounceCounter(
-          'CLANG', position + normal * (bodyRadius + 30)));
+      if (game.gameFeel.combatText) {
+        game.world.add(PopupTextComponent.bounceCounter(
+            'CLANG', position + normal * (bodyRadius + 30)));
+      }
       game.juice.sound.play(Sfx.wardenClang);
       return false;
     }

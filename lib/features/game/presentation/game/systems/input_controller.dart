@@ -75,7 +75,8 @@ class InputController extends PositionComponent
 
   void _updatePreview() {
     final aiming = _aiming;
-    game.trajectory.visible = _dragOrigin != null;
+    // The aim guide can be turned off in Settings — keep the line hidden then.
+    game.trajectory.visible = _dragOrigin != null && game.gameFeel.aimGuide;
     game.trajectory.dimmed = !aiming;
     if (!aiming || !game.player.fireReady) {
       if (!game.player.fireReady) game.trajectory.dimmed = true;

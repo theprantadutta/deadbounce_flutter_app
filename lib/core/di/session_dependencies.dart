@@ -148,6 +148,21 @@ class SessionDependencies {
     }
   }
 
+  /// Settings → "Clear local data": wipe this device's gameplay/account data
+  /// (device prefs kept) and re-pull the server snapshot in place, WITHOUT
+  /// signing out (so anonymous accounts aren't orphaned). Offline, the re-pull
+  /// is skipped and the sync engine retries it later.
+  Future<void> clearLocalData() async {
+    await db.clearGameData();
+    try {
+      await snapshotRestorer.restoreIfNeeded();
+    } on ApiException {
+      // Offline: profile row is gone so `initialSyncCompleted` is false again;
+      // the next session start re-pulls the snapshot.
+    }
+    syncWorker.requestSync();
+  }
+
   Future<void> dispose() async {
     await syncWorker.dispose();
     await syncTriggers.dispose();

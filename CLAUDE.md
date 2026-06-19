@@ -245,12 +245,34 @@ Wall bounces climb in pitch with the bounce count (`bounce_1/2/3.wav` via
 `Sfx.bounceFor`).
 
 **Music**: `core/audio/music_manager.dart` (`MusicManager`, a `FlameAudio.bgm`
-wrapper) plays one looping track at a time — `menu` on Home, `combat` on run start
-(`boss` reserved). Gated by the **Music** settings toggle (`AppSettings.musicEnabled`)
-and **gracefully silent if a track file is absent**, so the game runs fine before the
-loops exist. Add `assets/audio/menu_loop.mp3` / `combat_loop.mp3` / `boss_loop.mp3`
-to bring it to life. Still open (optional): the boss-loop swap on Warden waves, and
-wiring `Sfx.uiTap` into menu buttons.
+wrapper) plays one looping track at a time — `menu` on Home, `combat` on a normal
+wave, and `boss` on Warden waves (swapped in `WaveRunner.startWave` via
+`WaveDefinition.hasBoss`, back to `combat` on the next wave). Loops live at
+`assets/audio/{menu,combat,boss}_loop.wav`. Gated by the **Music** settings toggle
+(`AppSettings.musicEnabled`) and **gracefully silent if a track file is absent**.
+Still open (optional): wiring `Sfx.uiTap` into menu buttons.
+
+## Settings
+
+`features/settings/` — `AppSettings` (Equatable) persisted in the Drift key-value
+`settings` table via `SettingsRepository`(+impl); `SettingsCubit` toggles emit-then-
+persist. Beyond audio (sound/music/haptics), it carries **game-feel/accessibility**
+prefs, all wired to real behavior and read once in `GameSessionCubit.startRun()` into
+an immutable **`GameFeel`** (`features/game/presentation/game/game_feel.dart`) handed
+to `DeadbounceGame` (like the meta loadout, kept OUT of `GameBalance`):
+`screenShakeEnabled`/`hitStopEnabled` gate `JuiceController.addTrauma`/`hitStop`;
+`aimGuideEnabled` gates `trajectory.visible` in `InputController`; `combatTextEnabled`
+gates the three popup spawn sites (bounce counter, chain label, Warden CLANG);
+`particleQuality` (`ParticleQuality.low/medium/high` → budget 250/600/1200) feeds the
+`ParticleFactory` budget. The screen (`settings_screen.dart`, over `MetaScaffold`) is
+sectioned AUDIO / GAME FEEL / DATA & SYNC / ACCOUNT / ABOUT / DANGER ZONE /
+DIAGNOSTICS(debug). DATA & SYNC surfaces the `SyncStatusNotifier` with Sync-now /
+Retry-failed (`syncWorker`). ABOUT links How-to-Play / Credits / pranta.dev
+(`core/util/open_external_link.dart`, shared with Credits) + a dynamic version via
+`package_info_plus`. **DANGER ZONE → Clear local data** calls
+`SessionDependencies.clearLocalData()` → `AppDatabase.clearGameData()` (wipes
+gameplay/account tables, **preserves `settings`**) then re-pulls the server snapshot
+in place **without signing out** (guest-safe); unsynced changes are lost.
 
 ## Logging (Talker)
 

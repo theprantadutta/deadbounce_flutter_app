@@ -68,6 +68,26 @@ class AppDatabase extends _$AppDatabase {
   @override
   int get schemaVersion => 2;
 
+  /// Wipes all gameplay/account data on this device in one transaction,
+  /// **preserving the settings table** (device preferences). Clearing the
+  /// profile row resets `initialSyncCompleted`, so the next session re-pulls
+  /// the server snapshot. Used by Settings → "Clear local data".
+  Future<void> clearGameData() => transaction(() async {
+        await delete(playerProfiles).go();
+        await delete(playerStatsTable).go();
+        await delete(statCounters).go();
+        await delete(coinLedgerEntries).go();
+        await delete(coinBalances).go();
+        await delete(runs).go();
+        await delete(achievementStates).go();
+        await delete(dailyLoginClaims).go();
+        await delete(challengeAttempts).go();
+        await delete(leaderboardCacheEntries).go();
+        await delete(leaderboardSyncMeta).go();
+        await delete(syncOutbox).go();
+        await delete(metaUpgrades).go();
+      });
+
   @override
   MigrationStrategy get migration => MigrationStrategy(
         onCreate: (m) async {

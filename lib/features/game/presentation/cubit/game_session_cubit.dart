@@ -21,6 +21,7 @@ import '../../engine/challenge/challenge_config.dart';
 import '../../engine/game_rng.dart';
 import '../../engine/upgrades/upgrade_card.dart';
 import '../game/components/deadbounce_game.dart';
+import '../game/game_feel.dart';
 import '../game/game_session_gateway.dart';
 import '../game/hud_model.dart';
 import '../game/systems/flame_audio_sound_manager.dart';
@@ -112,6 +113,13 @@ class GameSessionCubit extends Cubit<GameSessionState>
       challengeDate: _challengeDate,
       challenge: challengeConfig,
       metaLoadout: loadout,
+      gameFeel: GameFeel(
+        screenShake: settings.screenShakeEnabled,
+        hitStop: settings.hitStopEnabled,
+        aimGuide: settings.aimGuideEnabled,
+        combatText: settings.combatTextEnabled,
+        particleBudget: settings.particleQuality.budget,
+      ),
     );
 
     // Warm the audio during the pre-game beat so the arena-flavored

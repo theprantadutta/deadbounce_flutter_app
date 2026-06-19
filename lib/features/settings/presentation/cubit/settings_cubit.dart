@@ -28,4 +28,29 @@ class SettingsCubit extends Cubit<AppSettings> {
     MusicManager.instance.enabled = enabled;
     await _repository.setMusicEnabled(enabled);
   }
+
+  Future<void> toggleScreenShake(bool enabled) async {
+    emit(state.copyWith(screenShakeEnabled: enabled));
+    await _repository.setScreenShakeEnabled(enabled);
+  }
+
+  Future<void> toggleHitStop(bool enabled) async {
+    emit(state.copyWith(hitStopEnabled: enabled));
+    await _repository.setHitStopEnabled(enabled);
+  }
+
+  Future<void> toggleAimGuide(bool enabled) async {
+    emit(state.copyWith(aimGuideEnabled: enabled));
+    await _repository.setAimGuideEnabled(enabled);
+  }
+
+  Future<void> toggleCombatText(bool enabled) async {
+    emit(state.copyWith(combatTextEnabled: enabled));
+    await _repository.setCombatTextEnabled(enabled);
+  }
+
+  Future<void> setParticleQuality(ParticleQuality quality) async {
+    emit(state.copyWith(particleQuality: quality));
+    await _repository.setParticleQuality(quality);
+  }
 }
