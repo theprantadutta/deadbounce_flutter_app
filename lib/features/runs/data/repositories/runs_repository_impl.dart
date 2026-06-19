@@ -50,6 +50,7 @@ class RunsRepositoryImpl implements RunsRepository {
             coinsEarned: r.coinsEarned,
             isDailyChallenge: r.isDailyChallenge,
             challengeDate: r.challengeDate,
+            tournamentId: r.tournamentId,
             arenaId: r.arenaId,
             upgradesPicked: jsonEncode(r.upgradesPicked),
             endedAt: endedAtMs,
@@ -87,7 +88,12 @@ class RunsRepositoryImpl implements RunsRepository {
           ),
         );
 
-        // 4. Challenge attempt, when this run was one.
+        // 4. Tournament best (local), when this run was a tournament entry.
+        if (r.tournamentId != null) {
+          await _db.tournamentDao.recordBest(r.tournamentId!, r.score);
+        }
+
+        // 4b. Challenge attempt, when this run was one.
         String? attemptId;
         if (r.isDailyChallenge && r.challengeDate != null) {
           attemptId = _uuid.v4();
@@ -145,14 +151,28 @@ class RunsRepositoryImpl implements RunsRepository {
           'upgrade_picks': upgradePicks,
         });
 
-        await _outboxWriter.enqueue(SyncEntityType.scoreSubmit, {
-          'run_id': r.id,
-          'score': r.score,
-          'wave_reached': r.waveReached,
-          'duration_ms': r.duration.inMilliseconds,
-          'kills': r.kills,
-          'ended_at': r.endedAt.toUtc().toIso8601String(),
-        });
+        if (r.tournamentId != null) {
+          // Tournament runs score the tournament board only — a seeded,
+          // constrained board must not pollute the global leaderboards.
+          await _outboxWriter.enqueue(SyncEntityType.tournamentScore, {
+            'tournament_id': r.tournamentId,
+            'run_id': r.id,
+            'score': r.score,
+            'wave_reached': r.waveReached,
+            'duration_ms': r.duration.inMilliseconds,
+            'kills': r.kills,
+            'ended_at': r.endedAt.toUtc().toIso8601String(),
+          });
+        } else {
+          await _outboxWriter.enqueue(SyncEntityType.scoreSubmit, {
+            'run_id': r.id,
+            'score': r.score,
+            'wave_reached': r.waveReached,
+            'duration_ms': r.duration.inMilliseconds,
+            'kills': r.kills,
+            'ended_at': r.endedAt.toUtc().toIso8601String(),
+          });
+        }
 
         if (attemptId != null) {
           await _outboxWriter.enqueue(SyncEntityType.challengeResult, {
@@ -198,5 +218,6 @@ class RunsRepositoryImpl implements RunsRepository {
     endedAt: DateTime.fromMillisecondsSinceEpoch(r.endedAt, isUtc: true),
     isDailyChallenge: r.isDailyChallenge,
     challengeDate: r.challengeDate,
+    tournamentId: r.tournamentId,
   );
 }

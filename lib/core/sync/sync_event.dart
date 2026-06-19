@@ -14,4 +14,7 @@ enum SyncEntityType {
   scoreSubmit,
   streakUpdate,
   accountLinked,
+
+  /// A tournament run's score — best-of-window on the player's entry.
+  tournamentScore,
 }

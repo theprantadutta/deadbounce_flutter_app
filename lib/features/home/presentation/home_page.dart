@@ -23,6 +23,7 @@ import 'widgets/hero_orb_rig.dart';
 import 'widgets/home_identity_bar.dart';
 import 'widgets/home_stat_chips.dart';
 import 'widgets/neon_wordmark.dart';
+import 'widgets/tournaments_feature_card.dart';
 
 /// The living-arena main menu: personalized identity + stats, a neon-sign
 /// wordmark, the hero launch orb, the daily-challenge event card, and the
@@ -118,7 +119,7 @@ class _HomeViewState extends State<_HomeView> {
                       ? AppSpacing.xxl
                       : AppSpacing.md;
                   final orbD =
-                      (constraints.maxHeight * 0.165).clamp(104.0, 164.0);
+                      (constraints.maxHeight * 0.145).clamp(88.0, 140.0);
                   return Center(
                     child: ConstrainedBox(
                       constraints: const BoxConstraints(maxWidth: 480),
@@ -175,10 +176,12 @@ class _HomeViewState extends State<_HomeView> {
                               Column(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
+                                  const TournamentsFeatureCard(),
+                                  const SizedBox(height: AppSpacing.xs),
                                   const GunsmithFeatureCard(),
-                                  const SizedBox(height: AppSpacing.sm),
+                                  const SizedBox(height: AppSpacing.xs),
                                   const DailyChallengeFeatureCard(),
-                                  const SizedBox(height: AppSpacing.sm),
+                                  const SizedBox(height: AppSpacing.xs),
                                   Row(
                                     children: [
                                       Expanded(

@@ -13,6 +13,12 @@ enum CoinReason {
   snapshotRestore,
   adjustment,
   shopPurchase,
+
+  /// Coin entry fee paid to join a tournament (negative).
+  tournamentEntry,
+
+  /// Coins awarded for a tournament final rank (positive).
+  tournamentReward,
 }
 
 /// One ledger entry. Balance is never a mutated integer — it is the sum

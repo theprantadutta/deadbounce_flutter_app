@@ -17,6 +17,9 @@ class Runs extends Table {
 
   /// UTC date yyyy-MM-dd when this run was a daily challenge attempt.
   TextColumn get challengeDate => text().nullable()();
+
+  /// Tournament id when this run was a tournament entry.
+  TextColumn get tournamentId => text().nullable()();
   TextColumn get arenaId => text()();
 
   /// JSON array of upgrade card ids picked during the run, in order.

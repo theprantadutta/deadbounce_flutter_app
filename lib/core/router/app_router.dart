@@ -17,6 +17,9 @@ import '../../features/profile/presentation/profile_screen.dart';
 import '../../features/settings/presentation/settings_screen.dart';
 import '../../features/splash/presentation/splash_page.dart';
 import '../../features/statistics/presentation/statistics_screen.dart';
+import '../../features/tournaments/presentation/tournament_detail_screen.dart';
+import '../../features/tournaments/presentation/tournament_run_page.dart';
+import '../../features/tournaments/presentation/tournaments_screen.dart';
 import 'db_page_transition.dart';
 import 'routes.dart';
 
@@ -104,6 +107,29 @@ GoRouter buildRouter() {
         path: Routes.gunsmith,
         pageBuilder: (context, state) =>
             dbPage(state: state, child: const GunsmithScreen()),
+      ),
+      GoRoute(
+        path: Routes.tournaments,
+        pageBuilder: (context, state) =>
+            dbPage(state: state, child: const TournamentsScreen()),
+      ),
+      GoRoute(
+        path: '${Routes.tournamentDetail}/:id',
+        pageBuilder: (context, state) => dbPage(
+          state: state,
+          child: TournamentDetailScreen(
+            tournamentId: state.pathParameters['id']!,
+          ),
+        ),
+      ),
+      GoRoute(
+        path: '${Routes.tournamentRun}/:id',
+        pageBuilder: (context, state) => dbPage(
+          state: state,
+          child: TournamentRunPage(
+            tournamentId: state.pathParameters['id']!,
+          ),
+        ),
       ),
       // Debug-only in-app log viewer.
       if (kDebugMode)

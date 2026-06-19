@@ -24,6 +24,7 @@ import '../game/components/deadbounce_game.dart';
 import '../game/game_feel.dart';
 import '../game/game_session_gateway.dart';
 import '../game/hud_model.dart';
+import '../game/tournament_run_context.dart';
 import '../game/systems/flame_audio_sound_manager.dart';
 import '../game/systems/haptics_service.dart';
 import '../game/systems/sound_manager.dart';
@@ -42,6 +43,7 @@ class GameSessionCubit extends Cubit<GameSessionState>
     required this._syncWorker,
     required this._metaRepository,
     this.dailyChallenge = false,
+    this.tournamentContext,
     Uuid? uuid,
   })  : _uuid = uuid ?? const Uuid(),
         super(const SessionIdle());
@@ -52,13 +54,20 @@ class GameSessionCubit extends Cubit<GameSessionState>
   final SyncWorker _syncWorker;
   final MetaRepository _metaRepository;
   final bool dailyChallenge;
+
+  /// Set when this session is a tournament run (mutually exclusive with
+  /// [dailyChallenge]). Carries the seed + ruleset to play offline.
+  final TournamentRunContext? tournamentContext;
   final Uuid _uuid;
+
+  bool get _isTournament => tournamentContext != null;
 
   final HudModel hud = HudModel();
   DeadbounceGame? game;
   SoundManager? _sound;
   int? _challengeSeed;
   String? _challengeDate;
+  String? _tournamentId;
   int _previousBestScore = 0;
 
   /// Completes early when the player taps to skip the death beat.
@@ -73,7 +82,11 @@ class GameSessionCubit extends Cubit<GameSessionState>
 
     final GameRng rng;
     ChallengeConfig? challengeConfig;
-    if (dailyChallenge) {
+    if (_isTournament) {
+      _tournamentId = tournamentContext!.tournamentId;
+      challengeConfig = tournamentContext!.config;
+      rng = GameRng(tournamentContext!.seed);
+    } else if (dailyChallenge) {
       final today = DateTime.now().toUtc();
       _challengeSeed = GameRng.dailySeed(today);
       _challengeDate = CalendarDay.utc(today);
@@ -86,7 +99,8 @@ class GameSessionCubit extends Cubit<GameSessionState>
 
     final arena = rng.fork('arena').pick(ArenaCatalog.all);
     AppLogger.talker.info(
-      '[game] startRun dailyChallenge=$dailyChallenge arena=${arena.id}',
+      '[game] startRun dailyChallenge=$dailyChallenge '
+      'tournament=${_tournamentId ?? '-'} arena=${arena.id}',
     );
     final settings = await _settingsRepository.load();
 
@@ -97,8 +111,8 @@ class GameSessionCubit extends Cubit<GameSessionState>
     _sound = sound;
 
     // Permanent Gunsmith perks apply to normal runs only — daily challenges
-    // stay fair and identical for everyone.
-    final loadout = dailyChallenge
+    // AND tournaments stay fair and identical for everyone.
+    final loadout = (dailyChallenge || _isTournament)
         ? MetaLoadout.empty
         : _buildLoadout(await _metaRepository.ownedLevels());
 
@@ -205,6 +219,7 @@ class GameSessionCubit extends Cubit<GameSessionState>
       isDailyChallenge: dailyChallenge,
       challengeDate: _challengeDate,
       challengeSeed: _challengeSeed,
+      tournamentId: _tournamentId,
     );
 
     AppLogger.talker.info(
@@ -262,6 +277,9 @@ class GameSessionCubit extends Cubit<GameSessionState>
 
   /// (headline, detail) for the death beat, in the Deadbounce voice.
   (String, String) _describeDeath(RunStatsSnapshot stats) {
+    if (_isTournament) {
+      return ('TOURNAMENT RUN OVER', 'Your run is locked in.');
+    }
     if (dailyChallenge) {
       return ('CHALLENGE OVER', 'Your daily run ends here.');
     }

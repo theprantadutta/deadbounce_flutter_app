@@ -20,6 +20,7 @@ class RunResult extends Equatable {
     this.isDailyChallenge = false,
     this.challengeDate,
     this.challengeSeed,
+    this.tournamentId,
   });
 
   final String id;
@@ -45,6 +46,9 @@ class RunResult extends Equatable {
   final String? challengeDate;
   final int? challengeSeed;
 
+  /// Tournament id when this run was a tournament entry.
+  final String? tournamentId;
+
   @override
   List<Object?> get props => [
         id,
@@ -62,5 +66,6 @@ class RunResult extends Equatable {
         isDailyChallenge,
         challengeDate,
         challengeSeed,
+        tournamentId,
       ];
 }

@@ -17,6 +17,9 @@ import '../../features/settings/data/repositories/settings_repository_impl.dart'
 import '../../features/settings/domain/repositories/settings_repository.dart';
 import '../../features/statistics/data/repositories/statistics_repository_impl.dart';
 import '../../features/statistics/domain/repositories/statistics_repository.dart';
+import '../../features/tournaments/data/datasources/tournament_api.dart';
+import '../../features/tournaments/data/repositories/tournament_repository_impl.dart';
+import '../../features/tournaments/domain/repositories/tournament_repository.dart';
 import '../../features/runs/data/repositories/runs_repository_impl.dart';
 import '../../features/runs/domain/repositories/runs_repository.dart';
 import '../../features/streak/data/repositories/login_streak_repository_impl.dart';
@@ -54,6 +57,7 @@ class SessionDependencies {
     required this.settingsRepository,
     required this.statisticsRepository,
     required this.metaRepository,
+    required this.tournamentRepository,
   });
 
   factory SessionDependencies.create({
@@ -100,6 +104,11 @@ class SessionDependencies {
       settingsRepository: SettingsRepositoryImpl(db),
       statisticsRepository: StatisticsRepositoryImpl(db),
       metaRepository: MetaRepositoryImpl(db: db, outboxWriter: outboxWriter),
+      tournamentRepository: TournamentRepositoryImpl(
+        db: db,
+        api: TournamentApi(apiClient),
+        outboxWriter: outboxWriter,
+      ),
     );
   }
 
@@ -120,6 +129,7 @@ class SessionDependencies {
   final SettingsRepository settingsRepository;
   final StatisticsRepository statisticsRepository;
   final MetaRepository metaRepository;
+  final TournamentRepository tournamentRepository;
 
   bool _started = false;
   final Completer<void> _ready = Completer<void>();

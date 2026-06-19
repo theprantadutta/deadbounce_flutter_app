@@ -11,6 +11,7 @@ import 'daos/settings_dao.dart';
 import 'daos/stats_dao.dart';
 import 'daos/streak_dao.dart';
 import 'daos/sync_outbox_dao.dart';
+import 'daos/tournament_dao.dart';
 import 'tables/achievement_states_table.dart';
 import 'tables/challenge_attempts_table.dart';
 import 'tables/coin_balance_table.dart';
@@ -24,6 +25,7 @@ import 'tables/runs_table.dart';
 import 'tables/settings_table.dart';
 import 'tables/stat_counters_table.dart';
 import 'tables/sync_outbox_table.dart';
+import 'tables/tournament_table.dart';
 
 part 'app_database.g.dart';
 
@@ -47,6 +49,8 @@ part 'app_database.g.dart';
     SettingsEntries,
     SyncOutbox,
     MetaUpgrades,
+    Tournaments,
+    TournamentLeaderboardCache,
   ],
   daos: [
     ProfileDao,
@@ -60,13 +64,14 @@ part 'app_database.g.dart';
     SettingsDao,
     SyncOutboxDao,
     MetaUpgradesDao,
+    TournamentDao,
   ],
 )
 class AppDatabase extends _$AppDatabase {
   AppDatabase(super.e);
 
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 3;
 
   /// Wipes all gameplay/account data on this device in one transaction,
   /// **preserving the settings table** (device preferences). Clearing the
@@ -86,6 +91,8 @@ class AppDatabase extends _$AppDatabase {
         await delete(leaderboardSyncMeta).go();
         await delete(syncOutbox).go();
         await delete(metaUpgrades).go();
+        await delete(tournaments).go();
+        await delete(tournamentLeaderboardCache).go();
       });
 
   @override
@@ -113,6 +120,11 @@ class AppDatabase extends _$AppDatabase {
         onUpgrade: (m, from, to) async {
           if (from < 2) {
             await m.createTable(metaUpgrades);
+          }
+          if (from < 3) {
+            await m.createTable(tournaments);
+            await m.createTable(tournamentLeaderboardCache);
+            await m.addColumn(runs, runs.tournamentId);
           }
         },
       );

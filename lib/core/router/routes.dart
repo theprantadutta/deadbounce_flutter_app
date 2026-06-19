@@ -15,5 +15,13 @@ abstract final class Routes {
   static const String howToPlay = '/how-to-play';
   static const String credits = '/credits';
   static const String gunsmith = '/gunsmith';
+  static const String tournaments = '/tournaments';
+
+  /// Tournament detail — append the id, e.g. `/tournament/<id>`.
+  static const String tournamentDetail = '/tournament';
+
+  /// Tournament run — append the tournament id, e.g. `/game/tournament/<id>`.
+  static const String tournamentRun = '/game/tournament';
+
   static const String logs = '/logs'; // debug-only diagnostics viewer
 }

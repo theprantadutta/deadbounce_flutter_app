@@ -13,6 +13,7 @@ import 'cubit/game_session_cubit.dart';
 import 'debug/tuning_panel.dart';
 import 'game/components/deadbounce_game.dart';
 import 'game/hud_model.dart';
+import 'game/tournament_run_context.dart';
 import 'overlays/hud_overlay.dart';
 import 'overlays/pause_overlay.dart';
 import 'overlays/run_ending_overlay.dart';
@@ -23,9 +24,14 @@ import 'overlays/upgrade_picker_overlay.dart';
 /// normal Flutter widgets stacked over the GameWidget, driven by the
 /// session cubit — the game pauses underneath the overlays.
 class GamePage extends StatelessWidget {
-  const GamePage({super.key, this.dailyChallenge = false});
+  const GamePage({
+    super.key,
+    this.dailyChallenge = false,
+    this.tournamentContext,
+  });
 
   final bool dailyChallenge;
+  final TournamentRunContext? tournamentContext;
 
   @override
   Widget build(BuildContext context) {
@@ -38,6 +44,7 @@ class GamePage extends StatelessWidget {
         syncWorker: session.syncWorker,
         metaRepository: session.metaRepository,
         dailyChallenge: dailyChallenge,
+        tournamentContext: tournamentContext,
       )..startRun(),
       child: const _GameView(),
     );

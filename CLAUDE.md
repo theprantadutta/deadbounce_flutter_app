@@ -109,6 +109,24 @@ leak across cases (keeps daily-challenge wave goldens deterministic).
   seed (`engine/challenge/`), identical worldwide and offline — forced enemy type,
   +wall damage, heart cap, score multiplier, or random-dealt upgrades. Scores submit
   to a separate daily-challenge board.
+- **Tournaments** (`features/tournaments/`): the **backend generates** seeded,
+  time-limited competitions in **daily/weekly/monthly** cadences (fees + reward pools
+  scale by length); the client fetches them **cache-first** (`tournament_cache` Drift
+  table + `TournamentDao`, mirrors the leaderboard cache). A server tournament's
+  ruleset is JSON that `Tournament.toChallengeConfig()` maps onto the engine's
+  `ChallengeConfig` + shared `seed`, so a tournament run **reuses the entire
+  daily-challenge run path** (perks off for fairness). Flow: **join is online** (POST,
+  pays a coin entry fee — `CoinReason.tournamentEntry`, synced as a `coinTxn` carrying
+  `tournament_id`; the server flips the entry to paid) and caches the seed/config so
+  you can **play offline** (best score counts; the run enqueues a `tournamentScore`
+  outbox event and updates the local best — it does NOT emit the global `scoreSubmit`).
+  When the window closes a Hangfire sweep ranks paid entries and assigns rank rewards;
+  the client fetches the result and **claims** (`CoinReason.tournamentReward` coinTxn,
+  amount validated server-side against the finalized payout, single-claim). Run path:
+  `GameSessionCubit.tournamentContext` → `Routes.tournamentRun`. **Offline:**
+  list/board/result are cache-first with an offline banner; **join + claim need
+  connectivity**, playing a joined tournament does not. (`TournamentRunContext`,
+  `tournaments_screen`/`tournament_detail_screen`, `tournaments_feature_card` on home.)
 - **The Gunsmith** (`features/meta/`): the coin SINK / permanent meta-progression.
   Spend coins on tiered perks that apply to **every normal run** (not daily
   challenges — those stay fair): Reinforced Heart, Iron Resolve, Quick Hands, Keen
