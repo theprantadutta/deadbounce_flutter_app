@@ -32,10 +32,11 @@ class DbLoadingScene extends StatefulWidget {
 
 class _DbLoadingSceneState extends State<DbLoadingScene>
     with TickerProviderStateMixin {
-  late final AnimationController _pulse = AnimationController(
-    vsync: this,
-    duration: const Duration(milliseconds: 1400),
-  )..repeat(reverse: true);
+  // Created eagerly in initState (only when shown) — never lazily, so the
+  // ticker is born while the element is active. A `late final` initializer
+  // would run on first access, which for a logo-less scene is dispose() —
+  // creating an AnimationController on a deactivated widget and crashing.
+  AnimationController? _pulse;
 
   Timer? _tipTimer;
   int _tipIndex = 0;
@@ -43,6 +44,12 @@ class _DbLoadingSceneState extends State<DbLoadingScene>
   @override
   void initState() {
     super.initState();
+    if (widget.showLogo) {
+      _pulse = AnimationController(
+        vsync: this,
+        duration: const Duration(milliseconds: 1400),
+      )..repeat(reverse: true);
+    }
     if (widget.tips.length > 1) {
       _tipTimer = Timer.periodic(const Duration(milliseconds: 2600), (_) {
         if (mounted) {
@@ -54,8 +61,8 @@ class _DbLoadingSceneState extends State<DbLoadingScene>
 
   @override
   void dispose() {
-    _pulse.dispose();
     _tipTimer?.cancel();
+    _pulse?.dispose();
     super.dispose();
   }
 
@@ -71,10 +78,10 @@ class _DbLoadingSceneState extends State<DbLoadingScene>
             child: Column(
               children: [
                 const Spacer(flex: 3),
-                if (widget.showLogo)
+                if (widget.showLogo && _pulse != null)
                   ScaleTransition(
                     scale: Tween(begin: 0.94, end: 1.06).animate(
-                      CurvedAnimation(parent: _pulse, curve: Curves.easeInOut),
+                      CurvedAnimation(parent: _pulse!, curve: Curves.easeInOut),
                     ),
                     child: const DbLogo(size: 104),
                   ),
