@@ -50,6 +50,12 @@ abstract final class AppTheme {
       appBarTheme: AppBarTheme(
         backgroundColor: Colors.transparent,
         elevation: 0,
+        // Never paint a surface tint/shadow when content scrolls under the
+        // bar (Material 3 does this by default). The app's own screens use a
+        // custom transparent header; this only covers the debug Talker screen.
+        scrolledUnderElevation: 0,
+        surfaceTintColor: Colors.transparent,
+        shadowColor: Colors.transparent,
         centerTitle: true,
         titleTextStyle: textTheme.headlineSmall,
         iconTheme: const IconThemeData(color: AppColors.textPrimary),
