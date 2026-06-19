@@ -21,6 +21,10 @@ class MusicManager {
   bool _enabled = true;
   MusicTrack? _current;
 
+  /// True while playback is suspended because the app left the foreground —
+  /// so we only resume music that we ourselves paused.
+  bool _pausedForBackground = false;
+
   set enabled(bool value) {
     if (_enabled == value) return;
     _enabled = value;
@@ -50,6 +54,27 @@ class MusicManager {
   void stop() {
     _current = null;
     _stop();
+  }
+
+  /// The app left the foreground (home button, app switcher, screen off) —
+  /// pause the loop so it isn't heard outside the game.
+  void handleAppPaused() {
+    if (_current == null || _pausedForBackground) return;
+    _pausedForBackground = true;
+    try {
+      FlameAudio.bgm.pause();
+    } catch (_) {}
+  }
+
+  /// The app returned to the foreground — resume the loop we paused (only if
+  /// music is still enabled and a track was playing).
+  void handleAppResumed() {
+    if (!_pausedForBackground) return;
+    _pausedForBackground = false;
+    if (!_enabled || _current == null) return;
+    try {
+      FlameAudio.bgm.resume();
+    } catch (_) {}
   }
 
   void _stop() {

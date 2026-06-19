@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart' show FirebaseAuth;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import 'core/audio/music_manager.dart';
 import 'core/di/session_dependencies.dart';
 import 'core/network/api_client.dart';
 import 'core/router/app_router.dart';
@@ -33,7 +34,8 @@ class DeadbounceApp extends StatefulWidget {
   State<DeadbounceApp> createState() => _DeadbounceAppState();
 }
 
-class _DeadbounceAppState extends State<DeadbounceApp> {
+class _DeadbounceAppState extends State<DeadbounceApp>
+    with WidgetsBindingObserver {
   late final TokenStorage _tokenStorage = TokenStorage();
   late final ApiClient _apiClient = ApiClient(_tokenStorage);
   late final AuthRepository _authRepository = _buildAuthRepository();
@@ -53,6 +55,34 @@ class _DeadbounceAppState extends State<DeadbounceApp> {
           await repo.refreshSessionToken() == SessionRefreshOutcome.refreshed,
     );
     return repo;
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // Don't let the background music play while the app isn't on screen.
+    switch (state) {
+      case AppLifecycleState.resumed:
+        MusicManager.instance.handleAppResumed();
+      case AppLifecycleState.paused:
+      case AppLifecycleState.hidden:
+      case AppLifecycleState.detached:
+        MusicManager.instance.handleAppPaused();
+      case AppLifecycleState.inactive:
+        // Transient (system dialogs, app-switcher peek) — leave music alone.
+        break;
+    }
   }
 
   @override
