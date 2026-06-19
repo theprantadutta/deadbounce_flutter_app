@@ -1,9 +1,12 @@
+import 'dart:async';
+
 import 'package:deadbounce_flutter_app/core/logging/app_logger.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../domain/entities/auth_user.dart';
 import '../../domain/repositories/auth_repository.dart';
+import '../../domain/usecases/refresh_session.dart';
 import '../../domain/usecases/restore_session.dart';
 import '../../domain/usecases/sign_in_as_guest.dart';
 import '../../domain/usecases/sign_in_with_email.dart';
@@ -20,6 +23,7 @@ class AuthCubit extends Cubit<AuthState> {
     required this._signInWithGoogle,
     required this._signInAsGuest,
     required this._restoreSession,
+    required this._refreshSession,
     required this._signOut,
   }) : super(const AuthInitial());
 
@@ -28,17 +32,36 @@ class AuthCubit extends Cubit<AuthState> {
   final SignInWithGoogle _signInWithGoogle;
   final SignInAsGuest _signInAsGuest;
   final RestoreSession _restoreSession;
+  final RefreshSession _refreshSession;
   final SignOut _signOut;
 
-  /// Called from the splash screen: try to resume the stored session.
+  /// Called from the splash screen: resume the stored session offline-first
+  /// (no network), then reconcile with the server in the background.
   Future<void> restoreSession() async {
     emit(const AuthLoading(AuthAction.restore));
     try {
       final user = await _restoreSession();
-      emit(user != null ? AuthAuthenticated(user) : const AuthUnauthenticated());
+      if (user == null) {
+        emit(const AuthUnauthenticated());
+        return;
+      }
+      emit(AuthAuthenticated(user));
+      unawaited(_reconcileSession());
     } catch (e, st) {
       AppLogger.talker.handle(e, st, '[auth] restoreSession failed');
       emit(const AuthUnauthenticated());
+    }
+  }
+
+  /// Background, non-blocking: silently refresh the JWT once connectivity
+  /// allows. Only signs out when the server EXPLICITLY rejects the identity
+  /// (account disabled/deleted) — never on a mere network/offline error, so an
+  /// offline player is never kicked out.
+  Future<void> _reconcileSession() async {
+    final outcome = await _refreshSession();
+    if (outcome == SessionRefreshOutcome.identityRejected) {
+      AppLogger.talker.warning('[auth] session rejected by server — signing out');
+      await signOut();
     }
   }
 

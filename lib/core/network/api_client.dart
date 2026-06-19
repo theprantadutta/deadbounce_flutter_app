@@ -41,6 +41,14 @@ class ApiClient {
           }
           handler.next(options);
         },
+        onError: (e, handler) async {
+          final recovered = await _maybeRecoverFrom(e);
+          if (recovered != null) {
+            handler.resolve(recovered);
+            return;
+          }
+          handler.next(e);
+        },
       ),
     );
 
@@ -61,6 +69,56 @@ class ApiClient {
 
   final Dio _dio;
   final TokenStorage _tokenStorage;
+
+  /// Silently mints a fresh token when a request 401s. Returns true if a new
+  /// token is now stored. Injected after construction (the auth repository
+  /// depends on this client, so the wiring can't be a constructor arg).
+  Future<bool> Function()? _sessionRefresher;
+
+  /// In-flight refresh, so concurrent 401s share one re-exchange.
+  Future<bool>? _refreshing;
+
+  /// Marks a request we've already retried once, to prevent 401 loops.
+  static const String _retriedFlag = 'db_retried_after_refresh';
+
+  /// Wires the session refresher used to recover from 401s. Call once at boot.
+  void attachSessionRefresher(Future<bool> Function() refresher) {
+    _sessionRefresher = refresher;
+  }
+
+  /// On a 401 (other than the refresh endpoint itself, and only once per
+  /// request), refresh the token and replay the original request. Returns the
+  /// replayed response on success, or null to let the original error surface.
+  Future<Response<dynamic>?> _maybeRecoverFrom(DioException e) async {
+    final refresher = _sessionRefresher;
+    final request = e.requestOptions;
+    if (refresher == null ||
+        e.response?.statusCode != 401 ||
+        request.path.contains('/auth/firebase') ||
+        request.extra[_retriedFlag] == true) {
+      return null;
+    }
+
+    final refreshed = await (_refreshing ??= refresher());
+    _refreshing = null;
+    if (!refreshed) return null;
+
+    final token = await _tokenStorage.readAccessToken();
+    final headers = Map<String, dynamic>.from(request.headers);
+    if (token != null && token.isNotEmpty) {
+      headers['Authorization'] = 'Bearer $token';
+    }
+    try {
+      return await _dio.fetch<dynamic>(
+        request.copyWith(
+          headers: headers,
+          extra: {...request.extra, _retriedFlag: true},
+        ),
+      );
+    } on DioException {
+      return null; // replay failed — surface the original error path
+    }
+  }
 
   Future<Map<String, dynamic>> get(String path) async {
     try {

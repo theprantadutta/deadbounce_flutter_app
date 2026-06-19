@@ -150,6 +150,21 @@ The game is 100% playable offline after first sign-in.**
 - **Conflict policy**: the client is authoritative for its own gameplay data (server
   applies events); the server is authoritative for leaderboards and validated
   aggregates. Multi-device divergence (e.g. local streak) is accepted by design.
+- **Offline session restore**: **first login needs internet** (the server provisions
+  the user + mints the JWT), but every cold start after that is offline-capable.
+  `_exchange` caches the `AuthUser` via `AuthLocalDataSource` (secure storage);
+  `restoreSession()` returns that cached identity **with no network call** (falling
+  back to a `FirebaseAuth.currentUser`-derived identity for pre-cache tokens), so the
+  app stays logged in with zero connectivity. The old blocking `GET /auth/me` is gone
+  from the boot path. The Deadbounce JWT is **stateless, 7-day expiry**:
+  `AuthRepository.refreshSessionToken()` silently re-exchanges the current Firebase
+  identity via `POST /auth/firebase` (works even when the old JWT has expired). It runs
+  two ways — (1) `ApiClient` has an `onError` interceptor that, on a **401** (never on
+  the `/auth/firebase` path, once per request, single-flight), refreshes and replays
+  the original request, so sync self-heals after the token expires; (2) `AuthCubit`
+  fires a background reconcile after an offline restore and **only signs out on an
+  explicit identity rejection** (`SessionRefreshOutcome.identityRejected` — account
+  disabled/deleted or backend 401/403), never on a network error.
 
 ## Project structure
 

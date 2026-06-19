@@ -8,12 +8,14 @@ import 'core/router/app_router.dart';
 import 'core/storage/token_storage.dart';
 import 'core/theme/app_theme.dart';
 import 'features/auth/data/datasources/auth_firebase_datasource.dart';
+import 'features/auth/data/datasources/auth_local_datasource.dart';
 import 'features/auth/data/datasources/auth_remote_datasource.dart';
 import 'features/auth/data/repositories/auth_repository_impl.dart';
 import 'features/auth/domain/repositories/auth_repository.dart';
 import 'features/auth/domain/usecases/restore_session.dart';
 import 'features/auth/domain/usecases/sign_in_as_guest.dart';
 import 'features/auth/domain/usecases/sign_in_with_email.dart';
+import 'features/auth/domain/usecases/refresh_session.dart';
 import 'features/auth/domain/usecases/sign_in_with_google.dart';
 import 'features/auth/domain/usecases/sign_out.dart';
 import 'features/auth/domain/usecases/sign_up_with_email.dart';
@@ -34,12 +36,24 @@ class DeadbounceApp extends StatefulWidget {
 class _DeadbounceAppState extends State<DeadbounceApp> {
   late final TokenStorage _tokenStorage = TokenStorage();
   late final ApiClient _apiClient = ApiClient(_tokenStorage);
-  late final AuthRepository _authRepository = AuthRepositoryImpl(
-    firebaseDataSource: AuthFirebaseDataSource(),
-    remoteDataSource: AuthRemoteDataSource(_apiClient),
-    tokenStorage: _tokenStorage,
-  );
+  late final AuthRepository _authRepository = _buildAuthRepository();
   late final _router = buildRouter();
+
+  AuthRepository _buildAuthRepository() {
+    final repo = AuthRepositoryImpl(
+      firebaseDataSource: AuthFirebaseDataSource(),
+      remoteDataSource: AuthRemoteDataSource(_apiClient),
+      localDataSource: AuthLocalDataSource(),
+      tokenStorage: _tokenStorage,
+    );
+    // Let the API client self-heal a 401 by silently re-exchanging the
+    // Firebase identity for a fresh JWT (covers the expired-token case).
+    _apiClient.attachSessionRefresher(
+      () async =>
+          await repo.refreshSessionToken() == SessionRefreshOutcome.refreshed,
+    );
+    return repo;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -54,6 +68,7 @@ class _DeadbounceAppState extends State<DeadbounceApp> {
             signInWithGoogle: SignInWithGoogle(_authRepository),
             signInAsGuest: SignInAsGuest(_authRepository),
             restoreSession: RestoreSession(_authRepository),
+            refreshSession: RefreshSession(_authRepository),
             signOut: SignOut(_authRepository),
           ),
           child: _SessionScope(

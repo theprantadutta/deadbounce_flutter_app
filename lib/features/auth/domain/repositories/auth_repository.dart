@@ -16,6 +16,20 @@ class AuthCancelled implements Exception {
   const AuthCancelled();
 }
 
+/// Result of a silent session-token refresh.
+enum SessionRefreshOutcome {
+  /// A fresh JWT was minted and stored.
+  refreshed,
+
+  /// The server/Firebase explicitly rejected the identity (account disabled or
+  /// deleted) — the session should be ended.
+  identityRejected,
+
+  /// Couldn't refresh right now (offline, no Firebase user yet, server down) —
+  /// keep the current session and try again later.
+  unavailable,
+}
+
 /// Contract the presentation layer talks to. Implementations live in the
 /// data layer (Firebase sign-in + Deadbounce token exchange + storage).
 abstract interface class AuthRepository {
@@ -33,9 +47,15 @@ abstract interface class AuthRepository {
 
   Future<AuthUser> signInAsGuest();
 
-  /// Restores a previous session from the stored token, validating it
-  /// against the backend. Returns null when there is no valid session.
+  /// Restores a previous session from local storage WITHOUT a network call,
+  /// so the app stays logged in offline. Returns null when there is no stored
+  /// session (first login requires internet).
   Future<AuthUser?> restoreSession();
+
+  /// Silently mints a fresh Deadbounce JWT by re-exchanging the current
+  /// Firebase identity (works even if the old JWT has expired). See
+  /// [SessionRefreshOutcome] for how callers should react.
+  Future<SessionRefreshOutcome> refreshSessionToken();
 
   Future<void> signOut();
 }

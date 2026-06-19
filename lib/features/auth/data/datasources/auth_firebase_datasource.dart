@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
 import '../../../../core/config/app_config.dart';
+import '../../domain/entities/auth_user.dart';
 import '../../domain/repositories/auth_repository.dart';
 
 /// Wraps the Firebase client SDK sign-in flows. Every provider funnels to
@@ -21,6 +22,34 @@ class AuthFirebaseDataSource {
 
   bool get isCurrentUserAnonymous =>
       _firebaseAuth.currentUser?.isAnonymous ?? false;
+
+  /// True when Firebase still holds a persisted user (survives offline cold
+  /// starts) — i.e. there is an identity we can silently re-exchange for a
+  /// fresh Deadbounce JWT once back online.
+  bool get hasCurrentUser => _firebaseAuth.currentUser != null;
+
+  /// A fresh Firebase ID token for the CURRENT persisted user, or null if
+  /// there is none. [forceRefresh] re-mints it (needed when the cached one
+  /// may be stale). Network is required only when actually refreshing.
+  Future<String?> currentUserIdToken({bool forceRefresh = true}) =>
+      _firebaseAuth.currentUser?.getIdToken(forceRefresh) ??
+      Future<String?>.value();
+
+  /// A minimal identity rebuilt from Firebase's persisted user (offline-safe),
+  /// or null if there is none. Used only as a fallback when no backend identity
+  /// is cached yet — note [AuthUser.id] is the Firebase uid here, replaced by
+  /// the authoritative backend id on the next online refresh.
+  AuthUser? get firebaseIdentity {
+    final u = _firebaseAuth.currentUser;
+    if (u == null) return null;
+    return AuthUser(
+      id: u.uid,
+      isAnonymous: u.isAnonymous,
+      email: u.email,
+      displayName: u.displayName,
+      photoUrl: u.photoURL,
+    );
+  }
 
   Future<String> signInWithEmail({
     required String email,
