@@ -1,13 +1,19 @@
 import 'package:flutter/material.dart';
 
-import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_dimens.dart';
-import '../../../../core/theme/app_effects.dart';
 import '../game/hud_model.dart';
+import 'hud/boss_bar.dart';
+import 'hud/chain_meter.dart';
+import 'hud/command_bar.dart';
+import 'hud/readiness_pips.dart';
+import 'hud/upgrade_tray.dart';
+import 'hud/wave_banner.dart';
 
-/// Minimal, readable, out of the thumb's way: hearts top-left, wave
-/// center, score/coins top-right, pause button. Each value listens
-/// independently — no full-overlay rebuilds at game speed.
+/// The in-play HUD: a unified neon "command bar" up top (life | wave +
+/// progress | score/coins/pause), a live chain meter and boss bar beneath
+/// it, a transient wave banner, and a thumb-zone strip (drafted-upgrade
+/// tray + fire/dash readiness). Everything listens per-value so only tiny
+/// widgets rebuild at game speed — no full-overlay rebuilds.
 class HudOverlay extends StatelessWidget {
   const HudOverlay({super.key, required this.hud, required this.onPause});
 
@@ -16,89 +22,38 @@ class HudOverlay extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-    final effects = Theme.of(context).extension<AppEffects>()!;
-
     return SafeArea(
       child: Padding(
         padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.md,
+          horizontal: AppSpacing.sm,
           vertical: AppSpacing.xs,
         ),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        child: Column(
           children: [
-            // Hearts.
-            ValueListenableBuilder<int>(
-              valueListenable: hud.hearts,
-              builder: (context, hearts, _) => ValueListenableBuilder<int>(
-                valueListenable: hud.maxHearts,
-                builder: (context, maxHearts, _) => Row(
-                  children: [
-                    for (var i = 0; i < maxHearts; i++)
-                      Padding(
-                        padding: const EdgeInsets.only(right: 2),
-                        child: Icon(
-                          i < hearts
-                              ? Icons.favorite
-                              : Icons.favorite_border,
-                          size: 22,
-                          color: i < hearts
-                              ? AppColors.error
-                              : AppColors.ink400,
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-            ),
-            const Spacer(),
-            // Wave + score + coins.
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
+            CommandBar(hud: hud, onPause: onPause),
+            BossBar(hud: hud),
+            const SizedBox(height: AppSpacing.xs),
+            // Hero chain meter + the transient wave banner share the top
+            // band over the arena. The banner ignores pointer events.
+            Stack(
+              alignment: Alignment.topCenter,
               children: [
-                ValueListenableBuilder<int>(
-                  valueListenable: hud.wave,
-                  builder: (context, wave, _) => Text(
-                    'WAVE $wave',
-                    style: textTheme.labelMedium
-                        ?.copyWith(color: AppColors.blue300),
-                  ),
-                ),
-                ValueListenableBuilder<int>(
-                  valueListenable: hud.score,
-                  builder: (context, score, _) => Text(
-                    '$score',
-                    style: textTheme.headlineSmall,
-                  ),
-                ),
-                ValueListenableBuilder<int>(
-                  valueListenable: hud.coins,
-                  builder: (context, coins, _) => Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(Icons.paid,
-                          size: 14, color: AppColors.amber400),
-                      const SizedBox(width: 3),
-                      Text(
-                        '$coins',
-                        style: textTheme.labelMedium
-                            ?.copyWith(color: AppColors.amber300),
-                      ),
-                    ],
-                  ),
+                ChainMeter(hud: hud),
+                Padding(
+                  padding: const EdgeInsets.only(top: AppSpacing.xl),
+                  child: WaveBanner(hud: hud),
                 ),
               ],
             ),
-            const SizedBox(width: AppSpacing.md),
-            DecoratedBox(
-              decoration: effects.glassDecoration,
-              child: IconButton(
-                tooltip: 'Pause',
-                onPressed: onPause,
-                icon: const Icon(Icons.pause, size: 20),
-                visualDensity: VisualDensity.compact,
-              ),
+            const Spacer(),
+            // Thumb-zone strip: build on the left, readiness on the right.
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Expanded(child: UpgradeTray(hud: hud)),
+                const SizedBox(width: AppSpacing.xs),
+                ReadinessPips(hud: hud),
+              ],
             ),
           ],
         ),

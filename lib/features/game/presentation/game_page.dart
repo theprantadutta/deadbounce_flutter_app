@@ -43,6 +43,7 @@ class GamePage extends StatelessWidget {
         settingsRepository: session.settingsRepository,
         syncWorker: session.syncWorker,
         metaRepository: session.metaRepository,
+        cosmeticsRepository: session.cosmeticsRepository,
         dailyChallenge: dailyChallenge,
         tournamentContext: tournamentContext,
       )..startRun(),

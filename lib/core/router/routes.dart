@@ -15,6 +15,11 @@ abstract final class Routes {
   static const String howToPlay = '/how-to-play';
   static const String credits = '/credits';
   static const String gunsmith = '/gunsmith';
+  static const String cosmetics = '/outfitter';
+  static const String trickShot = '/trick-shot';
+
+  /// Trick-shot run — append the level id, e.g. `/trick-shot/run/<id>`.
+  static const String trickShotRun = '/trick-shot/run';
   static const String tournaments = '/tournaments';
 
   /// Tournament detail — append the id, e.g. `/tournament/<id>`.

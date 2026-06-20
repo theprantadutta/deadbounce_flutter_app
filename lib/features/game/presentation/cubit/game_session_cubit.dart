@@ -9,6 +9,7 @@ import 'package:uuid/uuid.dart';
 import '../../../../core/sync/sync_worker.dart';
 import '../../../../core/util/calendar_day.dart';
 import '../../../achievements/domain/repositories/achievements_repository.dart';
+import '../../../cosmetics/domain/repositories/cosmetics_repository.dart';
 import '../../../meta/domain/meta_catalog.dart';
 import '../../../meta/domain/meta_loadout.dart';
 import '../../../meta/domain/repositories/meta_repository.dart';
@@ -42,6 +43,7 @@ class GameSessionCubit extends Cubit<GameSessionState>
     required this._settingsRepository,
     required this._syncWorker,
     required this._metaRepository,
+    required this._cosmeticsRepository,
     this.dailyChallenge = false,
     this.tournamentContext,
     Uuid? uuid,
@@ -53,6 +55,7 @@ class GameSessionCubit extends Cubit<GameSessionState>
   final SettingsRepository _settingsRepository;
   final SyncWorker _syncWorker;
   final MetaRepository _metaRepository;
+  final CosmeticsRepository _cosmeticsRepository;
   final bool dailyChallenge;
 
   /// Set when this session is a tournament run (mutually exclusive with
@@ -116,6 +119,9 @@ class GameSessionCubit extends Cubit<GameSessionState>
         ? MetaLoadout.empty
         : _buildLoadout(await _metaRepository.ownedLevels());
 
+    // Cosmetics are visual-only, so they're fair in every mode.
+    final cosmetics = await _cosmeticsRepository.loadout();
+
     game = DeadbounceGame(
       gateway: this,
       hud: hud,
@@ -127,6 +133,7 @@ class GameSessionCubit extends Cubit<GameSessionState>
       challengeDate: _challengeDate,
       challenge: challengeConfig,
       metaLoadout: loadout,
+      cosmetics: cosmetics,
       gameFeel: GameFeel(
         screenShake: settings.screenShakeEnabled,
         hitStop: settings.hitStopEnabled,
@@ -289,6 +296,10 @@ class GameSessionCubit extends Cubit<GameSessionState>
       'splitter' => 'A Splitter swarmed you.',
       'turret' => "A Turret's shot found you.",
       'warden' => 'The Warden broke you.',
+      'powderkeg' => 'A Powderkeg blast caught you.',
+      'sawbones' => 'A Sawbones patched them up and ran you down.',
+      'ironhide' => 'An Ironhide bulled you over.',
+      'mirror' => 'A Mirror cut you down.',
       _ => 'The arena claimed you.',
     };
     return ('YOU FELL', detail);

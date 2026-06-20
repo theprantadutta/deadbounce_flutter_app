@@ -13,6 +13,10 @@ import '../components/deadbounce_game.dart';
 import '../components/enemies/charger_enemy.dart';
 import '../components/enemies/drifter_enemy.dart';
 import '../components/enemies/enemy_component.dart';
+import '../components/enemies/ironhide_enemy.dart';
+import '../components/enemies/mirror_enemy.dart';
+import '../components/enemies/powderkeg_enemy.dart';
+import '../components/enemies/sawbones_enemy.dart';
 import '../components/enemies/splitter_enemy.dart';
 import '../components/enemies/turret_enemy.dart';
 import '../components/enemies/warden_enemy.dart';
@@ -108,6 +112,18 @@ class SpawnDirector {
           hpMult: hpMult,
           appearance: _wardenAppearances++,
         );
+      case EnemyType.powderkeg:
+        return PowderkegEnemy(
+            position: position, speedMult: speedMult, hpMult: hpMult);
+      case EnemyType.sawbones:
+        return SawbonesEnemy(
+            position: position, speedMult: speedMult, hpMult: hpMult);
+      case EnemyType.ironhide:
+        return IronhideEnemy(
+            position: position, speedMult: speedMult, hpMult: hpMult);
+      case EnemyType.mirror:
+        return MirrorEnemy(
+            position: position, speedMult: speedMult, hpMult: hpMult);
     }
   }
 }

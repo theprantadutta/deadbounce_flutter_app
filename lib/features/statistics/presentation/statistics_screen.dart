@@ -220,6 +220,10 @@ class _EnemyBreakdown extends StatelessWidget {
     ('splitter', 'Splitters', Icons.call_split),
     ('turret', 'Turrets', Icons.gps_fixed),
     ('warden', 'Wardens', Icons.shield),
+    ('powderkeg', 'Powderkegs', Icons.local_fire_department),
+    ('sawbones', 'Sawbones', Icons.healing),
+    ('ironhide', 'Ironhides', Icons.security),
+    ('mirror', 'Mirrors', Icons.flip),
   ];
 
   @override

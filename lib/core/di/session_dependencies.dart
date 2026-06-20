@@ -4,6 +4,8 @@ import '../../features/achievements/data/repositories/achievements_repository_im
 import '../../features/achievements/domain/repositories/achievements_repository.dart';
 import '../../features/challenges/data/repositories/daily_challenge_repository_impl.dart';
 import '../../features/challenges/domain/repositories/daily_challenge_repository.dart';
+import '../../features/cosmetics/data/repositories/cosmetics_repository_impl.dart';
+import '../../features/cosmetics/domain/repositories/cosmetics_repository.dart';
 import '../../features/economy/data/repositories/wallet_repository_impl.dart';
 import '../../features/economy/domain/repositories/wallet_repository.dart';
 import '../../features/leaderboards/data/datasources/leaderboard_api.dart';
@@ -58,6 +60,7 @@ class SessionDependencies {
     required this.statisticsRepository,
     required this.metaRepository,
     required this.tournamentRepository,
+    required this.cosmeticsRepository,
   });
 
   factory SessionDependencies.create({
@@ -109,6 +112,8 @@ class SessionDependencies {
         api: TournamentApi(apiClient),
         outboxWriter: outboxWriter,
       ),
+      cosmeticsRepository:
+          CosmeticsRepositoryImpl(db: db, outboxWriter: outboxWriter),
     );
   }
 
@@ -130,6 +135,7 @@ class SessionDependencies {
   final StatisticsRepository statisticsRepository;
   final MetaRepository metaRepository;
   final TournamentRepository tournamentRepository;
+  final CosmeticsRepository cosmeticsRepository;
 
   bool _started = false;
   final Completer<void> _ready = Completer<void>();

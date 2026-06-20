@@ -26,8 +26,10 @@ class ArenaComponent extends PositionComponent
   static const double _gridSpacing = 80;
 
   late final Paint _floorPaint = Paint()..color = AppColors.ink900;
+  // The blueprint grid takes the equipped arena theme's color (cosmetic,
+  // visual only). The walls themselves stay amber for gameplay readability.
   late final Paint _gridPaint = Paint()
-    ..color = AppColors.blue500.withValues(alpha: 0.07)
+    ..color = game.cosmetics.arenaTheme.primary.withValues(alpha: 0.10)
     ..strokeWidth = 1;
   late final Paint _wallPaint = Paint()
     ..color = AppColors.amber500
@@ -64,6 +66,9 @@ class ArenaComponent extends PositionComponent
     }
 
     for (final segment in segments) {
+      // Mirror faces are drawn by the MirrorEnemy itself, not as walls.
+      if (segment.isMirror) continue;
+
       final a = segment.a.toOffset();
       final b = segment.b.toOffset();
 

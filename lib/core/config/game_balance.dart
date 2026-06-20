@@ -77,6 +77,10 @@ class GameBalance {
   final SplitterBalance splitter = SplitterBalance();
   final TurretBalance turret = TurretBalance();
   final WardenBalance warden = WardenBalance();
+  final PowderkegBalance powderkeg = PowderkegBalance();
+  final SawbonesBalance sawbones = SawbonesBalance();
+  final IronhideBalance ironhide = IronhideBalance();
+  final MirrorBalance mirror = MirrorBalance();
   final WaveBalance waves = WaveBalance();
   final JuiceBalance juice = JuiceBalance();
   final InputBalance input = InputBalance();
@@ -94,6 +98,10 @@ class GameBalance {
     splitter.copyFrom(SplitterBalance());
     turret.copyFrom(TurretBalance());
     warden.copyFrom(WardenBalance());
+    powderkeg.copyFrom(PowderkegBalance());
+    sawbones.copyFrom(SawbonesBalance());
+    ironhide.copyFrom(IronhideBalance());
+    mirror.copyFrom(MirrorBalance());
     waves.copyFrom(WaveBalance());
     juice.copyFrom(JuiceBalance());
     input.copyFrom(InputBalance());
@@ -272,6 +280,55 @@ class GameBalance {
     _p('Warden', 'warden.hpScalePerAppearance', '+HP per appearance',
         () => warden.hpScalePerAppearance,
         (v) => warden.hpScalePerAppearance = v, 0, 1, 0.05),
+
+    // ---- Powderkeg ----
+    _pi('Powderkeg', 'powderkeg.hp', 'HP', () => powderkeg.hp.toDouble(),
+        (v) => powderkeg.hp = v.round(), 1, 10, 1, TuneScope.nextWave),
+    _p('Powderkeg', 'powderkeg.speed', 'Speed', () => powderkeg.speed,
+        (v) => powderkeg.speed = v, 10, 160, 2),
+    _p('Powderkeg', 'powderkeg.radius', 'Radius', () => powderkeg.radius,
+        (v) => powderkeg.radius = v, 12, 48, 1),
+    _p('Powderkeg', 'powderkeg.blastRadius', 'Blast radius',
+        () => powderkeg.blastRadius, (v) => powderkeg.blastRadius = v, 30, 200, 5),
+    _p('Powderkeg', 'powderkeg.fuseDuration', 'Fuse telegraph (s)',
+        () => powderkeg.fuseDuration, (v) => powderkeg.fuseDuration = v,
+        0.2, 2, 0.05),
+
+    // ---- Sawbones ----
+    _pi('Sawbones', 'sawbones.hp', 'HP', () => sawbones.hp.toDouble(),
+        (v) => sawbones.hp = v.round(), 1, 12, 1, TuneScope.nextWave),
+    _p('Sawbones', 'sawbones.speed', 'Speed', () => sawbones.speed,
+        (v) => sawbones.speed = v, 10, 140, 2),
+    _p('Sawbones', 'sawbones.radius', 'Radius', () => sawbones.radius,
+        (v) => sawbones.radius = v, 12, 48, 1),
+    _p('Sawbones', 'sawbones.healInterval', 'Heal interval (s)',
+        () => sawbones.healInterval, (v) => sawbones.healInterval = v, 0.5, 8, 0.1),
+    _p('Sawbones', 'sawbones.healRadius', 'Heal radius',
+        () => sawbones.healRadius, (v) => sawbones.healRadius = v, 40, 240, 5),
+    _pi('Sawbones', 'sawbones.healAmount', 'Heal amount',
+        () => sawbones.healAmount.toDouble(),
+        (v) => sawbones.healAmount = v.round(), 1, 5, 1),
+
+    // ---- Ironhide ----
+    _pi('Ironhide', 'ironhide.hp', 'HP', () => ironhide.hp.toDouble(),
+        (v) => ironhide.hp = v.round(), 1, 16, 1, TuneScope.nextWave),
+    _p('Ironhide', 'ironhide.speed', 'Speed', () => ironhide.speed,
+        (v) => ironhide.speed = v, 8, 120, 2),
+    _p('Ironhide', 'ironhide.radius', 'Radius', () => ironhide.radius,
+        (v) => ironhide.radius = v, 16, 56, 1),
+    _p('Ironhide', 'ironhide.shieldArc', 'Shield arc (deg)',
+        () => ironhide.shieldArcDegrees, (v) => ironhide.shieldArcDegrees = v,
+        30, 200, 5),
+
+    // ---- Mirror ----
+    _pi('Mirror', 'mirror.hp', 'HP', () => mirror.hp.toDouble(),
+        (v) => mirror.hp = v.round(), 1, 8, 1, TuneScope.nextWave),
+    _p('Mirror', 'mirror.speed', 'Speed', () => mirror.speed,
+        (v) => mirror.speed = v, 8, 120, 2),
+    _p('Mirror', 'mirror.radius', 'Radius', () => mirror.radius,
+        (v) => mirror.radius = v, 12, 40, 1),
+    _p('Mirror', 'mirror.width', 'Mirror width', () => mirror.width,
+        (v) => mirror.width = v, 30, 120, 2),
 
     // ---- Waves / difficulty ----
     _p('Waves', 'waves.spawnTelegraph', 'Spawn telegraph (s)',
@@ -570,6 +627,82 @@ class WardenBalance {
     shieldMinBounces = o.shieldMinBounces;
     shieldDownDuration = o.shieldDownDuration;
     hpScalePerAppearance = o.hpScalePerAppearance;
+  }
+}
+
+class PowderkegBalance {
+  int hp = 2;
+  double speed = 38; // slow, like a Drifter
+  double radius = 24;
+
+  /// Radius of the death detonation zone.
+  double blastRadius = 78;
+
+  /// Telegraph window between death and the damaging blast — must be long
+  /// enough to dash clear of (it's a positioning hazard, not a gotcha).
+  double fuseDuration = 0.6;
+
+  void copyFrom(PowderkegBalance o) {
+    hp = o.hp;
+    speed = o.speed;
+    radius = o.radius;
+    blastRadius = o.blastRadius;
+    fuseDuration = o.fuseDuration;
+  }
+}
+
+class SawbonesBalance {
+  int hp = 3;
+  double speed = 34;
+  double radius = 26;
+
+  /// Seconds between heal pulses.
+  double healInterval = 3.0;
+
+  /// Enemies within this radius get healed (excludes other Sawbones/self).
+  double healRadius = 130;
+  int healAmount = 1;
+
+  void copyFrom(SawbonesBalance o) {
+    hp = o.hp;
+    speed = o.speed;
+    radius = o.radius;
+    healInterval = o.healInterval;
+    healRadius = o.healRadius;
+    healAmount = o.healAmount;
+  }
+}
+
+class IronhideBalance {
+  int hp = 6;
+  double speed = 30;
+  double radius = 34;
+
+  /// Frontal shield arc (degrees) facing the player — bullets striking
+  /// within it CLANG off (no damage). Hit it from the side/back via bounces.
+  double shieldArcDegrees = 130;
+
+  void copyFrom(IronhideBalance o) {
+    hp = o.hp;
+    speed = o.speed;
+    radius = o.radius;
+    shieldArcDegrees = o.shieldArcDegrees;
+  }
+}
+
+class MirrorBalance {
+  int hp = 2;
+  double speed = 32;
+  double radius = 20;
+
+  /// Length of the reflecting face (the wall segment) it carries.
+  double width = 64;
+
+  void copyFrom(MirrorBalance o) {
+    hp = o.hp;
+    speed = o.speed;
+    radius = o.radius;
+    width = o.width;
   }
 }
 

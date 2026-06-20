@@ -23,6 +23,7 @@ import 'widgets/hero_orb_rig.dart';
 import 'widgets/home_identity_bar.dart';
 import 'widgets/home_stat_chips.dart';
 import 'widgets/neon_wordmark.dart';
+import 'widgets/outfitter_feature_card.dart';
 import 'widgets/tournaments_feature_card.dart';
 
 /// The living-arena main menu: personalized identity + stats, a neon-sign
@@ -178,7 +179,13 @@ class _HomeViewState extends State<_HomeView> {
                                 children: [
                                   const TournamentsFeatureCard(),
                                   const SizedBox(height: AppSpacing.xs),
-                                  const GunsmithFeatureCard(),
+                                  Row(
+                                    children: const [
+                                      Expanded(child: GunsmithFeatureCard()),
+                                      SizedBox(width: AppSpacing.xs),
+                                      Expanded(child: OutfitterFeatureCard()),
+                                    ],
+                                  ),
                                   const SizedBox(height: AppSpacing.xs),
                                   const DailyChallengeFeatureCard(),
                                   const SizedBox(height: AppSpacing.xs),
@@ -208,6 +215,15 @@ class _HomeViewState extends State<_HomeView> {
                                           label: 'STATS',
                                           onTap: () =>
                                               context.push(Routes.statistics),
+                                        ),
+                                      ),
+                                      const SizedBox(width: AppSpacing.sm),
+                                      Expanded(
+                                        child: _NavTile(
+                                          icon: Icons.adjust,
+                                          label: 'TRICKS',
+                                          onTap: () =>
+                                              context.push(Routes.trickShot),
                                         ),
                                       ),
                                       const SizedBox(width: AppSpacing.sm),

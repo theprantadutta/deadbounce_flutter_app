@@ -58,6 +58,13 @@ abstract class EnemyComponent extends PositionComponent
     if (hp <= 0) die();
   }
 
+  /// Restores HP up to [maxHp] (the Sawbones mender). No-op on the dead.
+  void receiveHeal(int amount) {
+    if (_dead || amount <= 0) return;
+    if (hp >= maxHp) return;
+    hp = (hp + amount).clamp(0, maxHp);
+  }
+
   /// Death — also used by non-bullet sources (fire trails).
   void die({BulletComponent? killer}) {
     if (_dead) return;

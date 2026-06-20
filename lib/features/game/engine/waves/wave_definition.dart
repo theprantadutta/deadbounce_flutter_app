@@ -1,4 +1,15 @@
-enum EnemyType { drifter, smallDrifter, charger, splitter, turret, warden }
+enum EnemyType {
+  drifter,
+  smallDrifter,
+  charger,
+  splitter,
+  turret,
+  warden,
+  powderkeg,
+  sawbones,
+  ironhide,
+  mirror,
+}
 
 /// A batch of one enemy type spawned together (with stagger).
 class SpawnGroup {

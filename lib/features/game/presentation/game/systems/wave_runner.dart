@@ -58,7 +58,15 @@ class WaveRunner extends Component with HasGameReference<DeadbounceGame> {
       }
     }
     _schedule.sort((a, b) => a.at.compareTo(b.at));
+
+    // Wave-progress denominator: everything scheduled to spawn this wave.
+    // (Splitter children spawn on death — an accepted slight under-count.)
+    game.hud.enemiesTotal.value = _schedule.length;
+    game.hud.enemiesRemaining.value = _schedule.length;
   }
+
+  /// Enemies still pending or alive this wave (the progress numerator).
+  int get enemiesRemaining => _schedule.length + _spawner.activeCount;
 
   @override
   void update(double dt) {
@@ -76,6 +84,8 @@ class WaveRunner extends Component with HasGameReference<DeadbounceGame> {
       );
     }
     if (_schedule.isEmpty) _spawningDone = true;
+
+    game.hud.enemiesRemaining.value = enemiesRemaining;
 
     if (_spawningDone && _spawner.activeCount == 0) {
       // Short beat before the upgrade picker so the last kill lands.

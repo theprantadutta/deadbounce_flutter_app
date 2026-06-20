@@ -152,8 +152,10 @@ class BulletComponent extends PositionComponent
   void render(Canvas canvas) {
     final heat =
         (state.bounces / GameBalance.I.bullet.maxBounces).clamp(0.0, 1.0);
-    final hot =
-        Color.lerp(AppColors.amber500, const Color(0xFFFFFFFF), heat)!;
+    // Base hue is the equipped trail cosmetic (visual only); it still goes
+    // white-hot with bounce count so the heat read stays intact.
+    final hot = Color.lerp(
+        game.cosmetics.bulletTrail.primary, const Color(0xFFFFFFFF), heat)!;
 
     // Trail: fading polyline in LOCAL coords (positions are world-space).
     if (_trail.length >= 2) {

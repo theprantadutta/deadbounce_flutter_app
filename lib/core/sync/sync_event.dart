@@ -17,4 +17,8 @@ enum SyncEntityType {
 
   /// A tournament run's score — best-of-window on the player's entry.
   tournamentScore,
+
+  /// The player's full cosmetics aggregate (owned ids + equipped per slot),
+  /// last-writer-wins by its own timestamp. Visual-only, client-authoritative.
+  cosmeticState,
 }

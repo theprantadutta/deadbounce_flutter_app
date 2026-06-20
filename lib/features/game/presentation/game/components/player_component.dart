@@ -5,7 +5,6 @@ import 'package:flame/components.dart';
 import 'package:flame/effects.dart';
 import 'package:flutter/animation.dart' show Curves;
 
-import '../../../../../core/theme/app_colors.dart';
 import '../../../engine/combat/bullet_state.dart';
 import 'package:deadbounce_flutter_app/core/config/game_balance.dart';
 import '../../../engine/upgrades/upgrade_modifier.dart';
@@ -28,6 +27,7 @@ class PlayerComponent extends PositionComponent
   int hearts = GameBalance.I.player.maxHearts;
   int anchorIndex = 1;
   double fireCooldownRemaining = 0;
+  double _fireCooldownTotal = 0;
   double invulnRemaining = 0;
   int shotCounter = 0;
   bool _dashing = false;
@@ -49,6 +49,9 @@ class PlayerComponent extends PositionComponent
       if (fireCooldownRemaining <= 0) game.hud.fireReady.value = true;
     }
     if (invulnRemaining > 0) invulnRemaining -= dt;
+    game.hud.fireCharge.value = _fireCooldownTotal <= 0
+        ? 1
+        : (1 - fireCooldownRemaining / _fireCooldownTotal).clamp(0.0, 1.0);
   }
 
   Vector2 get muzzlePosition => position.clone();
@@ -59,6 +62,7 @@ class PlayerComponent extends PositionComponent
     if (_dashing || index == anchorIndex || game.runEnded) return;
     anchorIndex = index.clamp(0, anchors.length - 1);
     _dashing = true;
+    game.hud.dashReady.value = false;
     invulnRemaining =
         math.max(invulnRemaining, GameBalance.I.player.invulnAfterDash);
 
@@ -71,7 +75,10 @@ class PlayerComponent extends PositionComponent
         duration: GameBalance.I.player.dashDuration,
         curve: Curves.easeOutCubic,
       ),
-      onComplete: () => _dashing = false,
+      onComplete: () {
+        _dashing = false;
+        game.hud.dashReady.value = true;
+      },
     ));
   }
 
@@ -83,6 +90,7 @@ class PlayerComponent extends PositionComponent
     final playerStats = game.modifiers.effectivePlayerStats();
     final bulletStats = game.modifiers.effectiveBulletStats();
     fireCooldownRemaining = playerStats.fireCooldown;
+    _fireCooldownTotal = playerStats.fireCooldown;
     game.hud.fireReady.value = false;
     shotCounter++;
 
@@ -121,6 +129,10 @@ class PlayerComponent extends PositionComponent
 
   void takeProjectileDamage(EnemyProjectileComponent from) =>
       _takeDamage('turret');
+
+  /// Environmental damage from a hazard zone (e.g. a Powderkeg blast),
+  /// attributed to [cause] for the death-beat copy.
+  void takeHazardDamage(String cause) => _takeDamage(cause);
 
   void _takeDamage(String cause) {
     if (invulnRemaining > 0 || game.runEnded) return;
@@ -161,30 +173,33 @@ class PlayerComponent extends PositionComponent
     final readyPulse =
         fireReady ? 0.5 + 0.5 * math.sin(_pulse * 4) : 0.0;
 
+    // Equipped gunslinger skin (cosmetic, visual only): core + trim colors.
+    final skin = game.cosmetics.gunslinger;
+    final core = skin.primary;
+    final trim = skin.secondary;
+    final highlight = Color.lerp(core, const Color(0xFFFFFFFF), 0.6)!;
+
     // Glow halo (stronger when fire is ready).
     canvas.drawCircle(
       Offset.zero,
       r * 1.9,
-      Paint()
-        ..color = AppColors.amber500
-            .withValues(alpha: 0.14 + readyPulse * 0.08),
+      Paint()..color = core.withValues(alpha: 0.14 + readyPulse * 0.08),
     );
 
-    // Electric-blue trim ring.
+    // Trim ring.
     canvas.drawCircle(
       Offset.zero,
       r,
       Paint()
         ..style = PaintingStyle.stroke
         ..strokeWidth = 3.5
-        ..color = AppColors.blue400,
+        ..color = trim,
     );
 
-    // Amber core.
-    canvas.drawCircle(
-        Offset.zero, r * 0.72, Paint()..color = AppColors.amber500);
+    // Core.
+    canvas.drawCircle(Offset.zero, r * 0.72, Paint()..color = core);
     canvas.drawCircle(Offset(-r * 0.2, -r * 0.2), r * 0.22,
-        Paint()..color = AppColors.amber100);
+        Paint()..color = highlight);
 
     // Hat-brim glow arc above.
     canvas.drawArc(
@@ -196,7 +211,7 @@ class PlayerComponent extends PositionComponent
         ..style = PaintingStyle.stroke
         ..strokeWidth = 5
         ..strokeCap = StrokeCap.round
-        ..color = AppColors.blue300,
+        ..color = trim,
     );
   }
 }

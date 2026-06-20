@@ -14,9 +14,11 @@ import '../../../engine/game_rng.dart';
 import '../../../engine/physics/ricochet_solver.dart';
 import '../../../engine/physics/wall_segment.dart';
 import 'package:deadbounce_flutter_app/core/config/game_balance.dart';
+import 'package:deadbounce_flutter_app/features/cosmetics/domain/cosmetic_loadout.dart';
 import 'package:deadbounce_flutter_app/features/meta/domain/meta_loadout.dart';
 
 import '../../../engine/trajectory/trajectory_predictor.dart';
+import '../../../engine/trickshot/trickshot_level.dart';
 import '../../../engine/upgrades/run_modifiers.dart';
 import '../../../engine/upgrades/upgrade_card.dart';
 import '../../../engine/upgrades/upgrade_catalog.dart';
@@ -40,6 +42,7 @@ import 'fire_trail_component.dart';
 import 'player_component.dart';
 import 'popup_text_component.dart';
 import 'trajectory_component.dart';
+import 'trickshot_target_component.dart';
 
 /// The Deadbounce arena game. Implements [GameWorldOps] so upgrade
 /// modifiers act on the world through a seam that tests can fake.
@@ -56,7 +59,12 @@ class DeadbounceGame extends FlameGame implements GameWorldOps {
     this.challenge,
     this.metaLoadout = const MetaLoadout(),
     this.gameFeel = const GameFeel(),
+    this.trickShotLevel,
+    this.onTrickShotComplete,
+    this.onTrickShotProgress,
+    CosmeticLoadout? cosmetics,
   })  : haptics = hapticsService,
+        cosmetics = cosmetics ?? CosmeticLoadout.stock,
         super(
           camera: CameraComponent.withFixedResolution(
             width: arenaWidth,
@@ -84,6 +92,22 @@ class DeadbounceGame extends FlameGame implements GameWorldOps {
   /// Player-chosen feel/accessibility options (shake, hit-stop, aim guide,
   /// combat text, particle budget). Read by the systems below.
   final GameFeel gameFeel;
+
+  /// Equipped cosmetics (visual only) — bullet trail, gunslinger skin, arena
+  /// theme. Read live by the render code; never affects gameplay numbers.
+  final CosmeticLoadout cosmetics;
+
+  /// When non-null this is a Trick-Shot run: no waves/enemies, just the
+  /// level's static targets to clear with bounced shots.
+  final TrickShotLevel? trickShotLevel;
+
+  /// Called once every trick-shot target is cleared.
+  final void Function()? onTrickShotComplete;
+
+  /// Called after each target is cleared with the count still remaining.
+  final void Function(int remaining)? onTrickShotProgress;
+
+  int _trickShotRemaining = 0;
 
   /// Extra i-frame seconds after a hit, from the Iron Resolve perk.
   double metaInvulnBonus = 0;
@@ -173,7 +197,41 @@ class DeadbounceGame extends FlameGame implements GameWorldOps {
     hud.maxHearts.value = effectiveMaxHearts();
     hud.hearts.value = player.hearts;
 
+    // Trick-Shot: no waves — drop the level's static targets and wait for the
+    // player to clear them all with bounced shots.
+    if (trickShotLevel != null) {
+      _spawnTrickShotTargets(trickShotLevel!);
+      return;
+    }
+
     waveRunner.startWave(1);
+  }
+
+  void _spawnTrickShotTargets(TrickShotLevel level) {
+    _trickShotRemaining = level.targets.length;
+    for (final t in level.targets) {
+      world.add(TrickShotTargetComponent(
+        position: t.position.clone(),
+        requiredBounces: t.requiredBounces,
+      ));
+    }
+  }
+
+  /// A trick-shot target was cleared — juice it and finish when none remain.
+  void onTrickShotTargetHit(TrickShotTargetComponent target) {
+    juice.killFeedback(
+      position: target.position.clone(),
+      color: target.color,
+      radius: target.bodyRadius,
+      chainLength: 1,
+    );
+    _trickShotRemaining = math.max(0, _trickShotRemaining - 1);
+    onTrickShotProgress?.call(_trickShotRemaining);
+    if (_trickShotRemaining == 0 && !runEnded) {
+      runEnded = true;
+      juice.addTrauma(0.4);
+      onTrickShotComplete?.call();
+    }
   }
 
   @override
@@ -185,6 +243,10 @@ class DeadbounceGame extends FlameGame implements GameWorldOps {
       if (!runEnded) runTime += effective;
       super.update(effective);
     }
+    // Drain the chain meter live (frozen during hit-stop, since runTime is).
+    final chain = scoreSystem.activeChain(runTime);
+    hud.chainLength.value = chain?.length ?? 0;
+    hud.chainRemaining.value = chain?.remaining ?? 0;
   }
 
   // ---- queries used by components ----
@@ -344,7 +406,26 @@ class DeadbounceGame extends FlameGame implements GameWorldOps {
       player.heal(1);
     }
     hud.maxHearts.value = effectiveMaxHearts();
+    publishActiveUpgrades();
     sound.play(Sfx.upgrade);
+  }
+
+  /// Pushes the drafted build (deduped, with stack counts) to the HUD tray.
+  /// Also covers meta perks pre-loaded at run start.
+  void publishActiveUpgrades() {
+    final seen = <String>{};
+    final list = <HudUpgrade>[];
+    for (final id in modifiers.pickedIds) {
+      if (!seen.add(id)) continue;
+      final card = UpgradeCatalog.byId(id);
+      list.add(HudUpgrade(
+        id: id,
+        name: card.name,
+        iconName: card.iconName,
+        stacks: modifiers.stacksOf(id),
+      ));
+    }
+    hud.activeUpgrades.value = list;
   }
 
   void endRun() {

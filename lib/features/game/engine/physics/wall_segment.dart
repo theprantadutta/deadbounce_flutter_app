@@ -9,6 +9,7 @@ class WallSegment {
     required this.normal,
     this.isBoundary = true,
     this.turretSlot,
+    this.isMirror = false,
   });
 
   final Vector2 a;
@@ -23,6 +24,11 @@ class WallSegment {
   /// Non-null when a Turret may anchor here (index into the arena's
   /// turret slots).
   final int? turretSlot;
+
+  /// A Mirror enemy's reflecting face: a dynamic, one-sided segment owned
+  /// by a [MirrorEnemy] (added to the solver's list while it lives, removed
+  /// on death). The arena doesn't draw these — the enemy renders itself.
+  final bool isMirror;
 
   /// Id of the TurretEnemy currently dampening this section, or null.
   /// While held: bullets reflect with reduced restitution and do NOT

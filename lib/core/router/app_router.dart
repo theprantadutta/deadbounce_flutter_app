@@ -12,6 +12,9 @@ import '../../features/challenges/presentation/daily_challenge_screen.dart';
 import '../../features/game/presentation/game_page.dart';
 import '../../features/home/presentation/home_page.dart';
 import '../../features/leaderboards/presentation/leaderboard_screen.dart';
+import '../../features/cosmetics/presentation/cosmetics_screen.dart';
+import '../../features/game/presentation/trickshot/trickshot_gallery_screen.dart';
+import '../../features/game/presentation/trickshot/trickshot_page.dart';
 import '../../features/meta/presentation/gunsmith_screen.dart';
 import '../../features/profile/presentation/profile_screen.dart';
 import '../../features/settings/presentation/settings_screen.dart';
@@ -107,6 +110,23 @@ GoRouter buildRouter() {
         path: Routes.gunsmith,
         pageBuilder: (context, state) =>
             dbPage(state: state, child: const GunsmithScreen()),
+      ),
+      GoRoute(
+        path: Routes.cosmetics,
+        pageBuilder: (context, state) =>
+            dbPage(state: state, child: const CosmeticsScreen()),
+      ),
+      GoRoute(
+        path: Routes.trickShot,
+        pageBuilder: (context, state) =>
+            dbPage(state: state, child: const TrickShotGalleryScreen()),
+      ),
+      GoRoute(
+        path: '${Routes.trickShotRun}/:id',
+        pageBuilder: (context, state) => dbPage(
+          state: state,
+          child: TrickShotPage(levelId: state.pathParameters['id']!),
+        ),
       ),
       GoRoute(
         path: Routes.tournaments,

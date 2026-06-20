@@ -1,5 +1,16 @@
 import 'package:deadbounce_flutter_app/core/config/game_balance.dart';
 
+/// The live chain readout the HUD meter renders.
+class ChainSnapshot {
+  const ChainSnapshot({required this.length, required this.remaining});
+
+  /// Number of kills in the current chain (>= 1).
+  final int length;
+
+  /// Fraction of the chain window still open (0..1).
+  final double remaining;
+}
+
 /// One registered kill, for chain bookkeeping.
 class _ChainEntry {
   _ChainEntry(this.bulletId, this.time, this.length);
@@ -23,9 +34,28 @@ class ScoreSystem {
   int _maxBounceKill = 0;
   final Map<int, _ChainEntry> _chains = {};
 
+  // The most recent chain, tracked O(1) for the HUD meter (avoids scanning
+  // [_chains] every frame).
+  double _lastChainTime = -1e9;
+  int _lastChainLength = 0;
+
   int get score => _score;
   int get bestChain => _bestChain;
   int get maxBounceKill => _maxBounceKill;
+
+  /// The latest live chain at [now] (game-time seconds): its length and the
+  /// fraction (0..1) of the chain window still open (the draining ring).
+  /// Null once the window has lapsed — which hides the HUD chain meter.
+  ChainSnapshot? activeChain(double now) {
+    if (_lastChainLength <= 0) return null;
+    final window = GameBalance.I.score.chainWindow;
+    final age = now - _lastChainTime;
+    if (age > window) return null;
+    return ChainSnapshot(
+      length: _lastChainLength,
+      remaining: (1 - age / window).clamp(0.0, 1.0),
+    );
+  }
 
   /// Registers a kill at [now] (game-time seconds) by bullet [bulletId]
   /// with [bounces] on the killing bullet. Returns the chain length this
@@ -56,6 +86,8 @@ class ScoreSystem {
     }
 
     if (chainLength > _bestChain) _bestChain = chainLength;
+    _lastChainTime = now;
+    _lastChainLength = chainLength;
     return chainLength;
   }
 

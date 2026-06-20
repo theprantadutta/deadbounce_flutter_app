@@ -50,6 +50,29 @@ class WardenEnemy extends EnemyComponent {
   String get enemyId => 'warden';
 
   @override
+  Future<void> onLoad() async {
+    game.hud.bossActive.value = true;
+    game.hud.bossName.value = 'WARDEN';
+    game.hud.bossPhases.value = phasesTotal;
+    _pushBossHud();
+  }
+
+  @override
+  void onRemove() {
+    // Only drop the boss bar when the last Warden leaves the arena.
+    final othersAlive =
+        game.aliveEnemies.any((e) => e is WardenEnemy && e != this);
+    if (!othersAlive) game.hud.bossActive.value = false;
+    super.onRemove();
+  }
+
+  void _pushBossHud() {
+    game.hud.bossPhase.value = _phase;
+    game.hud.bossPhaseHp.value = phaseHp.clamp(0, _phaseMaxHp);
+    game.hud.bossPhaseMaxHp.value = _phaseMaxHp;
+  }
+
+  @override
   bool canBeDamagedBy(BulletState bullet) =>
       !shieldUp || bullet.bounces >= GameBalance.I.warden.shieldMinBounces;
 
@@ -92,6 +115,8 @@ class WardenEnemy extends EnemyComponent {
     seekPlayer(dt, GameBalance.I.warden.speed * _speedBoost);
     clampToArena();
     if (overlapsPlayer()) game.player.takeContactDamage(this);
+
+    _pushBossHud();
   }
 
   @override

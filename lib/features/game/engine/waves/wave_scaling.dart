@@ -37,11 +37,21 @@ abstract final class WaveScaling {
     if (isWardenWave) budget = (budget * 0.5).ceil();
 
     // Roughly even split across the roster, jittered by the seeded rng so
-    // late waves vary run to run (but identically for one seed).
-    final chargers = math.min(budget ~/ 3, 3 + rng.nextInt(3));
+    // late waves vary run to run (but identically for one seed). The newer
+    // enemies appear in modest numbers so they spice the mix without
+    // swamping it. Draw order is fixed for determinism.
+    final chargers = math.min(budget ~/ 4, 3 + rng.nextInt(3));
     budget -= chargers;
-    final splitters = math.min(budget ~/ 3, 2 + rng.nextInt(3));
+    final splitters = math.min(budget ~/ 4, 2 + rng.nextInt(3));
     budget -= splitters;
+    final powderkegs = math.min(budget ~/ 5, 1 + rng.nextInt(2));
+    budget -= powderkegs;
+    final ironhides = rng.nextInt(2); // 0-1
+    budget -= ironhides;
+    final sawbones = rng.nextInt(2); // 0-1 (a mender every so often)
+    budget -= sawbones;
+    final mirrors = rng.nextInt(2); // 0-1
+    budget -= mirrors;
     final turrets = math.min(2, 1 + rng.nextInt(2));
     final drifters = math.max(2, budget);
 
@@ -50,6 +60,15 @@ abstract final class WaveScaling {
       SpawnGroup(type: EnemyType.charger, count: chargers, delay: 2, stagger: 0.9),
       SpawnGroup(type: EnemyType.splitter, count: splitters, delay: 3, stagger: 1),
       SpawnGroup(type: EnemyType.turret, count: turrets, delay: 1, stagger: 2),
+      if (powderkegs > 0)
+        SpawnGroup(
+            type: EnemyType.powderkeg, count: powderkegs, delay: 2.5, stagger: 1.2),
+      if (ironhides > 0)
+        SpawnGroup(type: EnemyType.ironhide, count: ironhides, delay: 3.5),
+      if (sawbones > 0)
+        SpawnGroup(type: EnemyType.sawbones, count: sawbones, delay: 4),
+      if (mirrors > 0)
+        SpawnGroup(type: EnemyType.mirror, count: mirrors, delay: 1.5),
     ]);
 
     return WaveDefinition(

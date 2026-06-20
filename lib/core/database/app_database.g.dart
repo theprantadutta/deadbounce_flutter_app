@@ -7309,6 +7309,497 @@ class TournamentLeaderboardCacheCompanion
   }
 }
 
+class $CosmeticOwnedTable extends CosmeticOwned
+    with TableInfo<$CosmeticOwnedTable, CosmeticOwnedRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $CosmeticOwnedTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _cosmeticIdMeta = const VerificationMeta(
+    'cosmeticId',
+  );
+  @override
+  late final GeneratedColumn<String> cosmeticId = GeneratedColumn<String>(
+    'cosmetic_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<int> updatedAt = GeneratedColumn<int>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [cosmeticId, updatedAt];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'cosmetic_owned';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<CosmeticOwnedRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('cosmetic_id')) {
+      context.handle(
+        _cosmeticIdMeta,
+        cosmeticId.isAcceptableOrUnknown(data['cosmetic_id']!, _cosmeticIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_cosmeticIdMeta);
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {cosmeticId};
+  @override
+  CosmeticOwnedRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return CosmeticOwnedRow(
+      cosmeticId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}cosmetic_id'],
+      )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}updated_at'],
+      )!,
+    );
+  }
+
+  @override
+  $CosmeticOwnedTable createAlias(String alias) {
+    return $CosmeticOwnedTable(attachedDatabase, alias);
+  }
+}
+
+class CosmeticOwnedRow extends DataClass
+    implements Insertable<CosmeticOwnedRow> {
+  final String cosmeticId;
+  final int updatedAt;
+  const CosmeticOwnedRow({required this.cosmeticId, required this.updatedAt});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['cosmetic_id'] = Variable<String>(cosmeticId);
+    map['updated_at'] = Variable<int>(updatedAt);
+    return map;
+  }
+
+  CosmeticOwnedCompanion toCompanion(bool nullToAbsent) {
+    return CosmeticOwnedCompanion(
+      cosmeticId: Value(cosmeticId),
+      updatedAt: Value(updatedAt),
+    );
+  }
+
+  factory CosmeticOwnedRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return CosmeticOwnedRow(
+      cosmeticId: serializer.fromJson<String>(json['cosmeticId']),
+      updatedAt: serializer.fromJson<int>(json['updatedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'cosmeticId': serializer.toJson<String>(cosmeticId),
+      'updatedAt': serializer.toJson<int>(updatedAt),
+    };
+  }
+
+  CosmeticOwnedRow copyWith({String? cosmeticId, int? updatedAt}) =>
+      CosmeticOwnedRow(
+        cosmeticId: cosmeticId ?? this.cosmeticId,
+        updatedAt: updatedAt ?? this.updatedAt,
+      );
+  CosmeticOwnedRow copyWithCompanion(CosmeticOwnedCompanion data) {
+    return CosmeticOwnedRow(
+      cosmeticId: data.cosmeticId.present
+          ? data.cosmeticId.value
+          : this.cosmeticId,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CosmeticOwnedRow(')
+          ..write('cosmeticId: $cosmeticId, ')
+          ..write('updatedAt: $updatedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(cosmeticId, updatedAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is CosmeticOwnedRow &&
+          other.cosmeticId == this.cosmeticId &&
+          other.updatedAt == this.updatedAt);
+}
+
+class CosmeticOwnedCompanion extends UpdateCompanion<CosmeticOwnedRow> {
+  final Value<String> cosmeticId;
+  final Value<int> updatedAt;
+  final Value<int> rowid;
+  const CosmeticOwnedCompanion({
+    this.cosmeticId = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  CosmeticOwnedCompanion.insert({
+    required String cosmeticId,
+    required int updatedAt,
+    this.rowid = const Value.absent(),
+  }) : cosmeticId = Value(cosmeticId),
+       updatedAt = Value(updatedAt);
+  static Insertable<CosmeticOwnedRow> custom({
+    Expression<String>? cosmeticId,
+    Expression<int>? updatedAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (cosmeticId != null) 'cosmetic_id': cosmeticId,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  CosmeticOwnedCompanion copyWith({
+    Value<String>? cosmeticId,
+    Value<int>? updatedAt,
+    Value<int>? rowid,
+  }) {
+    return CosmeticOwnedCompanion(
+      cosmeticId: cosmeticId ?? this.cosmeticId,
+      updatedAt: updatedAt ?? this.updatedAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (cosmeticId.present) {
+      map['cosmetic_id'] = Variable<String>(cosmeticId.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<int>(updatedAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CosmeticOwnedCompanion(')
+          ..write('cosmeticId: $cosmeticId, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $CosmeticEquippedTable extends CosmeticEquipped
+    with TableInfo<$CosmeticEquippedTable, CosmeticEquippedRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $CosmeticEquippedTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _slotMeta = const VerificationMeta('slot');
+  @override
+  late final GeneratedColumn<String> slot = GeneratedColumn<String>(
+    'slot',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _cosmeticIdMeta = const VerificationMeta(
+    'cosmeticId',
+  );
+  @override
+  late final GeneratedColumn<String> cosmeticId = GeneratedColumn<String>(
+    'cosmetic_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<int> updatedAt = GeneratedColumn<int>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [slot, cosmeticId, updatedAt];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'cosmetic_equipped';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<CosmeticEquippedRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('slot')) {
+      context.handle(
+        _slotMeta,
+        slot.isAcceptableOrUnknown(data['slot']!, _slotMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_slotMeta);
+    }
+    if (data.containsKey('cosmetic_id')) {
+      context.handle(
+        _cosmeticIdMeta,
+        cosmeticId.isAcceptableOrUnknown(data['cosmetic_id']!, _cosmeticIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_cosmeticIdMeta);
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {slot};
+  @override
+  CosmeticEquippedRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return CosmeticEquippedRow(
+      slot: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}slot'],
+      )!,
+      cosmeticId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}cosmetic_id'],
+      )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}updated_at'],
+      )!,
+    );
+  }
+
+  @override
+  $CosmeticEquippedTable createAlias(String alias) {
+    return $CosmeticEquippedTable(attachedDatabase, alias);
+  }
+}
+
+class CosmeticEquippedRow extends DataClass
+    implements Insertable<CosmeticEquippedRow> {
+  final String slot;
+  final String cosmeticId;
+  final int updatedAt;
+  const CosmeticEquippedRow({
+    required this.slot,
+    required this.cosmeticId,
+    required this.updatedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['slot'] = Variable<String>(slot);
+    map['cosmetic_id'] = Variable<String>(cosmeticId);
+    map['updated_at'] = Variable<int>(updatedAt);
+    return map;
+  }
+
+  CosmeticEquippedCompanion toCompanion(bool nullToAbsent) {
+    return CosmeticEquippedCompanion(
+      slot: Value(slot),
+      cosmeticId: Value(cosmeticId),
+      updatedAt: Value(updatedAt),
+    );
+  }
+
+  factory CosmeticEquippedRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return CosmeticEquippedRow(
+      slot: serializer.fromJson<String>(json['slot']),
+      cosmeticId: serializer.fromJson<String>(json['cosmeticId']),
+      updatedAt: serializer.fromJson<int>(json['updatedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'slot': serializer.toJson<String>(slot),
+      'cosmeticId': serializer.toJson<String>(cosmeticId),
+      'updatedAt': serializer.toJson<int>(updatedAt),
+    };
+  }
+
+  CosmeticEquippedRow copyWith({
+    String? slot,
+    String? cosmeticId,
+    int? updatedAt,
+  }) => CosmeticEquippedRow(
+    slot: slot ?? this.slot,
+    cosmeticId: cosmeticId ?? this.cosmeticId,
+    updatedAt: updatedAt ?? this.updatedAt,
+  );
+  CosmeticEquippedRow copyWithCompanion(CosmeticEquippedCompanion data) {
+    return CosmeticEquippedRow(
+      slot: data.slot.present ? data.slot.value : this.slot,
+      cosmeticId: data.cosmeticId.present
+          ? data.cosmeticId.value
+          : this.cosmeticId,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CosmeticEquippedRow(')
+          ..write('slot: $slot, ')
+          ..write('cosmeticId: $cosmeticId, ')
+          ..write('updatedAt: $updatedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(slot, cosmeticId, updatedAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is CosmeticEquippedRow &&
+          other.slot == this.slot &&
+          other.cosmeticId == this.cosmeticId &&
+          other.updatedAt == this.updatedAt);
+}
+
+class CosmeticEquippedCompanion extends UpdateCompanion<CosmeticEquippedRow> {
+  final Value<String> slot;
+  final Value<String> cosmeticId;
+  final Value<int> updatedAt;
+  final Value<int> rowid;
+  const CosmeticEquippedCompanion({
+    this.slot = const Value.absent(),
+    this.cosmeticId = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  CosmeticEquippedCompanion.insert({
+    required String slot,
+    required String cosmeticId,
+    required int updatedAt,
+    this.rowid = const Value.absent(),
+  }) : slot = Value(slot),
+       cosmeticId = Value(cosmeticId),
+       updatedAt = Value(updatedAt);
+  static Insertable<CosmeticEquippedRow> custom({
+    Expression<String>? slot,
+    Expression<String>? cosmeticId,
+    Expression<int>? updatedAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (slot != null) 'slot': slot,
+      if (cosmeticId != null) 'cosmetic_id': cosmeticId,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  CosmeticEquippedCompanion copyWith({
+    Value<String>? slot,
+    Value<String>? cosmeticId,
+    Value<int>? updatedAt,
+    Value<int>? rowid,
+  }) {
+    return CosmeticEquippedCompanion(
+      slot: slot ?? this.slot,
+      cosmeticId: cosmeticId ?? this.cosmeticId,
+      updatedAt: updatedAt ?? this.updatedAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (slot.present) {
+      map['slot'] = Variable<String>(slot.value);
+    }
+    if (cosmeticId.present) {
+      map['cosmetic_id'] = Variable<String>(cosmeticId.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<int>(updatedAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CosmeticEquippedCompanion(')
+          ..write('slot: $slot, ')
+          ..write('cosmeticId: $cosmeticId, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -7340,6 +7831,10 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $TournamentsTable tournaments = $TournamentsTable(this);
   late final $TournamentLeaderboardCacheTable tournamentLeaderboardCache =
       $TournamentLeaderboardCacheTable(this);
+  late final $CosmeticOwnedTable cosmeticOwned = $CosmeticOwnedTable(this);
+  late final $CosmeticEquippedTable cosmeticEquipped = $CosmeticEquippedTable(
+    this,
+  );
   late final ProfileDao profileDao = ProfileDao(this as AppDatabase);
   late final StatsDao statsDao = StatsDao(this as AppDatabase);
   late final CoinLedgerDao coinLedgerDao = CoinLedgerDao(this as AppDatabase);
@@ -7358,6 +7853,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     this as AppDatabase,
   );
   late final TournamentDao tournamentDao = TournamentDao(this as AppDatabase);
+  late final CosmeticsDao cosmeticsDao = CosmeticsDao(this as AppDatabase);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -7379,6 +7875,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     metaUpgrades,
     tournaments,
     tournamentLeaderboardCache,
+    cosmeticOwned,
+    cosmeticEquipped,
   ];
 }
 
@@ -11288,6 +11786,329 @@ typedef $$TournamentLeaderboardCacheTableProcessedTableManager =
       TournamentLeaderboardRow,
       PrefetchHooks Function()
     >;
+typedef $$CosmeticOwnedTableCreateCompanionBuilder =
+    CosmeticOwnedCompanion Function({
+      required String cosmeticId,
+      required int updatedAt,
+      Value<int> rowid,
+    });
+typedef $$CosmeticOwnedTableUpdateCompanionBuilder =
+    CosmeticOwnedCompanion Function({
+      Value<String> cosmeticId,
+      Value<int> updatedAt,
+      Value<int> rowid,
+    });
+
+class $$CosmeticOwnedTableFilterComposer
+    extends Composer<_$AppDatabase, $CosmeticOwnedTable> {
+  $$CosmeticOwnedTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get cosmeticId => $composableBuilder(
+    column: $table.cosmeticId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$CosmeticOwnedTableOrderingComposer
+    extends Composer<_$AppDatabase, $CosmeticOwnedTable> {
+  $$CosmeticOwnedTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get cosmeticId => $composableBuilder(
+    column: $table.cosmeticId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$CosmeticOwnedTableAnnotationComposer
+    extends Composer<_$AppDatabase, $CosmeticOwnedTable> {
+  $$CosmeticOwnedTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get cosmeticId => $composableBuilder(
+    column: $table.cosmeticId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+}
+
+class $$CosmeticOwnedTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $CosmeticOwnedTable,
+          CosmeticOwnedRow,
+          $$CosmeticOwnedTableFilterComposer,
+          $$CosmeticOwnedTableOrderingComposer,
+          $$CosmeticOwnedTableAnnotationComposer,
+          $$CosmeticOwnedTableCreateCompanionBuilder,
+          $$CosmeticOwnedTableUpdateCompanionBuilder,
+          (
+            CosmeticOwnedRow,
+            BaseReferences<
+              _$AppDatabase,
+              $CosmeticOwnedTable,
+              CosmeticOwnedRow
+            >,
+          ),
+          CosmeticOwnedRow,
+          PrefetchHooks Function()
+        > {
+  $$CosmeticOwnedTableTableManager(_$AppDatabase db, $CosmeticOwnedTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$CosmeticOwnedTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$CosmeticOwnedTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$CosmeticOwnedTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> cosmeticId = const Value.absent(),
+                Value<int> updatedAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => CosmeticOwnedCompanion(
+                cosmeticId: cosmeticId,
+                updatedAt: updatedAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String cosmeticId,
+                required int updatedAt,
+                Value<int> rowid = const Value.absent(),
+              }) => CosmeticOwnedCompanion.insert(
+                cosmeticId: cosmeticId,
+                updatedAt: updatedAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$CosmeticOwnedTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $CosmeticOwnedTable,
+      CosmeticOwnedRow,
+      $$CosmeticOwnedTableFilterComposer,
+      $$CosmeticOwnedTableOrderingComposer,
+      $$CosmeticOwnedTableAnnotationComposer,
+      $$CosmeticOwnedTableCreateCompanionBuilder,
+      $$CosmeticOwnedTableUpdateCompanionBuilder,
+      (
+        CosmeticOwnedRow,
+        BaseReferences<_$AppDatabase, $CosmeticOwnedTable, CosmeticOwnedRow>,
+      ),
+      CosmeticOwnedRow,
+      PrefetchHooks Function()
+    >;
+typedef $$CosmeticEquippedTableCreateCompanionBuilder =
+    CosmeticEquippedCompanion Function({
+      required String slot,
+      required String cosmeticId,
+      required int updatedAt,
+      Value<int> rowid,
+    });
+typedef $$CosmeticEquippedTableUpdateCompanionBuilder =
+    CosmeticEquippedCompanion Function({
+      Value<String> slot,
+      Value<String> cosmeticId,
+      Value<int> updatedAt,
+      Value<int> rowid,
+    });
+
+class $$CosmeticEquippedTableFilterComposer
+    extends Composer<_$AppDatabase, $CosmeticEquippedTable> {
+  $$CosmeticEquippedTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get slot => $composableBuilder(
+    column: $table.slot,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get cosmeticId => $composableBuilder(
+    column: $table.cosmeticId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$CosmeticEquippedTableOrderingComposer
+    extends Composer<_$AppDatabase, $CosmeticEquippedTable> {
+  $$CosmeticEquippedTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get slot => $composableBuilder(
+    column: $table.slot,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get cosmeticId => $composableBuilder(
+    column: $table.cosmeticId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$CosmeticEquippedTableAnnotationComposer
+    extends Composer<_$AppDatabase, $CosmeticEquippedTable> {
+  $$CosmeticEquippedTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get slot =>
+      $composableBuilder(column: $table.slot, builder: (column) => column);
+
+  GeneratedColumn<String> get cosmeticId => $composableBuilder(
+    column: $table.cosmeticId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+}
+
+class $$CosmeticEquippedTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $CosmeticEquippedTable,
+          CosmeticEquippedRow,
+          $$CosmeticEquippedTableFilterComposer,
+          $$CosmeticEquippedTableOrderingComposer,
+          $$CosmeticEquippedTableAnnotationComposer,
+          $$CosmeticEquippedTableCreateCompanionBuilder,
+          $$CosmeticEquippedTableUpdateCompanionBuilder,
+          (
+            CosmeticEquippedRow,
+            BaseReferences<
+              _$AppDatabase,
+              $CosmeticEquippedTable,
+              CosmeticEquippedRow
+            >,
+          ),
+          CosmeticEquippedRow,
+          PrefetchHooks Function()
+        > {
+  $$CosmeticEquippedTableTableManager(
+    _$AppDatabase db,
+    $CosmeticEquippedTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$CosmeticEquippedTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$CosmeticEquippedTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$CosmeticEquippedTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> slot = const Value.absent(),
+                Value<String> cosmeticId = const Value.absent(),
+                Value<int> updatedAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => CosmeticEquippedCompanion(
+                slot: slot,
+                cosmeticId: cosmeticId,
+                updatedAt: updatedAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String slot,
+                required String cosmeticId,
+                required int updatedAt,
+                Value<int> rowid = const Value.absent(),
+              }) => CosmeticEquippedCompanion.insert(
+                slot: slot,
+                cosmeticId: cosmeticId,
+                updatedAt: updatedAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$CosmeticEquippedTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $CosmeticEquippedTable,
+      CosmeticEquippedRow,
+      $$CosmeticEquippedTableFilterComposer,
+      $$CosmeticEquippedTableOrderingComposer,
+      $$CosmeticEquippedTableAnnotationComposer,
+      $$CosmeticEquippedTableCreateCompanionBuilder,
+      $$CosmeticEquippedTableUpdateCompanionBuilder,
+      (
+        CosmeticEquippedRow,
+        BaseReferences<
+          _$AppDatabase,
+          $CosmeticEquippedTable,
+          CosmeticEquippedRow
+        >,
+      ),
+      CosmeticEquippedRow,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -11330,4 +12151,8 @@ class $AppDatabaseManager {
         _db,
         _db.tournamentLeaderboardCache,
       );
+  $$CosmeticOwnedTableTableManager get cosmeticOwned =>
+      $$CosmeticOwnedTableTableManager(_db, _db.cosmeticOwned);
+  $$CosmeticEquippedTableTableManager get cosmeticEquipped =>
+      $$CosmeticEquippedTableTableManager(_db, _db.cosmeticEquipped);
 }

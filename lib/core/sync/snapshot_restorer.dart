@@ -149,6 +149,23 @@ class SnapshotRestorer {
           );
         }
 
+        // Cosmetics: owned ids + equipped per slot (visual only).
+        final cosmetics =
+            (snapshot['cosmetics'] as Map<String, dynamic>?) ?? const {};
+        for (final id
+            in (cosmetics['owned'] as List? ?? const []).cast<String>()) {
+          await _db.cosmeticsDao.addOwned(id, nowMs);
+        }
+        for (final entry in ((cosmetics['equipped']
+                    as Map<String, dynamic>?) ??
+                const {})
+            .entries) {
+          if (entry.value is String) {
+            await _db.cosmeticsDao
+                .setEquipped(entry.key, entry.value as String, nowMs);
+          }
+        }
+
         await _db.profileDao.setInitialSyncCompleted();
       });
 

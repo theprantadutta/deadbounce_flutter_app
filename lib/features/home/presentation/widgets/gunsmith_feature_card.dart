@@ -48,7 +48,10 @@ class GunsmithFeatureCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('THE GUNSMITH', style: textTheme.titleSmall),
+                    Text('THE GUNSMITH',
+                        style: textTheme.titleSmall,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis),
                     Text('Spend your bounty on permanent iron.',
                         style: textTheme.bodySmall,
                         maxLines: 1,

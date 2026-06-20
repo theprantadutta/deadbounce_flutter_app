@@ -3,6 +3,7 @@ import 'package:drift/drift.dart';
 import 'daos/achievements_dao.dart';
 import 'daos/challenge_dao.dart';
 import 'daos/coin_ledger_dao.dart';
+import 'daos/cosmetics_dao.dart';
 import 'daos/leaderboard_cache_dao.dart';
 import 'daos/meta_upgrades_dao.dart';
 import 'daos/profile_dao.dart';
@@ -16,6 +17,7 @@ import 'tables/achievement_states_table.dart';
 import 'tables/challenge_attempts_table.dart';
 import 'tables/coin_balance_table.dart';
 import 'tables/coin_ledger_table.dart';
+import 'tables/cosmetics_table.dart';
 import 'tables/daily_login_claims_table.dart';
 import 'tables/leaderboard_cache_table.dart';
 import 'tables/meta_upgrades_table.dart';
@@ -51,6 +53,8 @@ part 'app_database.g.dart';
     MetaUpgrades,
     Tournaments,
     TournamentLeaderboardCache,
+    CosmeticOwned,
+    CosmeticEquipped,
   ],
   daos: [
     ProfileDao,
@@ -65,13 +69,14 @@ part 'app_database.g.dart';
     SyncOutboxDao,
     MetaUpgradesDao,
     TournamentDao,
+    CosmeticsDao,
   ],
 )
 class AppDatabase extends _$AppDatabase {
   AppDatabase(super.e);
 
   @override
-  int get schemaVersion => 3;
+  int get schemaVersion => 4;
 
   /// Wipes all gameplay/account data on this device in one transaction,
   /// **preserving the settings table** (device preferences). Clearing the
@@ -93,6 +98,8 @@ class AppDatabase extends _$AppDatabase {
         await delete(metaUpgrades).go();
         await delete(tournaments).go();
         await delete(tournamentLeaderboardCache).go();
+        await delete(cosmeticOwned).go();
+        await delete(cosmeticEquipped).go();
       });
 
   @override
@@ -125,6 +132,10 @@ class AppDatabase extends _$AppDatabase {
             await m.createTable(tournaments);
             await m.createTable(tournamentLeaderboardCache);
             await m.addColumn(runs, runs.tournamentId);
+          }
+          if (from < 4) {
+            await m.createTable(cosmeticOwned);
+            await m.createTable(cosmeticEquipped);
           }
         },
       );

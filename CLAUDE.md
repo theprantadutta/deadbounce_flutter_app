@@ -42,12 +42,17 @@ CLAUDE.md / SETUP.md).
 | Splitter | 2 | Drifts; on death spawns 2 small Drifters via the SpawnDirector |
 | Turret | 4 | Claims a wall slot, dampens it, fires interceptable projectiles. Bulletproof release on remove. |
 | Warden (first at wave 10, then every 5th) | 3 phases × 14hp | Shield blocks <3-bounce bullets (CLANG reflect); phase break = hit-stop + shake + shield-down window |
+| Powderkeg (intro w7) | 2 | Slow seeker; on death drops a telegraphed `ShockwaveComponent` that detonates after a fuse, hazard-damaging the player in a zone (`player.takeHazardDamage`). Spatial play — punishes camping kills; never buffs bullets. |
+| Sawbones (intro w11) | 3 | Mender: every `healInterval` heals living non-Sawbones enemies in `healRadius` via `EnemyComponent.receiveHeal`. Priority target. |
+| Ironhide (intro w9) | 6 | Directional armor: a frontal shield arc faces the player and CLANGs off shots (reuses the Warden reflect). Crack it from the side/back via bounces. |
+| Mirror (intro w13) | 2 | Carries a **one-sided `WallSegment`** (`isMirror`) added to `game.segments`, so the shared solver + aim preview reflect it truthfully (front = real bounce, a free-bounce tool). Front always faces the player; killable only from the back face (`canBeDamagedBy` gates on `velocity·normal > 0`). Removed from `segments` on death. ArenaComponent skips drawing `isMirror` segments. |
 
 **Difficulty philosophy (do not undo): the first 3 waves must feel trivial** —
 only slow Drifters with generous spacing — then difficulty stays near-flat early
 and accelerates later. Enemy introductions: Drifter w1, Charger w4 (long, obvious
-telegraph), Splitter w6, Turret w8, **first Warden w10** (kept late so the early
-game is kind; every 5th thereafter — 15, 20, …). Waves 1–15 are authored
+telegraph), Splitter w6, Powderkeg w7, Turret w8, Ironhide w9, **first Warden w10**
+(kept late so the early game is kind; every 5th thereafter — 15, 20, …), Sawbones
+w11, Mirror w13. Waves 1–15 are authored
 (`engine/waves/wave_table.dart`); past 15 `wave_scaling.dart` composes endless
 waves where hp/speed grow as `growth × past^exponent` (shallow-then-steep, the
 exponent tunable). The on-ramp parameters (`firstWardenWave`, curve exponents,
@@ -138,6 +143,18 @@ leak across cases (keeps daily-challenge wave goldens deterministic).
   modifier (reusing existing card modifiers: heart_container/quickdraw/longer_sight/
   coin_magnet) without counting it as a wave pick; permanent stacks still respect each
   card's max-stacks cap. Applied in `game_session_cubit.startRun` via `MetaLoadout`.
+- **The Outfitter** (`features/cosmetics/`): a second coin SINK, **visual-only**. Buy
+  bullet trails / gunslinger skins / arena themes; spend goes through the coin ledger as
+  `CoinReason.shopPurchase` (mirrors The Gunsmith). Owned + equipped state lives in two
+  local Drift tables (`CosmeticOwned`/`CosmeticEquipped`, DB schema v4) and **syncs** as a
+  `cosmeticState` aggregate event (owned ids + equipped-per-slot, last-writer-wins by
+  `updated_at`; backend `CosmeticStateProcessor` + `PlayerCosmetic`; restored via
+  `/sync/snapshot`) so paid items survive reinstall. Catalog in Dart
+  (`cosmetic_catalog.dart`), free stock looks always owned. Applied at run start via an
+  immutable `CosmeticLoadout` (sibling of `MetaLoadout`/`GameFeel`): trail color in
+  `bullet_component`/`fire_trail_component`, core/trim in `player_component`, grid color in
+  `arena_component`. **Guardrail: cosmetics never touch `GameBalance`/`BulletStats`** — pure
+  render layer, so they're fair in every mode.
 - **Achievements** (24, `features/achievements/domain/achievement_catalog.dart`):
   in-app definitions; ids + coin rewards mirror the backend's validation catalog
   exactly. Evaluated locally after each run against lifetime stats. **Unlock and
@@ -145,6 +162,21 @@ leak across cases (keeps daily-challenge wave goldens deterministic).
   `achievementUnlock` sync event.
 - **Leaderboards**: cache-first (Drift) with last-synced + pinned player rank;
   refreshed from the server. Daily/Weekly/All-time/Daily-Challenge tabs.
+
+## Trick-Shot Gallery (`features/game/presentation/trickshot/`)
+
+A puzzle mode and the best teacher for the core mechanic: curated bounce puzzles (hit each
+target with ≥ N ricochets), **no enemies/waves**. Levels are pure data
+(`engine/trickshot/trickshot_level.dart` + `trickshot_catalog.dart`, referencing existing
+arenas). Reuses the whole engine: `DeadbounceGame.trickShotLevel` makes `onLoad` skip
+`waveRunner.startWave` and drop static `TrickShotTargetComponent`s (an `EnemyComponent`
+subclass that rides the existing bullet sweep but gates `canBeDamagedBy` on
+`bullet.bounces >= requiredBounces`). It's **fully isolated from the scored run path** —
+`TrickShotPage` is its own `GameSessionGateway` with no-op `onWaveCleared`/`onRunEnded`
+(so nothing hits runs/leaderboards/stats); completion fires `DeadbounceGame.onTrickShot
+Complete`/`onTrickShotProgress` callbacks instead. Routes: `Routes.trickShot` (gallery) +
+`Routes.trickShotRun/:id`; Home → "TRICKS" nav tile. Best-score persistence is a planned
+fast-follow (v1 ships the ladder + per-clear shots-vs-par).
 
 ## Offline-first architecture (the spine)
 
