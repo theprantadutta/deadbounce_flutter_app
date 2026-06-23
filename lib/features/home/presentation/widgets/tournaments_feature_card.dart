@@ -49,7 +49,10 @@ class TournamentsFeatureCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('TOURNAMENTS', style: textTheme.titleSmall),
+                    Text('TOURNAMENTS',
+                        style: textTheme.titleSmall,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis),
                     Text('Compete for coins — daily, weekly, monthly.',
                         style: textTheme.bodySmall, maxLines: 1,
                         overflow: TextOverflow.ellipsis),

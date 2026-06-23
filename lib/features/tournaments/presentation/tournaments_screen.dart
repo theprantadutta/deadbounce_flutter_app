@@ -108,11 +108,12 @@ class _TournamentsView extends StatelessWidget {
 
   Future<void> _claim(BuildContext context, Tournament t) async {
     final messenger = ScaffoldMessenger.of(context);
-    await context.read<TournamentsCubit>().claim(t);
+    final error = await context.read<TournamentsCubit>().claim(t);
     messenger
       ..clearSnackBars()
       ..showSnackBar(SnackBar(
-        content: Text('Claimed ${t.rewardCoins} coins. Well shot.'),
+        content: Text(
+            error ?? 'Claimed ${t.rewardCoins} coins. Well shot.'),
       ));
   }
 }

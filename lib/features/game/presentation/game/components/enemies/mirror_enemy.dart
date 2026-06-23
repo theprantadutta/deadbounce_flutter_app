@@ -6,6 +6,7 @@ import '../../../../../../core/theme/app_colors.dart';
 import '../../../../engine/combat/bullet_state.dart';
 import 'package:deadbounce_flutter_app/core/config/game_balance.dart';
 import '../../../../engine/physics/wall_segment.dart';
+import '../bullet_component.dart';
 import 'enemy_component.dart';
 
 /// A drifting reflector. Its front face is a real, one-sided wall segment
@@ -55,6 +56,16 @@ class MirrorEnemy extends EnemyComponent {
   @override
   bool canBeDamagedBy(BulletState bullet) =>
       bullet.velocity.dot(_facing) > 0;
+
+  /// The bullet sweep calls receiveHit even when [canBeDamagedBy] is false
+  /// (that's the Warden CLANG path); the base impl ignores the gate and just
+  /// subtracts HP, which would let a front shot kill the Mirror. Enforce the
+  /// gate here, like Ironhide/Warden do.
+  @override
+  bool receiveHit(int damage, BulletComponent bullet) {
+    if (!canBeDamagedBy(bullet.state)) return false; // front face: bounce only
+    return super.receiveHit(damage, bullet);
+  }
 
   @override
   void updateBehavior(double dt) {

@@ -30,13 +30,16 @@ abstract final class CalendarDay {
   }
 
   /// Whole-day difference [later] − [earlier] (both yyyy-MM-dd). Null when
-  /// either fails to parse. Uses actual dates, so month/year rollovers and
-  /// DST are correct.
+  /// either fails to parse. The subtraction is done in UTC (which has no DST),
+  /// so consecutive calendar days are always exactly 24h apart — otherwise a
+  /// spring-forward day's 23h gap truncates to 0 and wrongly breaks the streak.
   static int? dayGap(String earlier, String later) {
     final a = parse(earlier);
     final b = parse(later);
     if (a == null || b == null) return null;
-    return b.difference(a).inDays;
+    final aUtc = DateTime.utc(a.year, a.month, a.day);
+    final bUtc = DateTime.utc(b.year, b.month, b.day);
+    return bUtc.difference(aUtc).inDays;
   }
 
   /// True when [candidate] is exactly the local day before [reference]'s

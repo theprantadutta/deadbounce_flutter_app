@@ -40,7 +40,8 @@ class HomePage extends StatelessWidget {
       providers: [
         BlocProvider(create: (_) => WalletCubit(session.walletRepository)),
         BlocProvider(
-          create: (_) => DailyRewardCubit(session.loginStreakRepository)..load(),
+          create: (_) =>
+              DailyRewardCubit(session.loginStreakRepository)..load(),
         ),
         BlocProvider(
           create: (_) => HomeCubit(
@@ -72,7 +73,8 @@ class _HomeViewState extends State<_HomeView> {
   }
 
   Future<void> _startMenuMusic() async {
-    final settings = await context.sessionDependencies.settingsRepository.load();
+    final settings = await context.sessionDependencies.settingsRepository
+        .load();
     MusicManager.instance.enabled = settings.musicEnabled;
     MusicManager.instance.play(MusicTrack.menu);
   }
@@ -119,130 +121,167 @@ class _HomeViewState extends State<_HomeView> {
                   final pad = constraints.maxWidth > 600
                       ? AppSpacing.xxl
                       : AppSpacing.md;
-                  final orbD =
-                      (constraints.maxHeight * 0.145).clamp(88.0, 140.0);
-                  return Center(
+                  final orbD = (constraints.maxHeight * 0.145).clamp(
+                    88.0,
+                    140.0,
+                  );
+                  // Scroll only when content can't fit (short screens / large
+                  // text scale) — otherwise the Spacers distribute as before
+                  // and nothing scrolls. Keeps the no-overflow mandate.
+                  return SingleChildScrollView(
                     child: ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 480),
-                      child: Padding(
-                        padding: EdgeInsets.symmetric(horizontal: pad),
-                        child: Column(
-                          children: [
-                            const SizedBox(height: AppSpacing.xs),
-                            // A — identity bar.
-                            _enter(
-                              BlocBuilder<HomeCubit, HomeState>(
-                                builder: (context, state) => HomeIdentityBar(
-                                  summary: _summaryOf(state),
-                                ),
-                              ),
-                              0,
-                            ),
-                            const Spacer(),
-                            // B — title group: wordmark + tagline + stat chips.
-                            _enter(
-                              Column(
-                                mainAxisSize: MainAxisSize.min,
+                      constraints: BoxConstraints(
+                        minHeight: constraints.maxHeight,
+                      ),
+                      child: IntrinsicHeight(
+                        child: Center(
+                          child: ConstrainedBox(
+                            constraints: const BoxConstraints(maxWidth: 480),
+                            child: Padding(
+                              padding: EdgeInsets.symmetric(horizontal: pad),
+                              child: Column(
                                 children: [
-                                  NeonWordmark(style: textTheme.headlineLarge),
                                   const SizedBox(height: AppSpacing.xs),
-                                  Text('Bullets only bite after they bounce.',
-                                      style: textTheme.bodyMedium,
-                                      textAlign: TextAlign.center),
-                                  const SizedBox(height: AppSpacing.sm),
-                                  BlocBuilder<HomeCubit, HomeState>(
-                                    builder: (context, state) => HomeStatChips(
-                                      summary: _summaryOf(state),
+                                  // A — identity bar.
+                                  _enter(
+                                    BlocBuilder<HomeCubit, HomeState>(
+                                      builder: (context, state) =>
+                                          HomeIdentityBar(
+                                            summary: _summaryOf(state),
+                                          ),
                                     ),
+                                    0,
                                   ),
+                                  const Spacer(),
+                                  // B — title group: wordmark + tagline + stat chips.
+                                  _enter(
+                                    Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        NeonWordmark(
+                                          style: textTheme.headlineLarge,
+                                        ),
+                                        const SizedBox(height: AppSpacing.xs),
+                                        Text(
+                                          'Bullets only bite after they bounce.',
+                                          style: textTheme.bodyMedium,
+                                          textAlign: TextAlign.center,
+                                        ),
+                                        const SizedBox(height: AppSpacing.sm),
+                                        BlocBuilder<HomeCubit, HomeState>(
+                                          builder: (context, state) =>
+                                              HomeStatChips(
+                                                summary: _summaryOf(state),
+                                              ),
+                                        ),
+                                      ],
+                                    ),
+                                    1,
+                                  ),
+                                  const Spacer(),
+                                  // C — hero launch orb.
+                                  _enter(
+                                    HeroOrbRig(
+                                      diameter: orbD,
+                                      child: DbLaunchButton(
+                                        diameter: orbD,
+                                        onPressed: () =>
+                                            context.push(Routes.game),
+                                      ),
+                                    ),
+                                    2,
+                                  ),
+                                  const Spacer(),
+                                  // D — bottom group: daily challenge + nav.
+                                  _enter(
+                                    Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        const TournamentsFeatureCard(),
+                                        const SizedBox(height: AppSpacing.xs),
+                                        Row(
+                                          children: const [
+                                            Expanded(
+                                              child: GunsmithFeatureCard(),
+                                            ),
+                                            SizedBox(width: AppSpacing.xs),
+                                            Expanded(
+                                              child: OutfitterFeatureCard(),
+                                            ),
+                                          ],
+                                        ),
+                                        const SizedBox(height: AppSpacing.xs),
+                                        const DailyChallengeFeatureCard(),
+                                        const SizedBox(height: AppSpacing.xs),
+                                        Row(
+                                          children: [
+                                            Expanded(
+                                              child: _NavTile(
+                                                icon: Icons.leaderboard,
+                                                label: 'BOARDS',
+                                                onTap: () => context.push(
+                                                  Routes.leaderboard,
+                                                ),
+                                              ),
+                                            ),
+                                            const SizedBox(
+                                              width: AppSpacing.sm,
+                                            ),
+                                            Expanded(
+                                              child: _NavTile(
+                                                icon: Icons.emoji_events,
+                                                label: 'AWARDS',
+                                                onTap: () =>
+                                                    context.push(Routes.awards),
+                                              ),
+                                            ),
+                                            const SizedBox(
+                                              width: AppSpacing.sm,
+                                            ),
+                                            Expanded(
+                                              child: _NavTile(
+                                                icon: Icons.query_stats,
+                                                label: 'STATS',
+                                                onTap: () => context.push(
+                                                  Routes.statistics,
+                                                ),
+                                              ),
+                                            ),
+                                            const SizedBox(
+                                              width: AppSpacing.sm,
+                                            ),
+                                            Expanded(
+                                              child: _NavTile(
+                                                icon: Icons.adjust,
+                                                label: 'TRICKS',
+                                                onTap: () => context.push(
+                                                  Routes.trickShot,
+                                                ),
+                                              ),
+                                            ),
+                                            const SizedBox(
+                                              width: AppSpacing.sm,
+                                            ),
+                                            Expanded(
+                                              child: _NavTile(
+                                                icon: Icons.help_outline,
+                                                label: 'GUIDE',
+                                                onTap: () => context.push(
+                                                  Routes.howToPlay,
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ],
+                                    ),
+                                    3,
+                                  ),
+                                  const SizedBox(height: AppSpacing.xs),
                                 ],
                               ),
-                              1,
                             ),
-                            const Spacer(),
-                            // C — hero launch orb.
-                            _enter(
-                              HeroOrbRig(
-                                diameter: orbD,
-                                child: DbLaunchButton(
-                                  diameter: orbD,
-                                  onPressed: () => context.push(Routes.game),
-                                ),
-                              ),
-                              2,
-                            ),
-                            const Spacer(),
-                            // D — bottom group: daily challenge + nav.
-                            _enter(
-                              Column(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  const TournamentsFeatureCard(),
-                                  const SizedBox(height: AppSpacing.xs),
-                                  Row(
-                                    children: const [
-                                      Expanded(child: GunsmithFeatureCard()),
-                                      SizedBox(width: AppSpacing.xs),
-                                      Expanded(child: OutfitterFeatureCard()),
-                                    ],
-                                  ),
-                                  const SizedBox(height: AppSpacing.xs),
-                                  const DailyChallengeFeatureCard(),
-                                  const SizedBox(height: AppSpacing.xs),
-                                  Row(
-                                    children: [
-                                      Expanded(
-                                        child: _NavTile(
-                                          icon: Icons.leaderboard,
-                                          label: 'BOARDS',
-                                          onTap: () =>
-                                              context.push(Routes.leaderboard),
-                                        ),
-                                      ),
-                                      const SizedBox(width: AppSpacing.sm),
-                                      Expanded(
-                                        child: _NavTile(
-                                          icon: Icons.emoji_events,
-                                          label: 'AWARDS',
-                                          onTap: () =>
-                                              context.push(Routes.awards),
-                                        ),
-                                      ),
-                                      const SizedBox(width: AppSpacing.sm),
-                                      Expanded(
-                                        child: _NavTile(
-                                          icon: Icons.query_stats,
-                                          label: 'STATS',
-                                          onTap: () =>
-                                              context.push(Routes.statistics),
-                                        ),
-                                      ),
-                                      const SizedBox(width: AppSpacing.sm),
-                                      Expanded(
-                                        child: _NavTile(
-                                          icon: Icons.adjust,
-                                          label: 'TRICKS',
-                                          onTap: () =>
-                                              context.push(Routes.trickShot),
-                                        ),
-                                      ),
-                                      const SizedBox(width: AppSpacing.sm),
-                                      Expanded(
-                                        child: _NavTile(
-                                          icon: Icons.help_outline,
-                                          label: 'GUIDE',
-                                          onTap: () =>
-                                              context.push(Routes.howToPlay),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ],
-                              ),
-                              3,
-                            ),
-                            const SizedBox(height: AppSpacing.xs),
-                          ],
+                          ),
                         ),
                       ),
                     ),

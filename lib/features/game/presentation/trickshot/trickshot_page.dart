@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../app.dart';
+import '../../../../core/logging/app_logger.dart';
 import '../../../../core/router/routes.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_dimens.dart';
@@ -35,6 +36,7 @@ class TrickShotPage extends StatefulWidget {
 }
 
 class _TrickShotPageState extends State<TrickShotPage>
+    with WidgetsBindingObserver
     implements GameSessionGateway {
   late final TrickShotLevel _level = TrickShotCatalog.byId(widget.levelId);
   final HudModel _hud = HudModel();
@@ -43,14 +45,35 @@ class _TrickShotPageState extends State<TrickShotPage>
   DeadbounceGame? _game;
   SoundManager? _sound;
   bool _complete = false;
+  bool _failed = false;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _start();
   }
 
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.hidden) {
+      _game?.pauseEngine();
+    } else if (state == AppLifecycleState.resumed && !_complete) {
+      _game?.resumeEngine();
+    }
+  }
+
   Future<void> _start() async {
+    try {
+      await _build();
+    } catch (e, st) {
+      AppLogger.talker.handle(e, st, '[trickshot] start failed');
+      if (mounted) setState(() => _failed = true);
+    }
+  }
+
+  Future<void> _build() async {
     final session = context.sessionDependencies;
     final settings = await session.settingsRepository.load();
     final cosmetics = await session.cosmeticsRepository.loadout();
@@ -87,6 +110,9 @@ class _TrickShotPageState extends State<TrickShotPage>
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    // Stop the Flame loop before disposing the HUD notifiers (see cubit.close).
+    _game?.pauseEngine();
     _hud.dispose();
     _remaining.dispose();
     _sound?.dispose();
@@ -111,6 +137,31 @@ class _TrickShotPageState extends State<TrickShotPage>
 
   @override
   Widget build(BuildContext context) {
+    if (_failed) {
+      return Scaffold(
+        body: AnimatedArenaBackground(
+          child: SafeArea(
+            child: Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    "Couldn't set up the gallery.",
+                    style: Theme.of(context).textTheme.bodyLarge,
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+                  DbSecondaryButton(
+                    label: 'BACK TO GALLERY',
+                    onPressed: () => context.go(Routes.trickShot),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
     final game = _game;
     if (game == null) {
       return const DbLoadingScene(
@@ -152,7 +203,9 @@ class _TopBar extends StatelessWidget {
     return SafeArea(
       child: Padding(
         padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.md, vertical: AppSpacing.xs),
+          horizontal: AppSpacing.md,
+          vertical: AppSpacing.xs,
+        ),
         child: Row(
           children: [
             IconButton(
@@ -166,13 +219,18 @@ class _TopBar extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(level.name.toUpperCase(),
-                      style: textTheme.labelMedium
-                          ?.copyWith(color: AppColors.blue300)),
-                  Text(level.hint,
-                      style: textTheme.bodySmall,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis),
+                  Text(
+                    level.name.toUpperCase(),
+                    style: textTheme.labelMedium?.copyWith(
+                      color: AppColors.blue300,
+                    ),
+                  ),
+                  Text(
+                    level.hint,
+                    style: textTheme.bodySmall,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ],
               ),
             ),
@@ -182,12 +240,18 @@ class _TopBar extends StatelessWidget {
               builder: (context, r, _) => Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(Icons.my_location,
-                      size: 16, color: AppColors.amber400),
+                  const Icon(
+                    Icons.my_location,
+                    size: 16,
+                    color: AppColors.amber400,
+                  ),
                   const SizedBox(width: 4),
-                  Text('$r left',
-                      style: textTheme.labelMedium
-                          ?.copyWith(color: AppColors.amber300)),
+                  Text(
+                    '$r left',
+                    style: textTheme.labelMedium?.copyWith(
+                      color: AppColors.amber300,
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -225,10 +289,13 @@ class _CompleteOverlay extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Text('TARGETS DOWN',
-                      style: textTheme.headlineMedium
-                          ?.copyWith(color: AppColors.amber300),
-                      textAlign: TextAlign.center),
+                  Text(
+                    'TARGETS DOWN',
+                    style: textTheme.headlineMedium?.copyWith(
+                      color: AppColors.amber300,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
                   const SizedBox(height: AppSpacing.xs),
                   Text(
                     underPar
@@ -242,13 +309,15 @@ class _CompleteOverlay extends StatelessWidget {
                     DbPrimaryButton(
                       label: 'NEXT LEVEL',
                       onPressed: () => context.pushReplacement(
-                          '${Routes.trickShotRun}/$nextLevelId'),
+                        '${Routes.trickShotRun}/$nextLevelId',
+                      ),
                     ),
                   const SizedBox(height: AppSpacing.xs),
                   DbSecondaryButton(
                     label: 'RETRY',
                     onPressed: () => context.pushReplacement(
-                        '${Routes.trickShotRun}/${level.id}'),
+                      '${Routes.trickShotRun}/${level.id}',
+                    ),
                   ),
                   const SizedBox(height: AppSpacing.xs),
                   DbSecondaryButton(

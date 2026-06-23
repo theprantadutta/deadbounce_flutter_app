@@ -38,7 +38,12 @@ class SyncWorker {
   bool _rerunRequested = false;
   bool _disposed = false;
 
+  /// The in-flight drain, awaited by [dispose] so the DB isn't closed out from
+  /// under a settling batch.
+  Future<void>? _drainFuture;
+
   Future<void> start() async {
+    if (_disposed) return; // session was torn down before start ran
     // Crash recovery: a batch stuck inFlight from a killed app goes back
     // to pending — safe because the server dedupes by event id.
     await _db.syncOutboxDao.recoverInFlight();
@@ -52,8 +57,9 @@ class SyncWorker {
     _triggerSub = _triggers.triggers.listen((_) => requestSync());
     await _refreshCounts();
     AppLogger.talker.info(
-        '[sync] worker started (${_status.value.pendingCount} pending, '
-        '${_status.value.failedCount} failed)');
+      '[sync] worker started (${_status.value.pendingCount} pending, '
+      '${_status.value.failedCount} failed)',
+    );
     requestSync();
   }
 
@@ -65,7 +71,7 @@ class SyncWorker {
       _rerunRequested = true;
       return;
     }
-    unawaited(_drainLoop());
+    _drainFuture = _drainLoop();
   }
 
   /// Flips failed events back to pending (the Profile/Settings "Retry
@@ -112,76 +118,93 @@ class SyncWorker {
     try {
       results = await _api.sendBatch(batch);
     } on ApiException catch (e) {
-      AppLogger.talker
-          .warning('[sync] batch send failed (${e.message}) — rescheduling');
+      AppLogger.talker.warning(
+        '[sync] batch send failed (${e.message}) — rescheduling',
+      );
       await _rescheduleBatch(batch);
       return;
     } catch (e, st) {
-      AppLogger.talker
-          .handle(e, st, '[sync] batch send failed (unexpected) — rescheduling');
+      AppLogger.talker.handle(
+        e,
+        st,
+        '[sync] batch send failed (unexpected) — rescheduling',
+      );
       await _rescheduleBatch(batch);
       return;
     }
 
     final byId = {for (final r in results) r.id: r};
     final settled = <String>[];
-    final retry = <String>[];
+    final retry = <SyncOutboxRow>[];
     var rejected = 0;
 
     for (final row in batch) {
       final result = byId[row.id];
       if (result == null) {
         // Server didn't mention it — treat as transient.
-        retry.add(row.id);
+        retry.add(row);
       } else if (result.isSettled) {
         settled.add(row.id);
       } else if (result.isRejected) {
         rejected++;
         AppLogger.talker.warning(
-            '[sync] event ${row.id} rejected: ${result.error ?? 'rejected by server'}');
+          '[sync] event ${row.id} rejected: ${result.error ?? 'rejected by server'}',
+        );
         await _db.syncOutboxDao.markFailed(
           row.id,
           result.error ?? 'rejected by server',
         );
       } else {
-        retry.add(row.id);
+        retry.add(row);
       }
     }
 
     await _db.syncOutboxDao.markDone(settled);
-    AppLogger.talker.info('[sync] batch settled: ${settled.length} done, '
-        '$rejected rejected, ${retry.length} retry');
+    AppLogger.talker.info(
+      '[sync] batch settled: ${settled.length} done, '
+      '$rejected rejected, ${retry.length} retry',
+    );
     if (retry.isNotEmpty) {
-      await _rescheduleRows(retry, attemptsHint: batch.first.attempts);
+      await _rescheduleRows(retry);
     }
   }
 
   Future<void> _rescheduleBatch(List<SyncOutboxRow> batch) =>
-      _rescheduleRows(batch.map((r) => r.id).toList(),
-          attemptsHint: batch.first.attempts);
+      _rescheduleRows(batch);
 
-  Future<void> _rescheduleRows(List<String> ids,
-      {required int attemptsHint}) async {
-    final delay = syncBackoff(attemptsHint + 1, _random);
-    await _db.syncOutboxDao.reschedule(
-      ids,
-      nextRetryAtMs:
-          DateTime.now().toUtc().add(delay).millisecondsSinceEpoch,
-    );
+  /// Backs off each row by ITS OWN attempt count (a batch can mix a brand-new
+  /// event with an old repeatedly-failing one — they must not share a delay),
+  /// so group by attempts and reschedule each group with its own backoff.
+  Future<void> _rescheduleRows(List<SyncOutboxRow> rows) async {
+    final byAttempts = <int, List<String>>{};
+    for (final row in rows) {
+      byAttempts.putIfAbsent(row.attempts, () => []).add(row.id);
+    }
+    final nowUtc = DateTime.now().toUtc();
+    for (final entry in byAttempts.entries) {
+      final delay = syncBackoff(entry.key + 1, _random);
+      await _db.syncOutboxDao.reschedule(
+        entry.value,
+        nextRetryAtMs: nowUtc.add(delay).millisecondsSinceEpoch,
+      );
+    }
     await _db.syncOutboxDao.failExhausted(maxAttempts: maxAttempts);
   }
 
   Future<void> _refreshCounts({bool markSynced = false}) async {
     if (_disposed) return;
-    final pending =
-        await _db.syncOutboxDao.countWithStatus(SyncOutboxDao.statusPending);
-    final failed =
-        await _db.syncOutboxDao.countWithStatus(SyncOutboxDao.statusFailed);
+    final pending = await _db.syncOutboxDao.countWithStatus(
+      SyncOutboxDao.statusPending,
+    );
+    final failed = await _db.syncOutboxDao.countWithStatus(
+      SyncOutboxDao.statusFailed,
+    );
     _status.value = SyncStatus(
       pendingCount: pending,
       failedCount: failed,
-      lastSyncedAt:
-          markSynced ? DateTime.now().toUtc() : _status.value.lastSyncedAt,
+      lastSyncedAt: markSynced
+          ? DateTime.now().toUtc()
+          : _status.value.lastSyncedAt,
       isSyncing: false,
     );
   }
@@ -189,5 +212,13 @@ class SyncWorker {
   Future<void> dispose() async {
     _disposed = true;
     await _triggerSub?.cancel();
+    // Let the in-flight drain finish settling the current batch before the
+    // caller closes the DB — otherwise markDone/reschedule hit a closed DB.
+    // The loop exits at its next !_disposed check, so this is bounded.
+    try {
+      await _drainFuture;
+    } catch (_) {
+      // A drain error during teardown is irrelevant; we're shutting down.
+    }
   }
 }

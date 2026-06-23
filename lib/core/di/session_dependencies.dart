@@ -78,8 +78,10 @@ class SessionDependencies {
       status: syncStatus,
       triggers: syncTriggers,
     );
-    final loginStreakRepository =
-        LoginStreakRepositoryImpl(db: db, outboxWriter: outboxWriter);
+    final loginStreakRepository = LoginStreakRepositoryImpl(
+      db: db,
+      outboxWriter: outboxWriter,
+    );
 
     return SessionDependencies._(
       db: db,
@@ -90,8 +92,10 @@ class SessionDependencies {
       syncWorker: syncWorker,
       snapshotRestorer: SnapshotRestorer(db: db, api: syncApi),
       runsRepository: RunsRepositoryImpl(db: db, outboxWriter: outboxWriter),
-      walletRepository:
-          WalletRepositoryImpl(db: db, outboxWriter: outboxWriter),
+      walletRepository: WalletRepositoryImpl(
+        db: db,
+        outboxWriter: outboxWriter,
+      ),
       loginStreakRepository: loginStreakRepository,
       dailyChallengeRepository: DailyChallengeRepositoryImpl(db: db),
       achievementsRepository: AchievementsRepositoryImpl(
@@ -112,8 +116,10 @@ class SessionDependencies {
         api: TournamentApi(apiClient),
         outboxWriter: outboxWriter,
       ),
-      cosmeticsRepository:
-          CosmeticsRepositoryImpl(db: db, outboxWriter: outboxWriter),
+      cosmeticsRepository: CosmeticsRepositoryImpl(
+        db: db,
+        outboxWriter: outboxWriter,
+      ),
     );
   }
 
@@ -138,6 +144,7 @@ class SessionDependencies {
   final CosmeticsRepository cosmeticsRepository;
 
   bool _started = false;
+  bool _disposed = false;
   final Completer<void> _ready = Completer<void>();
 
   /// Completes once [start] has finished (snapshot restore + sync spin-up).
@@ -148,18 +155,23 @@ class SessionDependencies {
   /// One-time restore (when needed) + start the sync engine. Safe to call
   /// once per session; the boot flow owns the call.
   Future<void> start() async {
-    if (_started) return;
+    if (_started || _disposed) return;
     _started = true;
     try {
+      if (_disposed) return; // torn down before the restore began
       await snapshotRestorer.restoreIfNeeded();
     } on ApiException {
       // Offline at boot on an already-hydrated device is fine; a FRESH
       // device needs the network once — surfaced by the boot screen,
       // retried on next launch.
     } finally {
-      syncTriggers.start();
-      // Don't block readiness on the first drain — fire and forget.
-      unawaited(syncWorker.start());
+      // A sign-out mid-restore may have disposed us; don't spin the engine up
+      // against a closing DB.
+      if (!_disposed) {
+        syncTriggers.start();
+        // Don't block readiness on the first drain — fire and forget.
+        unawaited(syncWorker.start());
+      }
       if (!_ready.isCompleted) _ready.complete();
     }
   }
@@ -180,6 +192,9 @@ class SessionDependencies {
   }
 
   Future<void> dispose() async {
+    _disposed = true;
+    // syncWorker.dispose() awaits its in-flight drain, so by the time we close
+    // the DB no batch is still settling against it.
     await syncWorker.dispose();
     await syncTriggers.dispose();
     syncStatus.dispose();

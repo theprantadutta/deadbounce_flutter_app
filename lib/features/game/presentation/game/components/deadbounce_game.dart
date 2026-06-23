@@ -63,14 +63,14 @@ class DeadbounceGame extends FlameGame implements GameWorldOps {
     this.onTrickShotComplete,
     this.onTrickShotProgress,
     CosmeticLoadout? cosmetics,
-  })  : haptics = hapticsService,
-        cosmetics = cosmetics ?? CosmeticLoadout.stock,
-        super(
-          camera: CameraComponent.withFixedResolution(
-            width: arenaWidth,
-            height: arenaHeight,
-          ),
-        );
+  }) : haptics = hapticsService,
+       cosmetics = cosmetics ?? CosmeticLoadout.stock,
+       super(
+         camera: CameraComponent.withFixedResolution(
+           width: arenaWidth,
+           height: arenaHeight,
+         ),
+       );
 
   static const double arenaWidth = ArenaDefinition.width;
   static const double arenaHeight = ArenaDefinition.height;
@@ -122,10 +122,12 @@ class DeadbounceGame extends FlameGame implements GameWorldOps {
 
   late final List<WallSegment> segments = arenaDef.buildSegments();
   late final RicochetSolver solver = RicochetSolver(segments);
-  late final RunModifiers modifiers =
-      RunModifiers(bonusDamagePerBounce: challenge?.extraWallDamage ?? 0);
-  late final ScoreSystem scoreSystem =
-      ScoreSystem(scoreMultiplier: challenge?.scoreMultiplier ?? 1);
+  late final RunModifiers modifiers = RunModifiers(
+    bonusDamagePerBounce: challenge?.extraWallDamage ?? 0,
+  );
+  late final ScoreSystem scoreSystem = ScoreSystem(
+    scoreMultiplier: challenge?.scoreMultiplier ?? 1,
+  );
   late final SpawnDirector spawner;
   late final WaveRunner waveRunner;
   late final PlayerComponent player;
@@ -157,7 +159,11 @@ class DeadbounceGame extends FlameGame implements GameWorldOps {
     // Permanent Gunsmith perks fold in before hearts/stats are read.
     _applyMetaLoadout();
 
-    particles = ParticleFactory(world, _vfxRandom, budget: gameFeel.particleBudget);
+    particles = ParticleFactory(
+      world,
+      _vfxRandom,
+      budget: gameFeel.particleBudget,
+    );
     juice = JuiceController(
       particles: particles,
       sound: sound,
@@ -169,11 +175,7 @@ class DeadbounceGame extends FlameGame implements GameWorldOps {
     // Shake oscillates around the look-at point.
     juice.setRestPosition(Vector2(arenaWidth / 2, arenaHeight / 2));
 
-    spawner = SpawnDirector(
-      game: this,
-      arena: arenaDef,
-      spawnRng: _spawnRng,
-    );
+    spawner = SpawnDirector(game: this, arena: arenaDef, spawnRng: _spawnRng);
 
     player = PlayerComponent(anchors: arenaDef.anchors());
     trajectory = TrajectoryComponent()..priority = 15;
@@ -210,10 +212,18 @@ class DeadbounceGame extends FlameGame implements GameWorldOps {
   void _spawnTrickShotTargets(TrickShotLevel level) {
     _trickShotRemaining = level.targets.length;
     for (final t in level.targets) {
-      world.add(TrickShotTargetComponent(
-        position: t.position.clone(),
-        requiredBounces: t.requiredBounces,
-      ));
+      world.add(
+        TrickShotTargetComponent(
+          position: t.position.clone(),
+          requiredBounces: t.requiredBounces,
+        ),
+      );
+    }
+    // Defensive: a level authored with no targets is trivially complete (don't
+    // soft-lock on a permanent "0 left").
+    if (_trickShotRemaining == 0 && !runEnded) {
+      runEnded = true;
+      onTrickShotComplete?.call();
     }
   }
 
@@ -260,12 +270,13 @@ class DeadbounceGame extends FlameGame implements GameWorldOps {
   void refreshTrajectory(Vector2 direction, double powerT) {
     final stats = modifiers.effectiveBulletStats();
     final playerStats = modifiers.effectivePlayerStats();
-    final speed = GameBalance.I.bullet.minSpeed +
-        (GameBalance.I.bullet.maxSpeed - GameBalance.I.bullet.minSpeed) * powerT;
+    final speed =
+        GameBalance.I.bullet.minSpeed +
+        (GameBalance.I.bullet.maxSpeed - GameBalance.I.bullet.minSpeed) *
+            powerT;
     // Every 4th shot is the ghost shot when Ghost Round is held — show it.
     final ghostHeld = modifiers.stacksOf('ghost_round') > 0;
-    final nextIsGhost =
-        ghostHeld && (player.shotCounter + 1) % 4 == 0;
+    final nextIsGhost = ghostHeld && (player.shotCounter + 1) % 4 == 0;
 
     trajectory.nodes = TrajectoryPredictor.predict(
       solver,
@@ -301,31 +312,39 @@ class DeadbounceGame extends FlameGame implements GameWorldOps {
 
     final label = ScoreSystem.chainLabel(chainLength);
     if (label != null && gameFeel.combatText) {
-      world.add(PopupTextComponent.chainLabel(
-        label,
-        enemy.position + Vector2(0, -enemy.bodyRadius - 30),
-      ));
+      world.add(
+        PopupTextComponent.chainLabel(
+          label,
+          enemy.position + Vector2(0, -enemy.bodyRadius - 30),
+        ),
+      );
     }
 
     // Kill coins + chance of a dropped pickup.
-    addRunCoins(GameBalance.I.economy.coinPerKill.toDouble() +
-        (chainLength > 1 ? GameBalance.I.economy.chainBonusPerKill : 0));
+    addRunCoins(
+      GameBalance.I.economy.coinPerKill.toDouble() +
+          (chainLength > 1 ? GameBalance.I.economy.chainBonusPerKill : 0),
+    );
     if (_lootRng.chance(GameBalance.I.economy.dropChance)) {
-      world.add(CoinPickupComponent(
-        position: enemy.position.clone(),
-        value: GameBalance.I.economy.dropValue,
-      ));
+      world.add(
+        CoinPickupComponent(
+          position: enemy.position.clone(),
+          value: GameBalance.I.economy.dropValue,
+        ),
+      );
     }
 
     // Upgrade hooks.
     if (killer != null) {
-      modifiers.kill(KillContext(
-        bullet: killer.state,
-        enemyType: enemy.enemyId,
-        chainLength: chainLength,
-        position: enemy.position.clone(),
-        world: this,
-      ));
+      modifiers.kill(
+        KillContext(
+          bullet: killer.state,
+          enemyType: enemy.enemyId,
+          chainLength: chainLength,
+          position: enemy.position.clone(),
+          world: this,
+        ),
+      );
     }
   }
 
@@ -355,7 +374,8 @@ class DeadbounceGame extends FlameGame implements GameWorldOps {
   /// and Second Wind grants one free random common upgrade.
   void _applyMetaLoadout() {
     metaLoadout.permanentCards.forEach((cardId, stacks) {
-      final card = UpgradeCatalog.byId(cardId);
+      final card = UpgradeCatalog.tryById(cardId);
+      if (card == null) return; // stale/removed card id — skip, don't crash
       for (var i = 0; i < stacks; i++) {
         modifiers.addPermanent(card);
       }
@@ -363,9 +383,11 @@ class DeadbounceGame extends FlameGame implements GameWorldOps {
     metaInvulnBonus = metaLoadout.invulnBonus;
     if (metaLoadout.grantFreeCard) {
       final commons = UpgradeCatalog.all
-          .where((c) =>
-              c.rarity == UpgradeRarity.common &&
-              modifiers.stacksOf(c.id) < c.maxStacks)
+          .where(
+            (c) =>
+                c.rarity == UpgradeRarity.common &&
+                modifiers.stacksOf(c.id) < c.maxStacks,
+          )
           .toList();
       if (commons.isNotEmpty) {
         modifiers.addPermanent(_runRng.fork('meta').pick(commons));
@@ -417,13 +439,16 @@ class DeadbounceGame extends FlameGame implements GameWorldOps {
     final list = <HudUpgrade>[];
     for (final id in modifiers.pickedIds) {
       if (!seen.add(id)) continue;
-      final card = UpgradeCatalog.byId(id);
-      list.add(HudUpgrade(
-        id: id,
-        name: card.name,
-        iconName: card.iconName,
-        stacks: modifiers.stacksOf(id),
-      ));
+      final card = UpgradeCatalog.tryById(id);
+      if (card == null) continue;
+      list.add(
+        HudUpgrade(
+          id: id,
+          name: card.name,
+          iconName: card.iconName,
+          stacks: modifiers.stacksOf(id),
+        ),
+      );
     }
     hud.activeUpgrades.value = list;
   }
@@ -436,45 +461,58 @@ class DeadbounceGame extends FlameGame implements GameWorldOps {
     juice.hitStop(0.45);
     juice.addTrauma(0.6);
 
-    gateway.onRunEnded(RunStatsSnapshot(
-      score: scoreSystem.score,
-      waveReached: waveRunner.currentWave,
-      kills: kills,
-      bestChain: scoreSystem.bestChain,
-      maxBounceKill: scoreSystem.maxBounceKill,
-      coinsEarned: coinsEarned,
-      durationSeconds: runTime,
-      upgradesPicked: List.of(modifiers.pickedIds),
-      enemyKills: Map.of(enemyKills),
-      hitsTaken: hitsTaken,
-      causeOfDeath: lastDamageSource,
-    ));
+    gateway.onRunEnded(
+      RunStatsSnapshot(
+        score: scoreSystem.score,
+        waveReached: waveRunner.currentWave,
+        kills: kills,
+        bestChain: scoreSystem.bestChain,
+        maxBounceKill: scoreSystem.maxBounceKill,
+        coinsEarned: coinsEarned,
+        durationSeconds: runTime,
+        upgradesPicked: List.of(modifiers.pickedIds),
+        enemyKills: Map.of(enemyKills),
+        hitsTaken: hitsTaken,
+        causeOfDeath: lastDamageSource,
+      ),
+    );
   }
 
   // ---- GameWorldOps (upgrade modifier seam) ----
 
   @override
-  void spawnBullet(BulletState state, BulletStats stats,
-      {double delaySeconds = 0}) {
+  void spawnBullet(
+    BulletState state,
+    BulletStats stats, {
+    double delaySeconds = 0,
+  }) {
     if (delaySeconds <= 0) {
       world.add(BulletComponent(state: state, stats: stats));
     } else {
-      world.add(_DelayedSpawn(
-        delay: delaySeconds,
-        spawn: () => world.add(BulletComponent(state: state, stats: stats)),
-      ));
+      world.add(
+        _DelayedSpawn(
+          delay: delaySeconds,
+          spawn: () => world.add(BulletComponent(state: state, stats: stats)),
+        ),
+      );
     }
   }
 
   @override
-  void spawnFireTrail(Vector2 position, double radius, double duration,
-      int damagePerSecond) {
-    world.add(FireTrailComponent(
-      position: position,
-      radius: radius,
-      duration: duration,
-      damagePerSecond: damagePerSecond,
-    ));
+  void spawnFireTrail(
+    Vector2 position,
+    double radius,
+    double duration,
+    int damagePerSecond,
+  ) {
+    world.add(
+      FireTrailComponent(
+        position: position,
+        radius: radius,
+        duration: duration,
+        damagePerSecond: damagePerSecond,
+      ),
+    );
   }
 
   @override

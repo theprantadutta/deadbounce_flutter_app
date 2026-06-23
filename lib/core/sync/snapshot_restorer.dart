@@ -1,6 +1,7 @@
 import 'package:drift/drift.dart';
 import 'package:uuid/uuid.dart';
 
+import '../../features/cosmetics/domain/cosmetic_catalog.dart';
 import '../database/app_database.dart';
 import '../logging/app_logger.dart';
 import '../network/api_client.dart';
@@ -19,11 +20,26 @@ class SnapshotRestorer {
   final SyncApi _api;
   final Uuid _uuid;
 
+  /// Single-flight guard: prevents a `start()`/`clearLocalData()` race from
+  /// both passing the `initialSyncCompleted` check and hydrating twice (which
+  /// would insert the synthetic balance entry twice → doubled balance).
+  bool _restoring = false;
+
   /// Returns true when a restore ran (the boot screen shows
   /// "Restoring your gunslinger…" for that case). Throws [ApiException]
   /// on network failure — the caller decides whether to retry or block;
   /// a fresh device cannot safely proceed without its state.
   Future<bool> restoreIfNeeded() async {
+    if (_restoring) return false;
+    _restoring = true;
+    try {
+      return await _restore();
+    } finally {
+      _restoring = false;
+    }
+  }
+
+  Future<bool> _restore() async {
     final profile = await _db.profileDao.getProfile();
     if (profile?.initialSyncCompleted ?? false) return false;
 
@@ -156,13 +172,20 @@ class SnapshotRestorer {
             in (cosmetics['owned'] as List? ?? const []).cast<String>()) {
           await _db.cosmeticsDao.addOwned(id, nowMs);
         }
-        for (final entry in ((cosmetics['equipped']
-                    as Map<String, dynamic>?) ??
-                const {})
-            .entries) {
-          if (entry.value is String) {
-            await _db.cosmeticsDao
-                .setEquipped(entry.key, entry.value as String, nowMs);
+        for (final entry
+            in ((cosmetics['equipped'] as Map<String, dynamic>?) ?? const {})
+                .entries) {
+          if (entry.value is! String) continue;
+          // The backend snake_cases dictionary keys (bullet_trail) but the
+          // client stores/reads the enum name (bulletTrail) — normalize so the
+          // restored loadout actually matches a slot.
+          final slot = _canonicalSlot(entry.key);
+          if (slot != null) {
+            await _db.cosmeticsDao.setEquipped(
+              slot,
+              entry.value as String,
+              nowMs,
+            );
           }
         }
 
@@ -182,4 +205,14 @@ class SnapshotRestorer {
     num n => n.toInt(),
     _ => 0,
   };
+
+  /// Maps an equipped-slot key in either casing (bullet_trail / bulletTrail)
+  /// to the canonical [CosmeticSlot] name, or null if unrecognized.
+  static String? _canonicalSlot(String key) {
+    final normalized = key.replaceAll('_', '').toLowerCase();
+    for (final s in CosmeticSlot.values) {
+      if (s.name.toLowerCase() == normalized) return s.name;
+    }
+    return null;
+  }
 }

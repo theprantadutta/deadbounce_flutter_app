@@ -52,7 +52,12 @@ class DailyChallengeFeatureCard extends StatelessWidget {
                   children: [
                     Row(
                       children: [
-                        Text('DAILY CHALLENGE', style: textTheme.titleSmall),
+                        Flexible(
+                          child: Text('DAILY CHALLENGE',
+                              style: textTheme.titleSmall,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis),
+                        ),
                         const SizedBox(width: AppSpacing.xs),
                         const _LiveBadge(),
                       ],

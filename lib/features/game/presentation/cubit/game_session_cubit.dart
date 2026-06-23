@@ -47,8 +47,8 @@ class GameSessionCubit extends Cubit<GameSessionState>
     this.dailyChallenge = false,
     this.tournamentContext,
     Uuid? uuid,
-  })  : _uuid = uuid ?? const Uuid(),
-        super(const SessionIdle());
+  }) : _uuid = uuid ?? const Uuid(),
+       super(const SessionIdle());
 
   final RunsRepository _runsRepository;
   final AchievementsRepository _achievementsRepository;
@@ -93,8 +93,10 @@ class GameSessionCubit extends Cubit<GameSessionState>
       final today = DateTime.now().toUtc();
       _challengeSeed = GameRng.dailySeed(today);
       _challengeDate = CalendarDay.utc(today);
-      challengeConfig =
-          ChallengeCatalog.forUtcDate(_challengeDate!, _challengeSeed!).config;
+      challengeConfig = ChallengeCatalog.forUtcDate(
+        _challengeDate!,
+        _challengeSeed!,
+      ).config;
       rng = GameRng(_challengeSeed!);
     } else {
       rng = GameRng(DateTime.now().microsecondsSinceEpoch);
@@ -208,8 +210,15 @@ class GameSessionCubit extends Cubit<GameSessionState>
     if (c != null && !c.isCompleted) c.complete();
   }
 
+  bool _runRecorded = false;
+
   @override
   Future<void> onRunEnded(RunStatsSnapshot stats) async {
+    // Idempotent: a double onRunEnded (engine + any future caller) can never
+    // double-record the run / re-submit the score, regardless of game state.
+    if (_runRecorded) return;
+    _runRecorded = true;
+
     final result = RunResult(
       id: _uuid.v4(),
       score: stats.score,
@@ -237,11 +246,13 @@ class GameSessionCubit extends Cubit<GameSessionState>
     // 1) The death beat: tell the player what happened, hold for a moment.
     final death = _describeDeath(stats);
     _skipBeat = Completer<void>();
-    emit(SessionRunEnding(
-      headline: death.$1,
-      detail: death.$2,
-      wave: stats.waveReached,
-    ));
+    emit(
+      SessionRunEnding(
+        headline: death.$1,
+        detail: death.$2,
+        wave: stats.waveReached,
+      ),
+    );
 
     // 2) Persist + evaluate achievements in parallel with the beat (Drift
     // first; the outbox carries it to the backend). Names captured for the
@@ -267,19 +278,18 @@ class GameSessionCubit extends Cubit<GameSessionState>
 
     await Future.wait([
       work,
-      Future.any([
-        Future<void>.delayed(_beatDuration),
-        _skipBeat!.future,
-      ]),
+      Future.any([Future<void>.delayed(_beatDuration), _skipBeat!.future]),
     ]);
 
     // 3) Results.
     if (isClosed) return;
-    emit(SessionRunOver(
-      result,
-      isNewBestScore: result.score > _previousBestScore && result.score > 0,
-      unlockedAchievements: unlockedNames,
-    ));
+    emit(
+      SessionRunOver(
+        result,
+        isNewBestScore: result.score > _previousBestScore && result.score > 0,
+        unlockedAchievements: unlockedNames,
+      ),
+    );
   }
 
   /// (headline, detail) for the death beat, in the Deadbounce voice.
@@ -307,6 +317,10 @@ class GameSessionCubit extends Cubit<GameSessionState>
 
   @override
   Future<void> close() {
+    // Stop the Flame loop BEFORE disposing the HUD notifiers — otherwise one
+    // more update() can push to disposed ValueNotifiers (asserts in debug,
+    // notifies freed listeners in release).
+    game?.pauseEngine();
     hud.dispose();
     _sound?.dispose();
     return super.close();

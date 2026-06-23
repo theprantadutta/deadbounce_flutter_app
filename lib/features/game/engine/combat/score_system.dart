@@ -67,6 +67,10 @@ class ScoreSystem {
   }) {
     final t = GameBalance.I.score;
 
+    // Drop chains whose window has lapsed so the map can't grow unbounded over
+    // a long endless run (one entry per distinct bullet otherwise lingers).
+    _chains.removeWhere((_, e) => now - e.time > t.chainWindow);
+
     final killScore =
         (t.killBase * (1 + t.bounceFactor * bounces)).round();
     _addScore(killScore);

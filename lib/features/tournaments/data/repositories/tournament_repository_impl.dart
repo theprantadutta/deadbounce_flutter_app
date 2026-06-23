@@ -61,27 +61,36 @@ class TournamentRepositoryImpl implements TournamentRepository {
     final nowMs = now.millisecondsSinceEpoch;
     final txnId = _uuid.v4();
     await _db.transaction(() async {
+      // Re-check inside the txn (the pre-network balance read is just for fast
+      // UX). Guards a double-tap from charging twice and a concurrent spend
+      // from driving the balance negative.
+      final current = await _db.tournamentDao.getById(id);
+      if (current != null && current.joined) return; // already joined + paid
+      if (dto.entryFeeCoins > 0) {
+        final balanceNow = await _db.coinLedgerDao.getBalance();
+        if (balanceNow < dto.entryFeeCoins) {
+          throw const TournamentException('Not enough coins to join.');
+        }
+      }
       await _db.tournamentDao.upsertJoined(_toRow(dto, nowMs));
       if (dto.entryFeeCoins > 0) {
-        await _db.coinLedgerDao.insertTransaction(CoinLedgerRow(
-          id: txnId,
-          amount: -dto.entryFeeCoins,
-          reason: CoinReason.tournamentEntry.name,
-          runId: null,
-          createdAt: nowMs,
-        ));
-        await _outboxWriter.enqueue(
-          SyncEntityType.coinTxn,
-          {
-            'txn_id': txnId,
-            'amount': -dto.entryFeeCoins,
-            'reason': CoinReason.tournamentEntry.name,
-            'run_id': null,
-            'created_at': now.toIso8601String(),
-            'tournament_id': id,
-          },
-          eventId: txnId,
+        await _db.coinLedgerDao.insertTransaction(
+          CoinLedgerRow(
+            id: txnId,
+            amount: -dto.entryFeeCoins,
+            reason: CoinReason.tournamentEntry.name,
+            runId: null,
+            createdAt: nowMs,
+          ),
         );
+        await _outboxWriter.enqueue(SyncEntityType.coinTxn, {
+          'txn_id': txnId,
+          'amount': -dto.entryFeeCoins,
+          'reason': CoinReason.tournamentEntry.name,
+          'run_id': null,
+          'created_at': now.toIso8601String(),
+          'tournament_id': id,
+        }, eventId: txnId);
       }
     });
 
@@ -95,14 +104,16 @@ class TournamentRepositoryImpl implements TournamentRepository {
     try {
       final dto = await _api.leaderboard(id);
       final rows = dto.rows
-          .map((r) => TournamentLeaderboardRow(
-                tournamentId: id,
-                rank: r.rank,
-                userId: r.userId,
-                username: r.username,
-                score: r.score,
-                isPlayer: dto.playerRank != null && r.rank == dto.playerRank,
-              ))
+          .map(
+            (r) => TournamentLeaderboardRow(
+              tournamentId: id,
+              rank: r.rank,
+              userId: r.userId,
+              username: r.username,
+              score: r.score,
+              isPlayer: dto.playerRank != null && r.rank == dto.playerRank,
+            ),
+          )
           .toList();
       await _db.tournamentDao.replaceBoard(id, rows);
       return TournamentBoard(
@@ -141,74 +152,75 @@ class TournamentRepositoryImpl implements TournamentRepository {
     final nowMs = now.millisecondsSinceEpoch;
     final txnId = _uuid.v4();
     await _db.transaction(() async {
-      await _db.coinLedgerDao.insertTransaction(CoinLedgerRow(
-        id: txnId,
-        amount: reward,
-        reason: CoinReason.tournamentReward.name,
-        runId: null,
-        createdAt: nowMs,
-      ));
-      await _outboxWriter.enqueue(
-        SyncEntityType.coinTxn,
-        {
-          'txn_id': txnId,
-          'amount': reward,
-          'reason': CoinReason.tournamentReward.name,
-          'run_id': null,
-          'created_at': now.toIso8601String(),
-          'tournament_id': tournament.id,
-        },
-        eventId: txnId,
+      await _db.coinLedgerDao.insertTransaction(
+        CoinLedgerRow(
+          id: txnId,
+          amount: reward,
+          reason: CoinReason.tournamentReward.name,
+          runId: null,
+          createdAt: nowMs,
+        ),
       );
+      await _outboxWriter.enqueue(SyncEntityType.coinTxn, {
+        'txn_id': txnId,
+        'amount': reward,
+        'reason': CoinReason.tournamentReward.name,
+        'run_id': null,
+        'created_at': now.toIso8601String(),
+        'tournament_id': tournament.id,
+      }, eventId: txnId);
       await _db.tournamentDao.markRewardClaimed(tournament.id);
     });
-    AppLogger.talker.info('[tournament] claimed reward $reward for ${tournament.id}');
+    AppLogger.talker.info(
+      '[tournament] claimed reward $reward for ${tournament.id}',
+    );
   }
 
   // ---- mapping ----
 
   TournamentRow _toRow(TournamentDto d, int nowMs) => TournamentRow(
-        id: d.id,
-        cadence: d.cadence.toLowerCase(),
-        state: d.state.toLowerCase(),
-        name: d.name,
-        tagline: d.tagline,
-        startsAt: d.startsAt.millisecondsSinceEpoch,
-        endsAt: d.endsAt.millisecondsSinceEpoch,
-        seed: d.seed,
-        configJson: d.configJson,
-        entryFeeCoins: d.entryFeeCoins,
-        rewardTableJson: d.rewardTableJson,
-        joined: d.joined,
-        paid: d.paid,
-        bestScore: d.bestScore,
-        rank: d.rank,
-        rewardCoins: d.rewardCoins,
-        rewardClaimed: d.rewardClaimed,
-        lastSyncedAt: nowMs,
-      );
+    id: d.id,
+    cadence: d.cadence.toLowerCase(),
+    state: d.state.toLowerCase(),
+    name: d.name,
+    tagline: d.tagline,
+    startsAt: d.startsAt.millisecondsSinceEpoch,
+    endsAt: d.endsAt.millisecondsSinceEpoch,
+    seed: d.seed,
+    configJson: d.configJson,
+    entryFeeCoins: d.entryFeeCoins,
+    rewardTableJson: d.rewardTableJson,
+    joined: d.joined,
+    paid: d.paid,
+    bestScore: d.bestScore,
+    rank: d.rank,
+    rewardCoins: d.rewardCoins,
+    rewardClaimed: d.rewardClaimed,
+    lastSyncedAt: nowMs,
+  );
 
   Tournament _toEntity(TournamentRow r) => Tournament(
-        id: r.id,
-        cadence: TournamentCadence.fromName(r.cadence),
-        state: TournamentState.fromName(r.state),
-        name: r.name,
-        tagline: r.tagline,
-        startsAt: DateTime.fromMillisecondsSinceEpoch(r.startsAt, isUtc: true),
-        endsAt: DateTime.fromMillisecondsSinceEpoch(r.endsAt, isUtc: true),
-        seed: r.seed,
-        configJson: r.configJson,
-        entryFeeCoins: r.entryFeeCoins,
-        rewardTableJson: r.rewardTableJson,
-        joined: r.joined,
-        paid: r.paid,
-        bestScore: r.bestScore,
-        rank: r.rank,
-        rewardCoins: r.rewardCoins,
-        rewardClaimed: r.rewardClaimed,
-      );
+    id: r.id,
+    cadence: TournamentCadence.fromName(r.cadence),
+    state: TournamentState.fromName(r.state),
+    name: r.name,
+    tagline: r.tagline,
+    startsAt: DateTime.fromMillisecondsSinceEpoch(r.startsAt, isUtc: true),
+    endsAt: DateTime.fromMillisecondsSinceEpoch(r.endsAt, isUtc: true),
+    seed: r.seed,
+    configJson: r.configJson,
+    entryFeeCoins: r.entryFeeCoins,
+    rewardTableJson: r.rewardTableJson,
+    joined: r.joined,
+    paid: r.paid,
+    bestScore: r.bestScore,
+    rank: r.rank,
+    rewardCoins: r.rewardCoins,
+    rewardClaimed: r.rewardClaimed,
+  );
 
-  TournamentStanding _toStanding(TournamentLeaderboardRow r) => TournamentStanding(
+  TournamentStanding _toStanding(TournamentLeaderboardRow r) =>
+      TournamentStanding(
         rank: r.rank,
         userId: r.userId,
         username: r.username,

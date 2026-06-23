@@ -14,15 +14,10 @@ part 'tournaments_state.dart';
 /// the server in the background (offline-tolerant). Issues join/claim
 /// mutations and nudges the sync engine.
 class TournamentsCubit extends Cubit<TournamentsState> {
-  TournamentsCubit({
-    required this._repository,
-    required this._syncWorker,
-  }) : super(const TournamentsState()) {
+  TournamentsCubit({required this._repository, required this._syncWorker})
+    : super(const TournamentsState()) {
     _sub = _repository.watchAll().listen((list) {
-      emit(state.copyWith(
-        tournaments: list,
-        status: TournamentsStatus.ready,
-      ));
+      emit(state.copyWith(tournaments: list, status: TournamentsStatus.ready));
     });
     refresh();
   }
@@ -35,8 +30,10 @@ class TournamentsCubit extends Cubit<TournamentsState> {
     emit(state.copyWith(refreshing: true));
     try {
       await _repository.refresh();
+      if (isClosed) return;
       emit(state.copyWith(refreshing: false, offline: false));
     } on ApiException {
+      if (isClosed) return;
       emit(state.copyWith(refreshing: false, offline: true));
     }
   }
@@ -54,9 +51,17 @@ class TournamentsCubit extends Cubit<TournamentsState> {
     }
   }
 
-  Future<void> claim(Tournament tournament) async {
-    await _repository.claimReward(tournament);
-    _syncWorker.requestSync();
+  /// Returns null on success, or an error message to show.
+  Future<String?> claim(Tournament tournament) async {
+    try {
+      await _repository.claimReward(tournament);
+      _syncWorker.requestSync();
+      return null;
+    } on TournamentException catch (e) {
+      return e.message;
+    } on ApiException catch (e) {
+      return e.message;
+    }
   }
 
   Future<TournamentBoard> board(String id) => _repository.leaderboard(id);

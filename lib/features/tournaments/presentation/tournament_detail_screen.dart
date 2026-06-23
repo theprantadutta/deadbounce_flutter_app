@@ -91,9 +91,11 @@ class _Body extends StatelessWidget {
     final c = t.toChallengeConfig();
     final lines = <String>['Same seeded board for everyone — pure skill.'];
     if (c.startingHearts != null) {
-      lines.add(c.startingHearts == 1
-          ? 'Start with a single heart.'
-          : 'Start with ${c.startingHearts} hearts.');
+      lines.add(
+        c.startingHearts == 1
+            ? 'Start with a single heart.'
+            : 'Start with ${c.startingHearts} hearts.',
+      );
     }
     if (c.forcedEnemyType != null) {
       lines.add('${_enemyLabel(c.forcedEnemyType!.name)} every wave.');
@@ -112,7 +114,9 @@ class _Body extends StatelessWidget {
 
   static String _enemyLabel(String name) {
     final spaced = name.replaceAllMapped(
-        RegExp('([a-z])([A-Z])'), (m) => '${m[1]} ${m[2]}');
+      RegExp('([a-z])([A-Z])'),
+      (m) => '${m[1]} ${m[2]}',
+    );
     return '${spaced[0].toUpperCase()}${spaced.substring(1)}s';
   }
 
@@ -134,7 +138,8 @@ class _RuleRow extends StatelessWidget {
           const Icon(Icons.chevron_right, size: 16, color: AppColors.amber400),
           const SizedBox(width: 4),
           Expanded(
-              child: Text(text, style: Theme.of(context).textTheme.bodySmall)),
+            child: Text(text, style: Theme.of(context).textTheme.bodySmall),
+          ),
         ],
       ),
     );
@@ -169,11 +174,13 @@ class _PrimaryAction extends StatelessWidget {
         content: Text('Entry costs ${t.entryFeeCoins} coins.'),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('CANCEL')),
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('CANCEL'),
+          ),
           TextButton(
-              onPressed: () => Navigator.pop(ctx, true),
-              child: const Text('JOIN')),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('JOIN'),
+          ),
         ],
       ),
     );
@@ -190,7 +197,8 @@ class _PrimaryAction extends StatelessWidget {
     messenger
       ..clearSnackBars()
       ..showSnackBar(
-          SnackBar(content: Text(error ?? "You're in. Good luck, partner.")));
+        SnackBar(content: Text(error ?? "You're in. Good luck, partner.")),
+      );
   }
 }
 
@@ -221,8 +229,11 @@ class _ResultPanel extends StatelessWidget {
           ),
           if (placed) ...[
             const SizedBox(height: AppSpacing.xs),
-            Text('Best score ${t.bestScore}',
-                style: textTheme.bodySmall, textAlign: TextAlign.center),
+            Text(
+              'Best score ${t.bestScore}',
+              style: textTheme.bodySmall,
+              textAlign: TextAlign.center,
+            ),
           ],
           const SizedBox(height: AppSpacing.md),
           if (t.hasUnclaimedReward)
@@ -232,11 +243,16 @@ class _ResultPanel extends StatelessWidget {
               onTap: () => _claim(context, t),
             )
           else if (t.rewardClaimed)
-            Text('Reward claimed. Well shot.',
-                style: textTheme.labelMedium?.copyWith(color: AppColors.amber300))
+            Text(
+              'Reward claimed. Well shot.',
+              style: textTheme.labelMedium?.copyWith(color: AppColors.amber300),
+            )
           else
-            Text('No reward this time — climb higher next round.',
-                style: textTheme.labelSmall, textAlign: TextAlign.center),
+            Text(
+              'No reward this time — climb higher next round.',
+              style: textTheme.labelSmall,
+              textAlign: TextAlign.center,
+            ),
         ],
       ),
     );
@@ -246,25 +262,60 @@ class _ResultPanel extends StatelessWidget {
     final repo = context.sessionDependencies.tournamentRepository;
     final syncWorker = context.sessionDependencies.syncWorker;
     final messenger = ScaffoldMessenger.of(context);
-    await repo.claimReward(t);
-    syncWorker.requestSync();
+    String? error;
+    try {
+      await repo.claimReward(t);
+      syncWorker.requestSync();
+    } on TournamentException catch (e) {
+      error = e.message;
+    } on ApiException catch (e) {
+      error = e.message;
+    }
     messenger
       ..clearSnackBars()
       ..showSnackBar(
-          SnackBar(content: Text('Claimed ${t.rewardCoins} coins. Well shot.')));
+        SnackBar(
+          content: Text(error ?? 'Claimed ${t.rewardCoins} coins. Well shot.'),
+        ),
+      );
   }
 }
 
-class _Leaderboard extends StatelessWidget {
+class _Leaderboard extends StatefulWidget {
   const _Leaderboard({required this.tournamentId});
   final String tournamentId;
 
   @override
+  State<_Leaderboard> createState() => _LeaderboardState();
+}
+
+class _LeaderboardState extends State<_Leaderboard> {
+  // Created once (not inline in build) so the standings don't refetch on
+  // every rebuild driven by the parent's tournament stream.
+  Future<TournamentBoard>? _future;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _future ??= context.sessionDependencies.tournamentRepository.leaderboard(
+      widget.tournamentId,
+    );
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final repo = context.sessionDependencies.tournamentRepository;
     return FutureBuilder<TournamentBoard>(
-      future: repo.leaderboard(tournamentId),
+      future: _future,
       builder: (context, snapshot) {
+        if (snapshot.hasError) {
+          return Padding(
+            padding: const EdgeInsets.all(AppSpacing.lg),
+            child: Text(
+              'Standings are offline right now — pull back later.',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+          );
+        }
         if (!snapshot.hasData) {
           return const Padding(
             padding: EdgeInsets.all(AppSpacing.lg),
@@ -273,8 +324,10 @@ class _Leaderboard extends StatelessWidget {
         }
         final board = snapshot.data!;
         if (board.standings.isEmpty) {
-          return Text('No scores posted yet — be the first.',
-              style: Theme.of(context).textTheme.bodySmall);
+          return Text(
+            'No scores posted yet — be the first.',
+            style: Theme.of(context).textTheme.bodySmall,
+          );
         }
         return Column(
           children: [
@@ -309,14 +362,17 @@ class _StandingRow extends StatelessWidget {
     return Container(
       margin: EdgeInsets.only(top: pinned ? AppSpacing.sm : 4),
       padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.md, vertical: AppSpacing.sm),
+        horizontal: AppSpacing.md,
+        vertical: AppSpacing.sm,
+      ),
       decoration: BoxDecoration(
         color: highlight
             ? AppColors.amber500.withValues(alpha: 0.12)
             : AppColors.ink800.withValues(alpha: 0.7),
         borderRadius: AppRadii.mdAll,
         border: Border.all(
-            color: highlight ? AppColors.amber600 : AppColors.outlineFaint),
+          color: highlight ? AppColors.amber600 : AppColors.outlineFaint,
+        ),
       ),
       child: Row(
         children: [
@@ -326,10 +382,12 @@ class _StandingRow extends StatelessWidget {
           ),
           const SizedBox(width: AppSpacing.sm),
           Expanded(
-            child: Text(standing.username,
-                style: textTheme.bodyMedium,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis),
+            child: Text(
+              standing.username,
+              style: textTheme.bodyMedium,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
           ),
           Text('${standing.score}', style: textTheme.titleSmall),
         ],
@@ -339,8 +397,11 @@ class _StandingRow extends StatelessWidget {
 }
 
 class _BigButton extends StatelessWidget {
-  const _BigButton(
-      {required this.label, required this.icon, required this.onTap});
+  const _BigButton({
+    required this.label,
+    required this.icon,
+    required this.onTap,
+  });
   final String label;
   final IconData icon;
   final VoidCallback onTap;
@@ -362,11 +423,12 @@ class _BigButton extends StatelessWidget {
             children: [
               Icon(icon, size: 20, color: AppColors.onAmber),
               const SizedBox(width: 6),
-              Text(label,
-                  style: Theme.of(context)
-                      .textTheme
-                      .labelLarge
-                      ?.copyWith(color: AppColors.onAmber)),
+              Text(
+                label,
+                style: Theme.of(
+                  context,
+                ).textTheme.labelLarge?.copyWith(color: AppColors.onAmber),
+              ),
             ],
           ),
         ),

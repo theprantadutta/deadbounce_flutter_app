@@ -52,8 +52,37 @@ class GamePage extends StatelessWidget {
   }
 }
 
-class _GameView extends StatelessWidget {
+class _GameView extends StatefulWidget {
   const _GameView();
+
+  @override
+  State<_GameView> createState() => _GameViewState();
+}
+
+class _GameViewState extends State<_GameView> with WidgetsBindingObserver {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // Freeze the run when the app leaves the screen so enemies don't keep
+    // advancing (and the player can't die) off-screen. pause() is a safe no-op
+    // unless a wave is actually playing, and it raises the pause overlay so
+    // resume is deliberate.
+    if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.hidden) {
+      context.read<GameSessionCubit>().pause();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -148,9 +177,17 @@ class _GameView extends StatelessWidget {
   }
 
   void _restart(BuildContext context) {
-    final dailyChallenge = context.read<GameSessionCubit>().dailyChallenge;
+    final cubit = context.read<GameSessionCubit>();
+    final tournament = cubit.tournamentContext;
+    if (tournament != null) {
+      // Restart the SAME tournament run, not a plain run.
+      context.pushReplacement(
+        '${Routes.tournamentRun}/${tournament.tournamentId}',
+      );
+      return;
+    }
     context.pushReplacement(
-      dailyChallenge ? Routes.dailyChallengeRun : Routes.game,
+      cubit.dailyChallenge ? Routes.dailyChallengeRun : Routes.game,
     );
   }
 }

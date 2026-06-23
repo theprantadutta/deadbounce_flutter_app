@@ -106,22 +106,7 @@ class AppDatabase extends _$AppDatabase {
   MigrationStrategy get migration => MigrationStrategy(
         onCreate: (m) async {
           await m.createAll();
-          await customStatement(
-            'CREATE INDEX IF NOT EXISTS idx_sync_outbox_status_created '
-            'ON sync_outbox (status, created_at)',
-          );
-          await customStatement(
-            'CREATE INDEX IF NOT EXISTS idx_coin_ledger_created '
-            'ON coin_ledger (created_at)',
-          );
-          await customStatement(
-            'CREATE INDEX IF NOT EXISTS idx_runs_ended_at '
-            'ON runs (ended_at DESC)',
-          );
-          await customStatement(
-            'CREATE INDEX IF NOT EXISTS idx_challenge_attempts_date_score '
-            'ON challenge_attempts (challenge_date, score DESC)',
-          );
+          await _createIndexes();
         },
         // Stepwise migrations from v2 on.
         onUpgrade: (m, from, to) async {
@@ -137,6 +122,31 @@ class AppDatabase extends _$AppDatabase {
             await m.createTable(cosmeticOwned);
             await m.createTable(cosmeticEquipped);
           }
+          // Indexes are added with IF NOT EXISTS, so this is safe on every
+          // upgrade path — and crucially repairs installs created before the
+          // indexes existed (onCreate-only would leave upgraders unindexed).
+          await _createIndexes();
         },
       );
+
+  /// The performance indexes, idempotent (IF NOT EXISTS) so both onCreate and
+  /// every onUpgrade can call it.
+  Future<void> _createIndexes() async {
+    await customStatement(
+      'CREATE INDEX IF NOT EXISTS idx_sync_outbox_status_created '
+      'ON sync_outbox (status, created_at)',
+    );
+    await customStatement(
+      'CREATE INDEX IF NOT EXISTS idx_coin_ledger_created '
+      'ON coin_ledger (created_at)',
+    );
+    await customStatement(
+      'CREATE INDEX IF NOT EXISTS idx_runs_ended_at '
+      'ON runs (ended_at DESC)',
+    );
+    await customStatement(
+      'CREATE INDEX IF NOT EXISTS idx_challenge_attempts_date_score '
+      'ON challenge_attempts (challenge_date, score DESC)',
+    );
+  }
 }

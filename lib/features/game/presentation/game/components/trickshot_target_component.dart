@@ -42,6 +42,15 @@ class TrickShotTargetComponent extends EnemyComponent {
     return true;
   }
 
+  // A target is cleared ONLY by a bounce-qualified bullet hit — never by
+  // environmental damage or healing (which would bypass the bounce gate and
+  // soft-lock or mis-route completion). No-op both.
+  @override
+  void receiveEnvironmentalDamage(int damage) {}
+
+  @override
+  void receiveHeal(int amount) {}
+
   @override
   void updateBehavior(double dt) {
     _pulse += dt * 2.5; // gentle idle pulse; static, never seeks/contacts
