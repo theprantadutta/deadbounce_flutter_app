@@ -37,10 +37,12 @@ class _StatisticsView extends StatelessWidget {
       child: BlocBuilder<StatisticsCubit, StatisticsState>(
         builder: (context, state) {
           return switch (state) {
-            StatisticsLoading() =>
-              const Center(child: CircularProgressIndicator()),
-            StatisticsError(:final message) =>
-              Center(child: Text(message, style: textTheme.bodyLarge)),
+            StatisticsLoading() => const Center(
+              child: CircularProgressIndicator(),
+            ),
+            StatisticsError(:final message) => Center(
+              child: Text(message, style: textTheme.bodyLarge),
+            ),
             StatisticsLoaded(:final stats) when !stats.hasPlayed =>
               const _EmptyState(),
             StatisticsLoaded(:final stats) => _StatsBody(stats: stats),
@@ -63,11 +65,17 @@ class _EmptyState extends StatelessWidget {
         children: [
           const Icon(Icons.query_stats, size: 56, color: AppColors.ink400),
           const SizedBox(height: AppSpacing.md),
-          Text('No runs logged yet.',
-              style: textTheme.titleMedium, textAlign: TextAlign.center),
+          Text(
+            'No runs logged yet.',
+            style: textTheme.titleMedium,
+            textAlign: TextAlign.center,
+          ),
           const SizedBox(height: AppSpacing.xs),
-          Text('Play a round and your legend starts here, partner.',
-              style: textTheme.bodyMedium, textAlign: TextAlign.center),
+          Text(
+            'Play a round and your legend starts here, partner.',
+            style: textTheme.bodyMedium,
+            textAlign: TextAlign.center,
+          ),
         ],
       ),
     );
@@ -88,42 +96,54 @@ class _StatsBody extends StatelessWidget {
         Row(
           children: [
             Expanded(
-                child: _HeroCard(
-                    label: 'RUNS',
-                    value: _fmtInt(stats.runsPlayed),
-                    icon: Icons.replay)),
+              child: _HeroCard(
+                label: 'RUNS',
+                value: _fmtInt(stats.runsPlayed),
+                icon: Icons.replay,
+              ),
+            ),
             const SizedBox(width: AppSpacing.sm),
             Expanded(
-                child: _HeroCard(
-                    label: 'KILLS',
-                    value: _fmtInt(stats.totalKills),
-                    icon: Icons.whatshot)),
+              child: _HeroCard(
+                label: 'KILLS',
+                value: _fmtInt(stats.totalKills),
+                icon: Icons.whatshot,
+              ),
+            ),
             const SizedBox(width: AppSpacing.sm),
             Expanded(
-                child: _HeroCard(
-                    label: 'IN THE DUST',
-                    value: _fmtDuration(stats.totalPlayTime),
-                    icon: Icons.schedule)),
+              child: _HeroCard(
+                label: 'IN THE DUST',
+                value: _fmtDuration(stats.totalPlayTime),
+                icon: Icons.schedule,
+              ),
+            ),
           ],
         ),
         const SizedBox(height: AppSpacing.lg),
-        _Section(label: 'LIFETIME', rows: [
-          ('Runs played', _fmtInt(stats.runsPlayed)),
-          ('Total kills', _fmtInt(stats.totalKills)),
-          ('Waves cleared', _fmtInt(stats.totalWavesCleared)),
-          ('Coins earned', _fmtInt(stats.totalCoinsEarned)),
-          ('Time in the dust', _fmtDuration(stats.totalPlayTime)),
-          ('Avg kills / run', stats.avgKillsPerRun.toStringAsFixed(1)),
-          ('Avg waves / run', stats.avgWavesPerRun.toStringAsFixed(1)),
-          ('Avg coins / run', stats.avgCoinsPerRun.toStringAsFixed(0)),
-        ]),
+        _Section(
+          label: 'LIFETIME',
+          rows: [
+            ('Runs played', _fmtInt(stats.runsPlayed)),
+            ('Total kills', _fmtInt(stats.totalKills)),
+            ('Waves cleared', _fmtInt(stats.totalWavesCleared)),
+            ('Coins earned', _fmtInt(stats.totalCoinsEarned)),
+            ('Time in the dust', _fmtDuration(stats.totalPlayTime)),
+            ('Avg kills / run', stats.avgKillsPerRun.toStringAsFixed(1)),
+            ('Avg waves / run', stats.avgWavesPerRun.toStringAsFixed(1)),
+            ('Avg coins / run', stats.avgCoinsPerRun.toStringAsFixed(0)),
+          ],
+        ),
         const SizedBox(height: AppSpacing.lg),
-        _Section(label: 'PERSONAL BESTS', rows: [
-          ('Best score', _fmtInt(stats.bestScore)),
-          ('Best chain', 'x${stats.bestChain}'),
-          ('Hottest bounce kill', '${stats.bestBounceKill} bounces'),
-          ('Furthest wave', '${stats.bestWave}'),
-        ]),
+        _Section(
+          label: 'PERSONAL BESTS',
+          rows: [
+            ('Best score', _fmtInt(stats.bestScore)),
+            ('Best chain', 'x${stats.bestChain}'),
+            ('Hottest bounce kill', '${stats.bestBounceKill} bounces'),
+            ('Furthest wave', '${stats.bestWave}'),
+          ],
+        ),
         const SizedBox(height: AppSpacing.lg),
         _EnemyBreakdown(enemyKills: stats.enemyKills),
         const SizedBox(height: AppSpacing.lg),
@@ -134,8 +154,11 @@ class _StatsBody extends StatelessWidget {
 }
 
 class _HeroCard extends StatelessWidget {
-  const _HeroCard(
-      {required this.label, required this.value, required this.icon});
+  const _HeroCard({
+    required this.label,
+    required this.value,
+    required this.icon,
+  });
 
   final String label;
   final String value;
@@ -146,7 +169,9 @@ class _HeroCard extends StatelessWidget {
     final textTheme = Theme.of(context).textTheme;
     return Container(
       padding: const EdgeInsets.symmetric(
-          vertical: AppSpacing.md, horizontal: AppSpacing.xs),
+        vertical: AppSpacing.md,
+        horizontal: AppSpacing.xs,
+      ),
       decoration: BoxDecoration(
         color: AppColors.ink800.withValues(alpha: 0.8),
         borderRadius: AppRadii.mdAll,
@@ -161,8 +186,7 @@ class _HeroCard extends StatelessWidget {
             child: Text(value, style: textTheme.titleMedium),
           ),
           const SizedBox(height: 2),
-          Text(label,
-              style: textTheme.labelSmall, textAlign: TextAlign.center),
+          Text(label, style: textTheme.labelSmall, textAlign: TextAlign.center),
         ],
       ),
     );
@@ -188,7 +212,9 @@ class _Section extends StatelessWidget {
             padding: const EdgeInsets.only(bottom: AppSpacing.xs),
             child: Container(
               padding: const EdgeInsets.symmetric(
-                  horizontal: AppSpacing.md, vertical: AppSpacing.sm),
+                horizontal: AppSpacing.md,
+                vertical: AppSpacing.sm,
+              ),
               decoration: BoxDecoration(
                 color: AppColors.ink800.withValues(alpha: 0.8),
                 borderRadius: AppRadii.mdAll,
@@ -291,9 +317,12 @@ class _EnemyRow extends StatelessWidget {
                 Row(
                   children: [
                     Expanded(child: Text(label, style: textTheme.bodyMedium)),
-                    Text('$count',
-                        style: textTheme.titleSmall
-                            ?.copyWith(color: AppColors.amber300)),
+                    Text(
+                      '$count',
+                      style: textTheme.titleSmall?.copyWith(
+                        color: AppColors.amber300,
+                      ),
+                    ),
                   ],
                 ),
                 const SizedBox(height: 4),
@@ -303,7 +332,9 @@ class _EnemyRow extends StatelessWidget {
                     value: fraction.clamp(0.0, 1.0),
                     minHeight: 5,
                     backgroundColor: AppColors.ink700,
-                    valueColor: const AlwaysStoppedAnimation(AppColors.amber500),
+                    valueColor: const AlwaysStoppedAnimation(
+                      AppColors.amber500,
+                    ),
                   ),
                 ),
               ],
@@ -363,14 +394,16 @@ class _FavoriteIron extends StatelessWidget {
 }
 
 String _fmtInt(int n) {
-  // Thousands separators in the western voice.
-  final s = n.toString();
+  // Thousands separators in the western voice. Group only the digits so a
+  // negative sign never gets a stray comma.
+  final neg = n < 0;
+  final s = n.abs().toString();
   final buffer = StringBuffer();
   for (var i = 0; i < s.length; i++) {
     if (i > 0 && (s.length - i) % 3 == 0) buffer.write(',');
     buffer.write(s[i]);
   }
-  return buffer.toString();
+  return neg ? '-$buffer' : buffer.toString();
 }
 
 String _fmtDuration(Duration d) {

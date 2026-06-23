@@ -22,15 +22,18 @@ class ChainMeter extends StatelessWidget {
         return ValueListenableBuilder<double>(
           valueListenable: hud.chainRemaining,
           builder: (context, remaining, _) {
-            return _ChainChip(length: length, remaining: remaining)
-                // Replay a punchy pop each time the chain grows.
-                .animate(key: ValueKey(length))
-                .scaleXY(
-                  begin: 1.35,
-                  end: 1,
-                  duration: 220.ms,
-                  curve: Curves.easeOutBack,
-                );
+            // Isolated so the ~60fps draining ring doesn't repaint the HUD.
+            return RepaintBoundary(
+              child: _ChainChip(length: length, remaining: remaining)
+                  // Replay a punchy pop each time the chain grows.
+                  .animate(key: ValueKey(length))
+                  .scaleXY(
+                    begin: 1.35,
+                    end: 1,
+                    duration: 220.ms,
+                    curve: Curves.easeOutBack,
+                  ),
+            );
           },
         );
       },
@@ -102,10 +105,7 @@ class _RingPainter extends CustomPainter {
     final rrect = RRect.fromRectAndRadius(rect, const Radius.circular(999));
 
     // Glassy fill + faint outline.
-    canvas.drawRRect(
-      rrect,
-      Paint()..color = const Color(0xCC0E101B),
-    );
+    canvas.drawRRect(rrect, Paint()..color = const Color(0xCC0E101B));
     canvas.drawRRect(
       rrect,
       Paint()

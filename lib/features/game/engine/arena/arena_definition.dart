@@ -71,19 +71,23 @@ class ArenaDefinition {
     final center = Vector2(width / 2, height / 2);
 
     void addWall(Vector2 a, Vector2 b, {required bool isBoundary, int? slot}) {
+      // A zero-length edge would NaN the normal — skip degenerate geometry.
+      if ((b - a).length2 < 1e-6) return;
       final direction = (b - a)..normalize();
       final normal = Vector2(-direction.y, direction.x);
       // Orient toward the arena center (convex boundary) — for obstacle
       // edges this flips outward correctly below.
       final mid = (a + b)..scale(0.5);
       if (normal.dot(center - mid) < 0) normal.negate();
-      segments.add(WallSegment(
-        a: a,
-        b: b,
-        normal: normal,
-        isBoundary: isBoundary,
-        turretSlot: slot,
-      ));
+      segments.add(
+        WallSegment(
+          a: a,
+          b: b,
+          normal: normal,
+          isBoundary: isBoundary,
+          turretSlot: slot,
+        ),
+      );
     }
 
     // Boundary (with optional 45° corner cuts).
@@ -125,17 +129,21 @@ class ArenaDefinition {
       for (var i = 0; i < points.length; i++) {
         final a = points[i];
         final b = points[(i + 1) % points.length];
+        if ((b - a).length2 < 1e-6) continue; // skip degenerate edge
         final direction = (b - a)..normalize();
         final normal = Vector2(-direction.y, direction.x);
         final mid = (a + b)..scale(0.5);
         if (normal.dot(mid - centroid) < 0) normal.negate();
-        segments.add(WallSegment(a: a, b: b, normal: normal, isBoundary: false));
+        segments.add(
+          WallSegment(a: a, b: b, normal: normal, isBoundary: false),
+        );
       }
     }
 
     return segments;
   }
 
-  List<Vector2> anchors() =>
-      [for (final (x, y) in playerAnchors) Vector2(x, y)];
+  List<Vector2> anchors() => [
+    for (final (x, y) in playerAnchors) Vector2(x, y),
+  ];
 }

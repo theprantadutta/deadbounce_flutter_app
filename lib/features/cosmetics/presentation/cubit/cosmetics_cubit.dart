@@ -13,10 +13,8 @@ part 'cosmetics_state.dart';
 /// Drives the cosmetics shop: live coin balance × owned ids × equipped slots,
 /// plus buy/equip actions.
 class CosmeticsCubit extends Cubit<CosmeticsState> {
-  CosmeticsCubit({
-    required this._cosmetics,
-    required this._wallet,
-  }) : super(const CosmeticsLoading());
+  CosmeticsCubit({required this._cosmetics, required this._wallet})
+    : super(const CosmeticsLoading());
 
   final CosmeticsRepository _cosmetics;
   final WalletRepository _wallet;
@@ -37,26 +35,31 @@ class CosmeticsCubit extends Cubit<CosmeticsState> {
       _balance = b;
       _hasBalance = true;
       _emit();
-    });
+    }, onError: _onStreamError);
     _ownedSub = _cosmetics.watchOwned().listen((o) {
       _owned = o;
       _hasOwned = true;
       _emit();
-    });
+    }, onError: _onStreamError);
     _equippedSub = _cosmetics.watchEquipped().listen((e) {
       _equipped = e;
       _hasEquipped = true;
       _emit();
-    });
+    }, onError: _onStreamError);
   }
+
+  void _onStreamError(Object e, StackTrace st) =>
+      AppLogger.talker.handle(e, st, '[cosmetics] watch stream error');
 
   void _emit() {
     if (_hasBalance && _hasOwned && _hasEquipped) {
-      emit(CosmeticsReady(
-        balance: _balance,
-        owned: Set.of(_owned),
-        equipped: Map.of(_equipped),
-      ));
+      emit(
+        CosmeticsReady(
+          balance: _balance,
+          owned: Set.of(_owned),
+          equipped: Map.of(_equipped),
+        ),
+      );
     }
   }
 

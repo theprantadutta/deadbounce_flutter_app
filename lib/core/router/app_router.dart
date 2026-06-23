@@ -1,8 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:go_router/go_router.dart';
 import 'package:talker_flutter/talker_flutter.dart';
 
 import '../logging/app_logger.dart';
+import '../../features/auth/presentation/cubit/auth_cubit.dart';
 import '../../features/about/presentation/credits_screen.dart';
 import '../../features/about/presentation/how_to_play_screen.dart';
 import '../../features/achievements/presentation/awards_screen.dart';
@@ -32,9 +35,25 @@ import 'routes.dart';
 /// through SessionHolder and so only mount after sign-in.
 ///
 /// Every route animates with the signature [dbPage] ricochet transition.
-GoRouter buildRouter() {
+GoRouter buildRouter({required AuthCubit authCubit}) {
   return GoRouter(
     initialLocation: Routes.splash,
+    // Re-evaluate the redirect whenever auth state changes (e.g. sign-out).
+    refreshListenable: GoRouterRefreshStream(authCubit.stream),
+    // Guard authed routes against a missing session (reading
+    // sessionDependencies with no session null-crashes in release). Splash
+    // owns the boot decision and the post-sign-in session-ready gate, so this
+    // only bounces DEFINITIVELY-unauthenticated users off authed routes — it
+    // never force-routes to home (that would race the session hydration).
+    redirect: (context, state) {
+      final loc = state.matchedLocation;
+      if (loc == Routes.splash) return null;
+      final onAuthScreen = loc == Routes.login || loc == Routes.signup;
+      if (authCubit.state is AuthUnauthenticated && !onAuthScreen) {
+        return Routes.login;
+      }
+      return null;
+    },
     routes: [
       GoRoute(
         path: Routes.splash,
@@ -146,9 +165,7 @@ GoRouter buildRouter() {
         path: '${Routes.tournamentRun}/:id',
         pageBuilder: (context, state) => dbPage(
           state: state,
-          child: TournamentRunPage(
-            tournamentId: state.pathParameters['id']!,
-          ),
+          child: TournamentRunPage(tournamentId: state.pathParameters['id']!),
         ),
       ),
       // Debug-only in-app log viewer.
@@ -157,12 +174,26 @@ GoRouter buildRouter() {
           path: Routes.logs,
           pageBuilder: (context, state) => dbPage(
             state: state,
-            child: TalkerScreen(
-              talker: AppLogger.talker,
-              appBarTitle: 'LOGS',
-            ),
+            child: TalkerScreen(talker: AppLogger.talker, appBarTitle: 'LOGS'),
           ),
         ),
     ],
   );
+}
+
+/// Adapts a Bloc/Cubit [Stream] into a [Listenable] so GoRouter re-runs its
+/// redirect on each auth-state change.
+class GoRouterRefreshStream extends ChangeNotifier {
+  GoRouterRefreshStream(Stream<dynamic> stream) {
+    notifyListeners();
+    _subscription = stream.asBroadcastStream().listen((_) => notifyListeners());
+  }
+
+  late final StreamSubscription<dynamic> _subscription;
+
+  @override
+  void dispose() {
+    _subscription.cancel();
+    super.dispose();
+  }
 }

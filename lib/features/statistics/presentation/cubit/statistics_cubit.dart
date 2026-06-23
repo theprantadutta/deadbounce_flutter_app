@@ -15,9 +15,12 @@ class StatisticsCubit extends Cubit<StatisticsState> {
   Future<void> load() async {
     emit(const StatisticsLoading());
     try {
-      emit(StatisticsLoaded(await _repository.getStatistics()));
+      final stats = await _repository.getStatistics();
+      if (isClosed) return;
+      emit(StatisticsLoaded(stats));
     } catch (e, st) {
       AppLogger.talker.handle(e, st, '[stats] load failed');
+      if (isClosed) return;
       emit(const StatisticsError('Could not load your statistics.'));
     }
   }

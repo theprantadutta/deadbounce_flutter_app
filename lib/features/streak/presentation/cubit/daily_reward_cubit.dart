@@ -16,9 +16,11 @@ class DailyRewardCubit extends Cubit<DailyRewardState> {
     emit(const DailyRewardLoading());
     try {
       final streak = await _repository.getState();
+      if (isClosed) return;
       emit(DailyRewardReady(streak));
     } catch (e, st) {
       AppLogger.talker.handle(e, st, '[streak] load failed');
+      if (isClosed) return;
       emit(const DailyRewardError('Could not load your streak.'));
     }
   }
@@ -30,11 +32,15 @@ class DailyRewardCubit extends Cubit<DailyRewardState> {
     try {
       final result = await _repository.claimToday();
       final refreshed = await _repository.getState();
+      if (isClosed) return;
       emit(DailyRewardClaimed(refreshed, result));
     } on AlreadyClaimedToday {
-      emit(DailyRewardReady(await _repository.getState()));
+      final refreshed = await _repository.getState();
+      if (isClosed) return;
+      emit(DailyRewardReady(refreshed));
     } catch (e, st) {
       AppLogger.talker.handle(e, st, '[streak] claim failed');
+      if (isClosed) return;
       emit(DailyRewardReady(current.streak));
     }
   }

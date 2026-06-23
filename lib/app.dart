@@ -39,7 +39,19 @@ class _DeadbounceAppState extends State<DeadbounceApp>
   late final TokenStorage _tokenStorage = TokenStorage();
   late final ApiClient _apiClient = ApiClient(_tokenStorage);
   late final AuthRepository _authRepository = _buildAuthRepository();
-  late final _router = buildRouter();
+
+  // Owned here (not in a BlocProvider's create:) so the router can observe it
+  // for its auth redirect; closed in dispose().
+  late final AuthCubit _authCubit = AuthCubit(
+    signInWithEmail: SignInWithEmail(_authRepository),
+    signUpWithEmail: SignUpWithEmail(_authRepository),
+    signInWithGoogle: SignInWithGoogle(_authRepository),
+    signInAsGuest: SignInAsGuest(_authRepository),
+    restoreSession: RestoreSession(_authRepository),
+    refreshSession: RefreshSession(_authRepository),
+    signOut: SignOut(_authRepository),
+  );
+  late final _router = buildRouter(authCubit: _authCubit);
 
   AuthRepository _buildAuthRepository() {
     final repo = AuthRepositoryImpl(
@@ -66,6 +78,7 @@ class _DeadbounceAppState extends State<DeadbounceApp>
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    _authCubit.close();
     super.dispose();
   }
 
@@ -91,16 +104,8 @@ class _DeadbounceAppState extends State<DeadbounceApp>
       value: _authRepository,
       child: RepositoryProvider.value(
         value: _apiClient,
-        child: BlocProvider(
-          create: (_) => AuthCubit(
-            signInWithEmail: SignInWithEmail(_authRepository),
-            signUpWithEmail: SignUpWithEmail(_authRepository),
-            signInWithGoogle: SignInWithGoogle(_authRepository),
-            signInAsGuest: SignInAsGuest(_authRepository),
-            restoreSession: RestoreSession(_authRepository),
-            refreshSession: RefreshSession(_authRepository),
-            signOut: SignOut(_authRepository),
-          ),
+        child: BlocProvider.value(
+          value: _authCubit,
           child: _SessionScope(
             apiClient: _apiClient,
             child: MaterialApp.router(
@@ -196,6 +201,5 @@ class SessionHolder {
 }
 
 extension SessionContext on BuildContext {
-  SessionDependencies get sessionDependencies =>
-      read<SessionHolder>().session;
+  SessionDependencies get sessionDependencies => read<SessionHolder>().session;
 }

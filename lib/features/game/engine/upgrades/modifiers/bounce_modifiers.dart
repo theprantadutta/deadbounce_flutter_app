@@ -80,7 +80,9 @@ class MagnetRoundsModifier extends UpgradeModifier {
     );
     if (target == null) return;
 
-    final desired = (target - ctx.bullet.position)..normalize();
+    final toTarget = target - ctx.bullet.position;
+    if (toTarget.length2 < 1e-6) return; // coincident — nothing to steer toward
+    final desired = toTarget..normalize();
     final current = ctx.bullet.velocity.normalized();
 
     final cross = current.cross(desired);

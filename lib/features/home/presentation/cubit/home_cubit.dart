@@ -17,10 +17,10 @@ class HomeCubit extends Cubit<HomeState> {
     required ProfileRepository profileRepository,
     required StatisticsRepository statisticsRepository,
     required LeaderboardRepository leaderboardRepository,
-  })  : _profile = profileRepository,
-        _stats = statisticsRepository,
-        _leaderboard = leaderboardRepository,
-        super(const HomeLoading());
+  }) : _profile = profileRepository,
+       _stats = statisticsRepository,
+       _leaderboard = leaderboardRepository,
+       super(const HomeLoading());
 
   final ProfileRepository _profile;
   final StatisticsRepository _stats;
@@ -40,16 +40,22 @@ class HomeCubit extends Cubit<HomeState> {
         AppLogger.talker.handle(e, st, '[home] cached rank lookup failed');
       }
 
-      emit(HomeLoaded(HomeSummary(
-        displayName: profile.displayName,
-        isGuest: profile.isGuest,
-        bestScore: stats.bestScore,
-        totalKills: stats.totalKills,
-        rank: rank,
-      )));
+      if (isClosed) return;
+      emit(
+        HomeLoaded(
+          HomeSummary(
+            displayName: profile.displayName,
+            isGuest: profile.isGuest,
+            bestScore: stats.bestScore,
+            totalKills: stats.totalKills,
+            rank: rank,
+          ),
+        ),
+      );
     } catch (e, st) {
       // Never block the menu — fall back to an empty summary.
       AppLogger.talker.handle(e, st, '[home] summary load failed');
+      if (isClosed) return;
       emit(const HomeLoaded(HomeSummary.empty()));
     }
   }

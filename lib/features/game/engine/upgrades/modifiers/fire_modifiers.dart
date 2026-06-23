@@ -1,3 +1,4 @@
+import '../../combat/bullet_state.dart';
 import '../../physics/vector_utils.dart';
 import '../upgrade_modifier.dart';
 
@@ -34,13 +35,22 @@ class EchoShotModifier extends UpgradeModifier {
 
     final originals = List.of(ctx.shots);
     for (final shot in originals) {
-      final jitter =
-          ctx.world.rng.range(-_jitterRadians, _jitterRadians);
-      ctx.shots.add(PendingShot(
-        direction: shot.direction.clone()..rotateBy(jitter),
-        speed: shot.speed,
-        delaySeconds: _delaySeconds,
-      ));
+      final jitter = ctx.world.rng.range(-_jitterRadians, _jitterRadians);
+      ctx.shots.add(
+        PendingShot(
+          direction: shot.direction.clone()..rotateBy(jitter),
+          speed: shot.speed,
+          delaySeconds: _delaySeconds,
+          // Inherit the source shot's flags (e.g. a queued Ghost pass) as an
+          // OWN instance so the echo behaves like its source regardless of
+          // modifier order, without sharing mutable state.
+          flags: BulletFlags(
+            ghostPassesRemaining: shot.flags.ghostPassesRemaining,
+            hasSplit: shot.flags.hasSplit,
+            trailCooldown: shot.flags.trailCooldown,
+          ),
+        ),
+      );
     }
   }
 }

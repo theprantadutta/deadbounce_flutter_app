@@ -19,7 +19,7 @@ import 'enemy_projectile_component.dart';
 class PlayerComponent extends PositionComponent
     with HasGameReference<DeadbounceGame> {
   PlayerComponent({required this.anchors, super.position})
-      : super(anchor: Anchor.center, priority: 45);
+    : super(anchor: Anchor.center, priority: 45);
 
   final List<Vector2> anchors;
   double get bodyRadius => GameBalance.I.player.radius;
@@ -44,10 +44,7 @@ class PlayerComponent extends PositionComponent
   void update(double dt) {
     super.update(dt);
     _pulse += dt;
-    if (fireCooldownRemaining > 0) {
-      fireCooldownRemaining -= dt;
-      if (fireCooldownRemaining <= 0) game.hud.fireReady.value = true;
-    }
+    if (fireCooldownRemaining > 0) fireCooldownRemaining -= dt;
     if (invulnRemaining > 0) invulnRemaining -= dt;
     game.hud.fireCharge.value = _fireCooldownTotal <= 0
         ? 1
@@ -63,23 +60,27 @@ class PlayerComponent extends PositionComponent
     anchorIndex = index.clamp(0, anchors.length - 1);
     _dashing = true;
     game.hud.dashReady.value = false;
-    invulnRemaining =
-        math.max(invulnRemaining, GameBalance.I.player.invulnAfterDash);
+    invulnRemaining = math.max(
+      invulnRemaining,
+      GameBalance.I.player.invulnAfterDash,
+    );
 
     game.juice.sound.play(Sfx.dash);
     game.juice.haptics.medium();
 
-    add(MoveToEffect(
-      anchors[anchorIndex],
-      EffectController(
-        duration: GameBalance.I.player.dashDuration,
-        curve: Curves.easeOutCubic,
+    add(
+      MoveToEffect(
+        anchors[anchorIndex],
+        EffectController(
+          duration: GameBalance.I.player.dashDuration,
+          curve: Curves.easeOutCubic,
+        ),
+        onComplete: () {
+          _dashing = false;
+          game.hud.dashReady.value = true;
+        },
       ),
-      onComplete: () {
-        _dashing = false;
-        game.hud.dashReady.value = true;
-      },
-    ));
+    );
   }
 
   /// Releases the aimed shot. [direction] must be normalized; [powerT]
@@ -91,19 +92,22 @@ class PlayerComponent extends PositionComponent
     final bulletStats = game.modifiers.effectiveBulletStats();
     fireCooldownRemaining = playerStats.fireCooldown;
     _fireCooldownTotal = playerStats.fireCooldown;
-    game.hud.fireReady.value = false;
     shotCounter++;
 
-    final speed = GameBalance.I.bullet.minSpeed +
-        (GameBalance.I.bullet.maxSpeed - GameBalance.I.bullet.minSpeed) * powerT;
+    final speed =
+        GameBalance.I.bullet.minSpeed +
+        (GameBalance.I.bullet.maxSpeed - GameBalance.I.bullet.minSpeed) *
+            powerT;
 
     final shots = [PendingShot(direction: direction, speed: speed)];
-    game.modifiers.fire(FireContext(
-      origin: muzzlePosition,
-      shotIndex: shotCounter,
-      shots: shots,
-      world: game,
-    ));
+    game.modifiers.fire(
+      FireContext(
+        origin: muzzlePosition,
+        shotIndex: shotCounter,
+        shots: shots,
+        world: game,
+      ),
+    );
 
     for (final shot in shots) {
       final state = BulletState(
@@ -111,8 +115,7 @@ class PlayerComponent extends PositionComponent
         velocity: shot.direction.normalized()..scale(shot.speed),
         flags: shot.flags,
       );
-      game.spawnBullet(state, bulletStats,
-          delaySeconds: shot.delaySeconds);
+      game.spawnBullet(state, bulletStats, delaySeconds: shot.delaySeconds);
     }
 
     game.particles.muzzleFlash(muzzlePosition, direction);
@@ -170,8 +173,7 @@ class PlayerComponent extends PositionComponent
     }
 
     final r = bodyRadius;
-    final readyPulse =
-        fireReady ? 0.5 + 0.5 * math.sin(_pulse * 4) : 0.0;
+    final readyPulse = fireReady ? 0.5 + 0.5 * math.sin(_pulse * 4) : 0.0;
 
     // Equipped gunslinger skin (cosmetic, visual only): core + trim colors.
     final skin = game.cosmetics.gunslinger;
@@ -198,8 +200,11 @@ class PlayerComponent extends PositionComponent
 
     // Core.
     canvas.drawCircle(Offset.zero, r * 0.72, Paint()..color = core);
-    canvas.drawCircle(Offset(-r * 0.2, -r * 0.2), r * 0.22,
-        Paint()..color = highlight);
+    canvas.drawCircle(
+      Offset(-r * 0.2, -r * 0.2),
+      r * 0.22,
+      Paint()..color = highlight,
+    );
 
     // Hat-brim glow arc above.
     canvas.drawArc(

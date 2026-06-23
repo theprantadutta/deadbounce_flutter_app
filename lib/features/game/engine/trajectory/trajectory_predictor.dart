@@ -47,6 +47,10 @@ abstract final class TrajectoryPredictor {
       TrajectoryNode(point: origin.clone(), bounceIndex: 0),
     ];
 
+    // A zero-length aim direction would NaN on normalize() — nothing to
+    // predict yet (e.g. drag still inside the deadzone).
+    if (direction.length2 < 1e-12) return nodes;
+
     // Simulate with a long dt so advance() walks the whole preview
     // distance in one call; bounce/ghost rules apply identically.
     final state = BulletState(
@@ -64,7 +68,8 @@ abstract final class TrajectoryPredictor {
     );
 
     final dt =
-        GameBalance.I.trajectory.maxTotalDistance / launchSpeed; // distance budget
+        GameBalance.I.trajectory.maxTotalDistance /
+        launchSpeed; // distance budget
 
     solver.advance(
       state,
@@ -72,12 +77,14 @@ abstract final class TrajectoryPredictor {
       dt,
       onBounce: (bounce) {
         if (stop) return;
-        nodes.add(TrajectoryNode(
-          point: bounce.point.clone(),
-          bounceIndex: bounce.bounceIndex,
-          dampened: bounce.dampened,
-          ghosted: bounce.ghosted,
-        ));
+        nodes.add(
+          TrajectoryNode(
+            point: bounce.point.clone(),
+            bounceIndex: bounce.bounceIndex,
+            dampened: bounce.dampened,
+            ghosted: bounce.ghosted,
+          ),
+        );
         if (!bounce.dampened && !bounce.ghosted) {
           bouncesSeen++;
           if (bouncesSeen >= previewBounces) stop = true;
@@ -91,11 +98,13 @@ abstract final class TrajectoryPredictor {
     if (!stop) {
       // Path ended on distance budget — close the polyline at the final
       // position.
-      nodes.add(TrajectoryNode(
-        point: state.position.clone(),
-        bounceIndex: state.bounces,
-        isTerminal: true,
-      ));
+      nodes.add(
+        TrajectoryNode(
+          point: state.position.clone(),
+          bounceIndex: state.bounces,
+          isTerminal: true,
+        ),
+      );
     }
 
     return nodes;

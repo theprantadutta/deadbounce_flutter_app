@@ -22,14 +22,19 @@ class FakeWorldOps implements GameWorldOps {
   final GameRng rng;
 
   @override
-  void spawnBullet(BulletState state, BulletStats stats,
-          {double delaySeconds = 0}) =>
-      spawnedBullets.add((state, stats));
+  void spawnBullet(
+    BulletState state,
+    BulletStats stats, {
+    double delaySeconds = 0,
+  }) => spawnedBullets.add((state, stats));
 
   @override
-  void spawnFireTrail(Vector2 position, double radius, double duration,
-          int damagePerSecond) =>
-      fireTrails.add(position);
+  void spawnFireTrail(
+    Vector2 position,
+    double radius,
+    double duration,
+    int damagePerSecond,
+  ) => fireTrails.add(position);
 
   @override
   Vector2? nearestEnemyTo(Vector2 position, {required double within}) =>
@@ -48,16 +53,17 @@ void main() {
 
   void pick(String id) => mods.add(UpgradeCatalog.byId(id));
 
-  test('stat folds compose: Quickdraw x2 + Heavy Caliber + Rubber Walls',
-      () {
+  test('stat folds compose: Quickdraw x2 + Heavy Caliber + Rubber Walls', () {
     pick('quickdraw');
     pick('quickdraw');
     pick('heavy_caliber');
     pick('rubber_walls');
 
     final player = mods.effectivePlayerStats();
-    expect(player.fireCooldown,
-        closeTo(GameBalance.I.player.fireCooldown * 0.78 * 0.78, 1e-9));
+    expect(
+      player.fireCooldown,
+      closeTo(GameBalance.I.player.fireCooldown * 0.78 * 0.78, 1e-9),
+    );
 
     final bullet = mods.effectiveBulletStats();
     expect(bullet.radius, closeTo(GameBalance.I.bullet.radius * 1.4, 1e-9));
@@ -77,11 +83,12 @@ void main() {
     );
 
     BounceContext ctx(int index) => BounceContext(
-        bullet: state,
-        stats: BulletStats.base(),
-        wall: wall,
-        bounceIndex: index,
-        world: world);
+      bullet: state,
+      stats: BulletStats.base(),
+      wall: wall,
+      bounceIndex: index,
+      world: world,
+    );
 
     mods.bounce(ctx(1));
     mods.bounce(ctx(2));
@@ -89,8 +96,11 @@ void main() {
 
     mods.bounce(ctx(3));
     expect(world.spawnedBullets, hasLength(1));
-    expect(world.spawnedBullets.single.$1.bounces, state.bounces,
-        reason: 'clone inherits bounce count (already lethal)');
+    expect(
+      world.spawnedBullets.single.$1.bounces,
+      state.bounces,
+      reason: 'clone inherits bounce count (already lethal)',
+    );
 
     // Same bullet, later bounce 3 contexts: never splits again.
     mods.bounce(ctx(3));
@@ -103,15 +113,15 @@ void main() {
     pick('ghost_round');
 
     List<PendingShot> fire(int shotIndex) {
-      final shots = [
-        PendingShot(direction: Vector2(0, -1), speed: 600),
-      ];
-      mods.fire(FireContext(
-        origin: Vector2.zero(),
-        shotIndex: shotIndex,
-        shots: shots,
-        world: world,
-      ));
+      final shots = [PendingShot(direction: Vector2(0, -1), speed: 600)];
+      mods.fire(
+        FireContext(
+          origin: Vector2.zero(),
+          shotIndex: shotIndex,
+          shots: shots,
+          world: world,
+        ),
+      );
       return shots;
     }
 
@@ -149,12 +159,14 @@ void main() {
     var duplicates = 0;
     for (var i = 0; i < 10000; i++) {
       final shots = [PendingShot(direction: Vector2(0, -1), speed: 600)];
-      mods.fire(FireContext(
-        origin: Vector2.zero(),
-        shotIndex: i,
-        shots: shots,
-        world: world,
-      ));
+      mods.fire(
+        FireContext(
+          origin: Vector2.zero(),
+          shotIndex: i,
+          shots: shots,
+          world: world,
+        ),
+      );
       if (shots.length > 1) duplicates++;
     }
     expect(duplicates, inInclusiveRange(800, 1200));
@@ -177,20 +189,31 @@ void main() {
       velocity: Vector2(500, 0),
     );
     mods.bulletUpdate(
-        BulletUpdateContext(
-            bullet: straight, stats: BulletStats.base(), world: world),
-        1 / 60);
+      BulletUpdateContext(
+        bullet: straight,
+        stats: BulletStats.base(),
+        world: world,
+      ),
+      1 / 60,
+    );
     expect(straight.velocity.x, 500, reason: 'no homing before bounce 2');
 
     straight.bounces = 2;
     final speedBefore = straight.velocity.length;
     mods.bulletUpdate(
-        BulletUpdateContext(
-            bullet: straight, stats: BulletStats.base(), world: world),
-        1 / 60);
+      BulletUpdateContext(
+        bullet: straight,
+        stats: BulletStats.base(),
+        world: world,
+      ),
+      1 / 60,
+    );
     expect(straight.velocity.length, closeTo(speedBefore, 1e-3));
-    expect(straight.velocity.x, lessThan(500),
-        reason: 'velocity rotated toward the enemy');
+    expect(
+      straight.velocity.x,
+      lessThan(500),
+      reason: 'velocity rotated toward the enemy',
+    );
   });
 
   test('deck draws 3 distinct cards and respects maxStacks', () {
@@ -223,5 +246,17 @@ void main() {
       }
     }
     expect(commons, greaterThan(epics * 3));
+  });
+
+  group('UpgradeCatalog.tryById', () {
+    test('returns the card for a known id', () {
+      final card = UpgradeCatalog.tryById('split_shot');
+      expect(card, isNotNull);
+      expect(card!.id, 'split_shot');
+    });
+
+    test('returns null for an unknown/stale id instead of throwing', () {
+      expect(UpgradeCatalog.tryById('removed_card_xyz'), isNull);
+    });
   });
 }

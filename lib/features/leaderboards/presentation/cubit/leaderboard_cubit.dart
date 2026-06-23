@@ -8,8 +8,7 @@ import '../../domain/repositories/leaderboard_repository.dart';
 part 'leaderboard_state.dart';
 
 class LeaderboardCubit extends Cubit<LeaderboardState> {
-  LeaderboardCubit(this._repository)
-      : super(const LeaderboardState.initial());
+  LeaderboardCubit(this._repository) : super(const LeaderboardState.initial());
 
   final LeaderboardRepository _repository;
 
@@ -24,15 +23,18 @@ class LeaderboardCubit extends Cubit<LeaderboardState> {
     }
 
     final cached = await _repository.getCached(tab);
-    emit(state.copyWith(
-      tab: tab,
-      board: cached,
-      status: cached == null
-          ? LeaderboardStatus.loading
-          : LeaderboardStatus.ready,
-      refreshing: true,
-      clearError: true,
-    ));
+    if (isClosed) return;
+    emit(
+      state.copyWith(
+        tab: tab,
+        board: cached,
+        status: cached == null
+            ? LeaderboardStatus.loading
+            : LeaderboardStatus.ready,
+        refreshing: true,
+        clearError: true,
+      ),
+    );
 
     await _refresh(tab);
   }
@@ -40,25 +42,29 @@ class LeaderboardCubit extends Cubit<LeaderboardState> {
   Future<void> _refresh(LeaderboardTab tab) async {
     try {
       final fresh = await _repository.refresh(tab);
-      if (state.tab != tab) return; // user switched away mid-fetch
-      emit(state.copyWith(
-        board: fresh,
-        status: LeaderboardStatus.ready,
-        refreshing: false,
-        clearError: true,
-      ));
+      if (isClosed || state.tab != tab) return; // closed or switched away
+      emit(
+        state.copyWith(
+          board: fresh,
+          status: LeaderboardStatus.ready,
+          refreshing: false,
+          clearError: true,
+        ),
+      );
     } catch (e, st) {
       AppLogger.talker.handle(e, st, '[leaderboard] load failed');
-      if (state.tab != tab) return;
-      emit(state.copyWith(
-        status: state.board == null
-            ? LeaderboardStatus.error
-            : LeaderboardStatus.ready,
-        refreshing: false,
-        error: state.board == null
-            ? 'No connection — and nothing cached yet.'
-            : null,
-      ));
+      if (isClosed || state.tab != tab) return;
+      emit(
+        state.copyWith(
+          status: state.board == null
+              ? LeaderboardStatus.error
+              : LeaderboardStatus.ready,
+          refreshing: false,
+          error: state.board == null
+              ? 'No connection — and nothing cached yet.'
+              : null,
+        ),
+      );
     }
   }
 }

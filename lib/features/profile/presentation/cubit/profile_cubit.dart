@@ -15,9 +15,12 @@ class ProfileCubit extends Cubit<ProfileState> {
   Future<void> load() async {
     emit(const ProfileLoading());
     try {
-      emit(ProfileLoaded(await _repository.getProfile()));
+      final profile = await _repository.getProfile();
+      if (isClosed) return;
+      emit(ProfileLoaded(profile));
     } catch (e, st) {
       AppLogger.talker.handle(e, st, '[profile] load failed');
+      if (isClosed) return;
       emit(const ProfileError('Could not load your profile.'));
     }
   }

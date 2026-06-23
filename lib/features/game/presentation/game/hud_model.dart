@@ -55,8 +55,6 @@ class HudModel {
   final ValueNotifier<int> bossPhaseMaxHp = ValueNotifier(0);
 
   // --- Readiness (thumb zone) ---
-  final ValueNotifier<bool> fireReady = ValueNotifier(true);
-
   /// Fire-cooldown recharge fraction (0..1, 1 = ready) for the readiness pip.
   final ValueNotifier<double> fireCharge = ValueNotifier(1);
 
@@ -64,8 +62,9 @@ class HudModel {
   final ValueNotifier<bool> dashReady = ValueNotifier(true);
 
   // --- Drafted build (upgrade tray) ---
-  final ValueNotifier<List<HudUpgrade>> activeUpgrades =
-      ValueNotifier(const []);
+  final ValueNotifier<List<HudUpgrade>> activeUpgrades = ValueNotifier(
+    const [],
+  );
 
   void dispose() {
     hearts.dispose();
@@ -83,7 +82,6 @@ class HudModel {
     bossPhases.dispose();
     bossPhaseHp.dispose();
     bossPhaseMaxHp.dispose();
-    fireReady.dispose();
     fireCharge.dispose();
     dashReady.dispose();
     activeUpgrades.dispose();

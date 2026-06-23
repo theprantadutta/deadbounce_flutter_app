@@ -116,4 +116,14 @@ abstract final class UpgradeCatalog {
   ];
 
   static UpgradeCard byId(String id) => all.firstWhere((c) => c.id == id);
+
+  /// Null when [id] is unknown — use at boundaries that read persisted/meta
+  /// ids that may have been removed from the catalog, so a stale id can't
+  /// crash run start with a [StateError].
+  static UpgradeCard? tryById(String id) {
+    for (final c in all) {
+      if (c.id == id) return c;
+    }
+    return null;
+  }
 }
