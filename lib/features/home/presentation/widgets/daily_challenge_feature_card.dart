@@ -25,11 +25,13 @@ class DailyChallengeFeatureCard extends StatelessWidget {
           decoration: BoxDecoration(
             color: AppColors.ink800.withValues(alpha: 0.85),
             borderRadius: AppRadii.lgAll,
-            border: Border.all(color: AppColors.blue600),
+            border: Border.all(
+              color: AppColors.blue400.withValues(alpha: 0.45),
+            ),
             boxShadow: [
               BoxShadow(
-                color: AppColors.blue500.withValues(alpha: 0.18),
-                blurRadius: 18,
+                color: AppColors.blue400.withValues(alpha: 0.12),
+                blurRadius: 12,
               ),
             ],
           ),
@@ -41,9 +43,15 @@ class DailyChallengeFeatureCard extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: AppColors.blue900.withValues(alpha: 0.5),
                   borderRadius: AppRadii.mdAll,
-                  border: Border.all(color: AppColors.blue600),
+                  border: Border.all(
+                    color: AppColors.blue400.withValues(alpha: 0.45),
+                  ),
                 ),
-                child: const Icon(Icons.bolt, color: AppColors.blue300, size: 26),
+                child: const Icon(
+                  Icons.bolt,
+                  color: AppColors.blue300,
+                  size: 26,
+                ),
               ),
               const SizedBox(width: AppSpacing.md),
               Expanded(
@@ -53,10 +61,12 @@ class DailyChallengeFeatureCard extends StatelessWidget {
                     Row(
                       children: [
                         Flexible(
-                          child: Text('DAILY CHALLENGE',
-                              style: textTheme.titleSmall,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis),
+                          child: Text(
+                            'DAILY CHALLENGE',
+                            style: textTheme.titleSmall,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         ),
                         const SizedBox(width: AppSpacing.xs),
                         const _LiveBadge(),
@@ -95,24 +105,26 @@ class _LiveBadge extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Container(
-            width: 5,
-            height: 5,
-            decoration: const BoxDecoration(
-              color: AppColors.amber400,
-              shape: BoxShape.circle,
-            ),
-          )
+                width: 5,
+                height: 5,
+                decoration: const BoxDecoration(
+                  color: AppColors.amber400,
+                  shape: BoxShape.circle,
+                ),
+              )
               .animate(onPlay: (c) => c.repeat(reverse: true))
               .fadeIn(duration: 700.ms)
               .then()
               .fade(begin: 1, end: 0.3, duration: 700.ms),
           const SizedBox(width: 4),
-          Text('TODAY',
-              style: textTheme.labelSmall?.copyWith(
-                color: AppColors.amber300,
-                fontSize: 9,
-                letterSpacing: 1,
-              )),
+          Text(
+            'TODAY',
+            style: textTheme.labelSmall?.copyWith(
+              color: AppColors.amber300,
+              fontSize: 9,
+              letterSpacing: 1,
+            ),
+          ),
         ],
       ),
     );

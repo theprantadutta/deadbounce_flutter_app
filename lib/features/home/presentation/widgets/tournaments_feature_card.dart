@@ -23,11 +23,13 @@ class TournamentsFeatureCard extends StatelessWidget {
           decoration: BoxDecoration(
             color: AppColors.ink800.withValues(alpha: 0.85),
             borderRadius: AppRadii.lgAll,
-            border: Border.all(color: AppColors.amber600),
+            border: Border.all(
+              color: AppColors.amber400.withValues(alpha: 0.45),
+            ),
             boxShadow: [
               BoxShadow(
-                color: AppColors.amber500.withValues(alpha: 0.16),
-                blurRadius: 18,
+                color: AppColors.amber400.withValues(alpha: 0.12),
+                blurRadius: 12,
               ),
             ],
           ),
@@ -39,23 +41,33 @@ class TournamentsFeatureCard extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: AppColors.amber500.withValues(alpha: 0.16),
                   borderRadius: AppRadii.mdAll,
-                  border: Border.all(color: AppColors.amber600),
+                  border: Border.all(
+                    color: AppColors.amber400.withValues(alpha: 0.45),
+                  ),
                 ),
-                child: const Icon(Icons.emoji_events,
-                    color: AppColors.amber300, size: 24),
+                child: const Icon(
+                  Icons.emoji_events,
+                  color: AppColors.amber300,
+                  size: 24,
+                ),
               ),
               const SizedBox(width: AppSpacing.md),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('TOURNAMENTS',
-                        style: textTheme.titleSmall,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis),
-                    Text('Compete for coins — daily, weekly, monthly.',
-                        style: textTheme.bodySmall, maxLines: 1,
-                        overflow: TextOverflow.ellipsis),
+                    Text(
+                      'TOURNAMENTS',
+                      style: textTheme.titleSmall,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    Text(
+                      'Compete for coins — daily, weekly, monthly.',
+                      style: textTheme.bodySmall,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ],
                 ),
               ),

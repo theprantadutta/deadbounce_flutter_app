@@ -5,9 +5,13 @@ import '../../../../core/router/routes.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_dimens.dart';
 
-/// Home entry to the Gunsmith shop — spend coins on permanent perks.
+/// Home entry to the Gunsmith shop — a compact horizontal icon + label tile
+/// styled to match the stat chips (soft accent border + faint glow, no heavy
+/// edge). Shares a row with the Outfitter.
 class GunsmithFeatureCard extends StatelessWidget {
   const GunsmithFeatureCard({super.key});
+
+  static const Color _accent = AppColors.amber400;
 
   @override
   Widget build(BuildContext context) {
@@ -16,50 +20,47 @@ class GunsmithFeatureCard extends StatelessWidget {
       color: Colors.transparent,
       child: InkWell(
         onTap: () => context.push(Routes.gunsmith),
-        borderRadius: AppRadii.lgAll,
+        borderRadius: AppRadii.mdAll,
         child: Container(
-          padding: const EdgeInsets.all(AppSpacing.md),
+          padding: const EdgeInsets.symmetric(
+            vertical: AppSpacing.sm,
+            horizontal: AppSpacing.xs,
+          ),
           decoration: BoxDecoration(
-            color: AppColors.ink800.withValues(alpha: 0.85),
-            borderRadius: AppRadii.lgAll,
-            border: Border.all(color: AppColors.amber600),
+            color: AppColors.ink800.withValues(alpha: 0.78),
+            borderRadius: AppRadii.mdAll,
+            border: Border.all(color: _accent.withValues(alpha: 0.45)),
             boxShadow: [
-              BoxShadow(
-                color: AppColors.amber500.withValues(alpha: 0.16),
-                blurRadius: 18,
-              ),
+              BoxShadow(color: _accent.withValues(alpha: 0.12), blurRadius: 12),
             ],
           ),
           child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
+              // Boxed icon badge, matching the Tournaments / Daily Challenge
+              // cards (soft accent border + tint), just smaller.
               Container(
-                width: 44,
-                height: 44,
+                width: 30,
+                height: 30,
                 decoration: BoxDecoration(
-                  color: AppColors.amber900.withValues(alpha: 0.4),
-                  borderRadius: AppRadii.mdAll,
-                  border: Border.all(color: AppColors.amber600),
+                  color: AppColors.amber500.withValues(alpha: 0.16),
+                  borderRadius: AppRadii.smAll,
+                  border: Border.all(color: _accent.withValues(alpha: 0.45)),
                 ),
-                child: const Icon(Icons.handyman,
-                    color: AppColors.amber300, size: 24),
-              ),
-              const SizedBox(width: AppSpacing.md),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('THE GUNSMITH',
-                        style: textTheme.titleSmall,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis),
-                    Text('Spend your bounty on permanent iron.',
-                        style: textTheme.bodySmall,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis),
-                  ],
+                child: const Icon(
+                  Icons.handyman,
+                  color: AppColors.amber300,
+                  size: 16,
                 ),
               ),
-              const Icon(Icons.chevron_right, color: AppColors.amber300),
+              const SizedBox(width: 8),
+              Flexible(
+                // Scales down rather than truncating, so the name stays whole.
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text('GUNSMITH', style: textTheme.labelMedium),
+                ),
+              ),
             ],
           ),
         ),
