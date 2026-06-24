@@ -4,8 +4,11 @@ import 'package:flutter/foundation.dart';
 import 'package:go_router/go_router.dart';
 import 'package:talker_flutter/talker_flutter.dart';
 
+import '../legal/legal_consent_store.dart';
 import '../logging/app_logger.dart';
 import '../../features/auth/presentation/cubit/auth_cubit.dart';
+import '../../features/legal/presentation/legal_consent_page.dart';
+import '../../features/legal/presentation/legal_viewer_page.dart';
 import '../../features/about/presentation/credits_screen.dart';
 import '../../features/about/presentation/how_to_play_screen.dart';
 import '../../features/achievements/presentation/awards_screen.dart';
@@ -35,18 +38,36 @@ import 'routes.dart';
 /// through SessionHolder and so only mount after sign-in.
 ///
 /// Every route animates with the signature [dbPage] ricochet transition.
-GoRouter buildRouter({required AuthCubit authCubit}) {
+GoRouter buildRouter({
+  required AuthCubit authCubit,
+  required LegalConsentStore legalConsent,
+}) {
   return GoRouter(
     initialLocation: Routes.splash,
-    // Re-evaluate the redirect whenever auth state changes (e.g. sign-out).
-    refreshListenable: GoRouterRefreshStream(authCubit.stream),
-    // Guard authed routes against a missing session (reading
-    // sessionDependencies with no session null-crashes in release). Splash
-    // owns the boot decision and the post-sign-in session-ready gate, so this
-    // only bounces DEFINITIVELY-unauthenticated users off authed routes — it
-    // never force-routes to home (that would race the session hydration).
+    // Re-evaluate the redirect whenever auth state changes (e.g. sign-out) OR
+    // legal consent is granted (lets the user past the first-launch gate).
+    refreshListenable: Listenable.merge([
+      GoRouterRefreshStream(authCubit.stream),
+      legalConsent,
+    ]),
+    // Two gates, in order:
+    //  1. Legal consent (device-level, pre-auth): until the user accepts the
+    //     current legal version, force the consent page — it's the very first
+    //     thing on a fresh install / after a version bump.
+    //  2. Auth: bounce DEFINITIVELY-unauthenticated users off authed routes
+    //     (reading sessionDependencies with no session null-crashes in
+    //     release). Splash owns the boot decision and the post-sign-in
+    //     session-ready gate, so this never force-routes to home (that would
+    //     race the session hydration).
     redirect: (context, state) {
       final loc = state.matchedLocation;
+
+      if (!legalConsent.hasAcceptedCurrent) {
+        return loc == Routes.legal ? null : Routes.legal;
+      }
+      // Consent granted — never linger on the gate.
+      if (loc == Routes.legal) return Routes.splash;
+
       if (loc == Routes.splash) return null;
       final onAuthScreen = loc == Routes.login || loc == Routes.signup;
       if (authCubit.state is AuthUnauthenticated && !onAuthScreen) {
@@ -55,6 +76,20 @@ GoRouter buildRouter({required AuthCubit authCubit}) {
       return null;
     },
     routes: [
+      GoRoute(
+        path: Routes.legal,
+        pageBuilder: (context, state) => dbPage(
+          state: state,
+          child: LegalConsentPage(consent: legalConsent),
+        ),
+      ),
+      GoRoute(
+        path: Routes.legalView,
+        pageBuilder: (context, state) {
+          final tab = int.tryParse(state.uri.queryParameters['tab'] ?? '') ?? 0;
+          return dbPage(state: state, child: LegalViewerPage(initialTab: tab));
+        },
+      ),
       GoRoute(
         path: Routes.splash,
         pageBuilder: (context, state) =>

@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'core/audio/music_manager.dart';
 import 'core/di/session_dependencies.dart';
+import 'core/legal/legal_consent_store.dart';
 import 'core/network/api_client.dart';
 import 'core/router/app_router.dart';
 import 'core/storage/token_storage.dart';
@@ -28,7 +29,11 @@ import 'features/auth/presentation/cubit/auth_cubit.dart';
 ///    game-data repositories) built when auth lands on a Firebase uid and
 ///    torn down on sign-out — managed by [_SessionScope].
 class DeadbounceApp extends StatefulWidget {
-  const DeadbounceApp({super.key});
+  const DeadbounceApp({super.key, required this.legalConsent});
+
+  /// Device-level legal-consent record (loaded in main before runApp), used by
+  /// the router to gate the first launch behind the Privacy Policy + Terms.
+  final LegalConsentStore legalConsent;
 
   @override
   State<DeadbounceApp> createState() => _DeadbounceAppState();
@@ -51,7 +56,10 @@ class _DeadbounceAppState extends State<DeadbounceApp>
     refreshSession: RefreshSession(_authRepository),
     signOut: SignOut(_authRepository),
   );
-  late final _router = buildRouter(authCubit: _authCubit);
+  late final _router = buildRouter(
+    authCubit: _authCubit,
+    legalConsent: widget.legalConsent,
+  );
 
   AuthRepository _buildAuthRepository() {
     final repo = AuthRepositoryImpl(

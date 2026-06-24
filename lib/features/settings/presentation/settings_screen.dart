@@ -147,6 +147,18 @@ class _SettingsView extends StatelessWidget {
               ),
               const SizedBox(height: AppSpacing.xs),
               _NavTile(
+                icon: Icons.privacy_tip_outlined,
+                label: 'Privacy Policy',
+                onTap: () => context.push('${Routes.legalView}?tab=0'),
+              ),
+              const SizedBox(height: AppSpacing.xs),
+              _NavTile(
+                icon: Icons.description_outlined,
+                label: 'Terms & Conditions',
+                onTap: () => context.push('${Routes.legalView}?tab=1'),
+              ),
+              const SizedBox(height: AppSpacing.xs),
+              _NavTile(
                 icon: Icons.public,
                 label: 'Visit pranta.dev',
                 external: true,

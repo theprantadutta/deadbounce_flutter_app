@@ -4,10 +4,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:talker_bloc_logger/talker_bloc_logger.dart';
 
 import 'app.dart';
 import 'core/config/game_balance_store.dart';
+import 'core/legal/legal_consent_store.dart';
 import 'core/logging/app_logger.dart';
 import 'firebase_options.dart';
 
@@ -50,5 +52,9 @@ Future<void> main() async {
     await GameBalanceStore.load();
   }
 
-  runApp(const DeadbounceApp());
+  // Device-level legal consent — loaded synchronously here so the router's
+  // first-launch gate (Privacy Policy + Terms) can read it without async.
+  final legalConsent = LegalConsentStore(await SharedPreferences.getInstance());
+
+  runApp(DeadbounceApp(legalConsent: legalConsent));
 }

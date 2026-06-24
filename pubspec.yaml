@@ -50,7 +50,7 @@ dependencies:
   connectivity_plus: ^7.1.1
   uuid: ^4.5.3
   flame_audio: ^2.12.1
-  shared_preferences: ^2.3.2 # dev-only: persists debug tuning-panel tweaks
+  shared_preferences: ^2.3.2 # device-level prefs: legal consent + debug tuning
   url_launcher: ^6.3.1 # opens the credits website link
   package_info_plus: ^10.0.0 # real app version/build in Settings → About
   talker_flutter: ^5.1.17
@@ -87,6 +87,7 @@ flutter:
   assets:
     - .env
     - assets/audio/
+    - assets/legal/
 
   # To add assets to your application, add an assets section, like this:
   # assets:

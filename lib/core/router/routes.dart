@@ -1,6 +1,15 @@
 /// Route locations — single place for every path string.
 abstract final class Routes {
   static const String splash = '/';
+
+  /// First-launch legal gate (Privacy Policy + Terms). Shown before login when
+  /// the accepted legal version is behind the current one.
+  static const String legal = '/legal';
+
+  /// Read-only viewer for the legal documents, opened from Settings → About.
+  /// Append `?tab=0` (Privacy) or `?tab=1` (Terms) to pick the initial tab.
+  static const String legalView = '/legal/view';
+
   static const String login = '/login';
   static const String signup = '/signup';
   static const String home = '/home';
