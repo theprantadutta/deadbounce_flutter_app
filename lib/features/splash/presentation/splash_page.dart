@@ -5,8 +5,8 @@ import 'package:go_router/go_router.dart';
 import '../../../app.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/theme/app_dimens.dart';
-import '../../../core/widgets/db_loading_scene.dart';
 import '../../auth/presentation/cubit/auth_cubit.dart';
+import 'widgets/boot_splash_scene.dart';
 
 /// App boot loading screen: animated brand backdrop, rotating tips, and a
 /// progress bar while [AuthCubit.restoreSession] resolves the session and
@@ -25,14 +25,6 @@ class _SplashPageState extends State<SplashPage> {
       Future<void>.delayed(AppDurations.splash);
   bool _routing = false;
   bool _restoring = false;
-
-  static const _tips = [
-    'Bullets only bite after they bounce.',
-    'Wardens fear the third bounce.',
-    'Dash to dodge — aim to win.',
-    'A dampened wall is a dead wall. Kill the turret.',
-    'Every bounce: more damage, more speed.',
-  ];
 
   @override
   void initState() {
@@ -79,10 +71,8 @@ class _SplashPageState extends State<SplashPage> {
           _onUnauthenticated();
         }
       },
-      child: DbLoadingScene(
-        title: 'DEADBOUNCE',
+      child: BootSplashScene(
         subtitle: _restoring ? 'Restoring your gunslinger…' : null,
-        tips: _tips,
       ),
     );
   }
