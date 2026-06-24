@@ -32,9 +32,10 @@ class RunResultsOverlay extends StatelessWidget {
     return AnimatedArenaBackground(
       child: SafeArea(
         child: Center(
-          // Scrolls only as a safety net on unusually short screens; the
-          // compact layout fits a normal phone without scrolling.
-          child: SingleChildScrollView(
+          // The whole screen never scrolls — the compact layout fits a normal
+          // phone. Only the unlocked-awards list scrolls internally (capped),
+          // so a big haul of awards can't make the results screen scrollable.
+          child: Padding(
             padding: const EdgeInsets.all(AppSpacing.lg),
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 400),
@@ -195,9 +196,16 @@ class _UnlockedAchievements extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.ink800.withValues(alpha: 0.85),
         borderRadius: AppRadii.lgAll,
-        border: Border.all(color: AppColors.blue700),
+        border: Border.all(color: AppColors.amber400.withValues(alpha: 0.45)),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.amber500.withValues(alpha: 0.10),
+            blurRadius: 12,
+          ),
+        ],
       ),
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
@@ -210,14 +218,61 @@ class _UnlockedAchievements extends StatelessWidget {
                       ?.copyWith(color: AppColors.amber300)),
             ],
           ),
-          const SizedBox(height: AppSpacing.xs),
-          for (final name in names)
-            Padding(
-              padding: const EdgeInsets.only(top: 2),
-              child: Text(name, style: textTheme.bodyMedium),
+          const SizedBox(height: AppSpacing.sm),
+          // Only THIS list scrolls — capped so a big haul can't grow the
+          // results screen. Sizes to content when there are just a few.
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxHeight: 132),
+            child: ListView.separated(
+              shrinkWrap: true,
+              padding: EdgeInsets.zero,
+              itemCount: names.length,
+              separatorBuilder: (_, _) =>
+                  const SizedBox(height: AppSpacing.xs),
+              itemBuilder: (_, i) => _AwardChip(name: names[i]),
             ),
-          const SizedBox(height: 4),
+          ),
+          const SizedBox(height: AppSpacing.sm),
           Text('Claim them in Awards.', style: textTheme.labelSmall),
+        ],
+      ),
+    );
+  }
+}
+
+/// A single unlocked award, shown as an outlined amber chip.
+class _AwardChip extends StatelessWidget {
+  const _AwardChip({required this.name});
+
+  final String name;
+
+  @override
+  Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.sm,
+        vertical: AppSpacing.xs,
+      ),
+      decoration: BoxDecoration(
+        color: AppColors.amber500.withValues(alpha: 0.08),
+        borderRadius: AppRadii.mdAll,
+        border: Border.all(color: AppColors.amber400.withValues(alpha: 0.45)),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.emoji_events, color: AppColors.amber300, size: 16),
+          const SizedBox(width: AppSpacing.xs),
+          Expanded(
+            child: Text(
+              name,
+              style: textTheme.bodyMedium?.copyWith(
+                color: AppColors.textPrimary,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
         ],
       ),
     );
