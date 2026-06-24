@@ -42,7 +42,6 @@ dependencies:
   dio: ^5.9.2
   firebase_auth: ^6.5.2
   google_sign_in: ^7.2.0
-  google_fonts: ^8.1.0
   flutter_secure_storage: ^10.3.1
   flutter_dotenv: ^6.0.1
   drift: ^2.34.0
@@ -88,6 +87,41 @@ flutter:
     - .env
     - assets/audio/
     - assets/legal/
+    # SIL Open Font License texts for the bundled fonts (registered with the
+    # LicenseRegistry in main.dart so they appear in the app's licenses page).
+    - assets/fonts/Orbitron-OFL.txt
+    - assets/fonts/Rajdhani-OFL.txt
+
+  # Bundled fonts (no runtime download). All weights Google Fonts publishes for
+  # each family: Orbitron 400–900, Rajdhani 300–700. Neither family ships
+  # italics. Static TTFs (latin subset) live in assets/fonts/.
+  fonts:
+    - family: Orbitron
+      fonts:
+        - asset: assets/fonts/Orbitron-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/Orbitron-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/Orbitron-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/Orbitron-Bold.ttf
+          weight: 700
+        - asset: assets/fonts/Orbitron-ExtraBold.ttf
+          weight: 800
+        - asset: assets/fonts/Orbitron-Black.ttf
+          weight: 900
+    - family: Rajdhani
+      fonts:
+        - asset: assets/fonts/Rajdhani-Light.ttf
+          weight: 300
+        - asset: assets/fonts/Rajdhani-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/Rajdhani-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/Rajdhani-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/Rajdhani-Bold.ttf
+          weight: 700
 
   # To add assets to your application, add an assets section, like this:
   # assets:

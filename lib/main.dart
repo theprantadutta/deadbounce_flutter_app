@@ -16,6 +16,20 @@ import 'firebase_options.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  // Register the SIL Open Font License for the bundled fonts (Orbitron,
+  // Rajdhani) so the attribution shows in the app's licenses page — the
+  // google_fonts package used to do this; we bundle the fonts ourselves now.
+  LicenseRegistry.addLicense(() async* {
+    yield LicenseEntryWithLineBreaks(
+      const ['Orbitron'],
+      await rootBundle.loadString('assets/fonts/Orbitron-OFL.txt'),
+    );
+    yield LicenseEntryWithLineBreaks(
+      const ['Rajdhani'],
+      await rootBundle.loadString('assets/fonts/Rajdhani-OFL.txt'),
+    );
+  });
+
   // Configuration first — AppConfig reads from this everywhere else.
   await dotenv.load(fileName: '.env');
 
