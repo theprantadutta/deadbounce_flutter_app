@@ -50,25 +50,34 @@ GoRouter buildRouter({
       GoRouterRefreshStream(authCubit.stream),
       legalConsent,
     ]),
-    // Two gates, in order:
+    // Boot order: splash (loading) → legal consent → login/home.
+    //  0. Splash always shows first — it owns the boot sequence (restore
+    //     session, minimum brand hold) and then navigates onward; the gates
+    //     below intercept that onward navigation.
     //  1. Legal consent (device-level, pre-auth): until the user accepts the
-    //     current legal version, force the consent page — it's the very first
-    //     thing on a fresh install / after a version bump.
+    //     current legal version, force the consent page — so it appears right
+    //     after the loading screen, before login, on a fresh install / after
+    //     a version bump.
     //  2. Auth: bounce DEFINITIVELY-unauthenticated users off authed routes
     //     (reading sessionDependencies with no session null-crashes in
-    //     release). Splash owns the boot decision and the post-sign-in
-    //     session-ready gate, so this never force-routes to home (that would
-    //     race the session hydration).
+    //     release). Splash already gates session readiness before navigating,
+    //     so routing an authed user home here doesn't race hydration.
     redirect: (context, state) {
       final loc = state.matchedLocation;
+
+      // Splash boots first.
+      if (loc == Routes.splash) return null;
 
       if (!legalConsent.hasAcceptedCurrent) {
         return loc == Routes.legal ? null : Routes.legal;
       }
-      // Consent granted — never linger on the gate.
-      if (loc == Routes.legal) return Routes.splash;
+      // Consent granted — leave the gate for login or home per auth state.
+      if (loc == Routes.legal) {
+        return authCubit.state is AuthAuthenticated
+            ? Routes.home
+            : Routes.login;
+      }
 
-      if (loc == Routes.splash) return null;
       final onAuthScreen = loc == Routes.login || loc == Routes.signup;
       if (authCubit.state is AuthUnauthenticated && !onAuthScreen) {
         return Routes.login;
