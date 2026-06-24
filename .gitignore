@@ -44,6 +44,10 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 
+# Gradle build output (regenerated on every Android build)
+/android/build/
+/android/app/build/
+
 # Firebase config (contains API keys — re-download from console)
 **/google-services.json
 ios/Runner/GoogleService-Info.plist
