@@ -79,7 +79,9 @@ abstract final class AppTheme {
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
           foregroundColor: AppColors.blue300,
-          side: const BorderSide(color: AppColors.blue700),
+          // Soft translucent accent border, matching the home-screen cards
+          // (accent @ 0.45) rather than a hard, bright outline.
+          side: BorderSide(color: AppColors.blue400.withValues(alpha: 0.45)),
           minimumSize: const Size.fromHeight(52),
           shape: RoundedRectangleBorder(borderRadius: AppRadii.mdAll),
           textStyle: textTheme.labelLarge,
