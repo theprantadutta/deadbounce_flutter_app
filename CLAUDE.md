@@ -348,6 +348,28 @@ End-to-end logging via **Talker**, **debug-only** (zero cost in release):
   this app, so `talker_bloc_logger` is the state-management integration (not
   `talker_riverpod_logger`).
 
+## Legal & consent (privacy / terms) — keep in sync with features
+
+First-launch legal gate: `assets/legal/{privacy,terms}.md` are shown in a
+two-tab consent screen (`features/legal/`, rendered by a small in-house
+markdown widget) **after** the boot splash and **before** login. Acceptance is
+device-level in `SharedPreferences` (pre-auth, per-install), gated by the
+GoRouter redirect; the read-only viewer is linked from Settings → About.
+
+`lib/core/legal/legal_documents.dart` holds `LegalDocuments.version` — the
+single source of truth. **Bump it (and the matching `**Version N**` line in
+BOTH markdown files) and every user is re-prompted to accept on next launch.**
+
+> **RULE — when you ship or change a feature, check whether the Privacy Policy /
+> Terms / Refund need updating.** If a feature changes what data is collected,
+> how it's used, third-party SDKs, virtual-goods/payment behavior, etc., update
+> the relevant `assets/legal/*.md`, **bump `LegalDocuments.version`**, and
+> **re-copy the files to `G:\MyProjects\privacy-project\Projects\deadbounce\`**
+> (privacy.md, terms.md, refund.md) so the hosted copies stay byte-identical to
+> what users accept in-app, then commit that repo. Refund.md is hosted-only (not
+> bundled in the app). The big one is monetization — see the
+> `monetization-legal-checklist` memory.
+
 ## Intentionally stubbed / next phase
 
 - **Account linking** (guest→Google): the architecture supports it (per-account
