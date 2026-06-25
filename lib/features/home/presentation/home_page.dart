@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import '../../../app.dart';
 import '../../../core/audio/music_manager.dart';
 import '../../../core/router/routes.dart';
+import '../../../core/update/app_updater.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_dimens.dart';
 import '../../../core/theme/app_effects.dart';
@@ -70,6 +71,7 @@ class _HomeViewState extends State<_HomeView> {
   void initState() {
     super.initState();
     _startMenuMusic();
+    _checkForUpdate();
   }
 
   Future<void> _startMenuMusic() async {
@@ -77,6 +79,25 @@ class _HomeViewState extends State<_HomeView> {
         .load();
     MusicManager.instance.enabled = settings.musicEnabled;
     MusicManager.instance.play(MusicTrack.menu);
+  }
+
+  /// Android only: pull a Play update in the background and, once downloaded,
+  /// offer a one-tap restart to install. No-op off Google Play.
+  Future<void> _checkForUpdate() async {
+    final ready = await AppUpdater.checkAndDownloadFlexible();
+    if (!ready || !mounted) return;
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: const Text('Update ready, partner — restart to install.'),
+          duration: const Duration(seconds: 30),
+          action: SnackBarAction(
+            label: 'RESTART',
+            onPressed: AppUpdater.completeFlexibleUpdate,
+          ),
+        ),
+      );
   }
 
   void _maybePromptReward(DailyRewardState state) {
