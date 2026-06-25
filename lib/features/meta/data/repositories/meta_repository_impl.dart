@@ -67,8 +67,24 @@ class MetaRepositoryImpl implements MetaRepository {
         eventId: txnId,
       );
       await _db.metaUpgradesDao.setLevel(perk.id, current + 1, nowMs);
+      await _enqueueState(nowMs);
     });
 
     AppLogger.talker.info('[meta] purchased ${perk.id}');
+  }
+
+  /// Enqueues the full owned-levels aggregate (last-writer-wins server-side),
+  /// mirroring CosmeticsRepositoryImpl._enqueueState. The coin spend rides the
+  /// coinTxn above; this carries perk OWNERSHIP so it survives reinstall.
+  Future<void> _enqueueState(int nowMs) async {
+    final rows = await _db.metaUpgradesDao.getOwned();
+    await _outboxWriter.enqueue(
+      SyncEntityType.metaState,
+      {
+        'levels': {for (final r in rows) r.perkId: r.level},
+        'updated_at': nowMs,
+      },
+      eventId: _uuid.v4(),
+    );
   }
 }

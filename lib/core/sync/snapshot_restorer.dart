@@ -189,6 +189,19 @@ class SnapshotRestorer {
           }
         }
 
+        // Gunsmith meta-upgrades: owned perk levels (gameplay perks bought
+        // with coins). Restored so a reinstall keeps perks the player paid for.
+        final meta =
+            (snapshot['meta_upgrades'] as Map<String, dynamic>?) ?? const {};
+        final levels = (meta['levels'] as Map<String, dynamic>?) ?? const {};
+        for (final entry in levels.entries) {
+          await _db.metaUpgradesDao.setLevel(
+            entry.key,
+            _asInt(entry.value),
+            nowMs,
+          );
+        }
+
         await _db.profileDao.setInitialSyncCompleted();
       });
 

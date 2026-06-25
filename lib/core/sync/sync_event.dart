@@ -21,4 +21,10 @@ enum SyncEntityType {
   /// The player's full cosmetics aggregate (owned ids + equipped per slot),
   /// last-writer-wins by its own timestamp. Visual-only, client-authoritative.
   cosmeticState,
+
+  /// The player's full Gunsmith meta-upgrade aggregate (perk id -> owned
+  /// level), last-writer-wins by its own timestamp. Mirrors [cosmeticState] —
+  /// the coin SPEND syncs as a coinTxn, this carries the perk OWNERSHIP so a
+  /// paid perk survives reinstall.
+  metaState,
 }
