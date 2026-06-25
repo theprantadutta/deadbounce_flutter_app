@@ -141,6 +141,27 @@ class ApiClient {
     }
   }
 
+  /// Lightweight reachability probe against the unauthenticated `/health`
+  /// endpoint (which sits at the API ROOT, not under `/api/v1`, so we pass an
+  /// absolute URL to bypass the base path). Short timeout so a down/slow
+  /// server is detected fast. Never throws — returns false on any failure.
+  /// The sync worker gates draining on this so queued events aren't burned
+  /// against an unreachable server.
+  Future<bool> isHealthy() async {
+    try {
+      final res = await _dio.get<Map<String, dynamic>>(
+        '${AppConfig.apiBaseUrl}/health',
+        options: Options(
+          receiveTimeout: const Duration(seconds: 5),
+          sendTimeout: const Duration(seconds: 5),
+        ),
+      );
+      return res.statusCode == 200 && res.data?['status'] == 'healthy';
+    } catch (_) {
+      return false;
+    }
+  }
+
   ApiException _normalize(DioException e) {
     final statusCode = e.response?.statusCode;
     final data = e.response?.data;

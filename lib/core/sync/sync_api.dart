@@ -52,4 +52,8 @@ class SyncApi {
 
   /// The one-time restore pull.
   Future<Map<String, dynamic>> fetchSnapshot() => _apiClient.get('/sync/snapshot');
+
+  /// Is the backend reachable right now? The worker checks this before
+  /// draining so a down server doesn't burn retry attempts.
+  Future<bool> isHealthy() => _apiClient.isHealthy();
 }

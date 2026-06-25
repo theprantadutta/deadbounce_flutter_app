@@ -17,6 +17,10 @@ class FakeSyncApi implements SyncApi {
   final List<dynamic Function(List<SyncOutboxRow>)> scripts = [];
   int _call = 0;
 
+  /// Gates the worker's drain; flip to false to simulate a down backend.
+  bool healthy = true;
+  int healthChecks = 0;
+
   @override
   Future<List<SyncEventResult>> sendBatch(List<SyncOutboxRow> events) async {
     sentBatches.add(events);
@@ -32,6 +36,12 @@ class FakeSyncApi implements SyncApi {
 
   @override
   Future<Map<String, dynamic>> fetchSnapshot() async => const {};
+
+  @override
+  Future<bool> isHealthy() async {
+    healthChecks++;
+    return healthy;
+  }
 }
 
 void main() {
@@ -132,6 +142,48 @@ void main() {
     expect(rows.every((r) => r.nextRetryAt != null), isTrue);
     // Backoff means not immediately due — a new drain skips them.
     expect(api.sentBatches, hasLength(1));
+  });
+
+  test('health gate: does not drain or burn attempts while backend is down',
+      () async {
+    await seed(2);
+    api.healthy = false;
+
+    await worker.start();
+    await pumpEventQueue(times: 50);
+
+    // Nothing sent; events stay pending with zero attempts consumed.
+    expect(api.sentBatches, isEmpty);
+    expect(api.healthChecks, greaterThan(0));
+    final rows = await allRows();
+    expect(rows.every((r) => r.status == SyncOutboxDao.statusPending), isTrue);
+    expect(rows.every((r) => r.attempts == 0), isTrue);
+  });
+
+  test('transport failure never permanently fails — retries indefinitely',
+      () async {
+    // An event that has already failed many times under the old 8-attempt cap.
+    await db.syncOutboxDao.enqueue(SyncOutboxRow(
+      id: 'evt-old',
+      entityType: 'coinTxn',
+      operation: 'create',
+      payload: '{"amount": 1}',
+      createdAt: 1,
+      attempts: 50,
+      status: SyncOutboxDao.statusPending,
+      nextRetryAt: null,
+      lastError: null,
+    ));
+    api.scripts.add((_) => ApiException('still offline'));
+
+    await worker.start();
+    await pumpEventQueue(times: 50);
+
+    final row = (await allRows()).single;
+    // Stays pending (rescheduled), never flips to failed.
+    expect(row.status, SyncOutboxDao.statusPending);
+    expect(row.attempts, 51);
+    expect(row.nextRetryAt, isNotNull);
   });
 
   test('start() recovers events stuck inFlight from a killed app',

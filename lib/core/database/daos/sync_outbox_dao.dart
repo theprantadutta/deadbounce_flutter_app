@@ -68,13 +68,6 @@ class SyncOutboxDao extends DatabaseAccessor<AppDatabase>
     );
   }
 
-  /// Exhausted-retries events become failed (kept, surfaced in UI).
-  Future<void> failExhausted({required int maxAttempts}) => customStatement(
-        'UPDATE sync_outbox SET status = ? '
-        'WHERE status = ? AND attempts >= ?',
-        [statusFailed, statusPending, maxAttempts],
-      );
-
   /// Crash recovery: anything stuck inFlight goes back to pending. Safe
   /// because the server dedupes by event id.
   Future<void> recoverInFlight() => customStatement(
