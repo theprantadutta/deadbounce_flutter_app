@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
@@ -50,6 +51,11 @@ class _SignupPageState extends State<SignupPage> {
     return BlocConsumer<AuthCubit, AuthState>(
       listener: (context, state) {
         if (state is AuthError) {
+          // A failed attempt (e.g. a mistyped email) must NOT be persisted by
+          // the platform autofill service — otherwise the bad value gets saved
+          // and re-suggested on every future sign-in. Discard the autofill
+          // context without saving.
+          TextInput.finishAutofillContext(shouldSave: false);
           ScaffoldMessenger.of(context)
             ..hideCurrentSnackBar()
             ..showSnackBar(
@@ -59,6 +65,9 @@ class _SignupPageState extends State<SignupPage> {
               ),
             );
         } else if (state is AuthAuthenticated) {
+          // Only now — with the credentials proven good — let autofill save
+          // them, so the only thing it can ever remember is a working login.
+          TextInput.finishAutofillContext(shouldSave: true);
           context.go(Routes.home);
         }
       },
@@ -70,6 +79,10 @@ class _SignupPageState extends State<SignupPage> {
           child: Form(
             key: _formKey,
             child: AutofillGroup(
+              // Never auto-save on dispose (the default). We commit the
+              // context explicitly only after a successful sign-up, so a
+              // typo'd or otherwise failed value can never be remembered.
+              onDisposeAction: AutofillContextAction.cancel,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
