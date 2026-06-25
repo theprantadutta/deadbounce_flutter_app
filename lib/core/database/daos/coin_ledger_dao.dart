@@ -16,12 +16,25 @@ class CoinLedgerDao extends DatabaseAccessor<AppDatabase>
   /// together.
   Future<void> insertTransaction(CoinLedgerRow row) async {
     await into(coinLedgerEntries).insert(row);
-    await customStatement(
+    // Use customUpdate (NOT customStatement) and declare the affected table so
+    // Drift fires a change notification for `coin_balances`. customStatement
+    // runs raw SQL that Drift can't analyze, so it notifies NO query streams —
+    // which left watchBalance() (the home/HUD coin readout) stuck at its last
+    // value after a daily-login claim or run payout until its cubit was
+    // recreated. The balance was always written correctly; only the live
+    // stream went stale.
+    await customUpdate(
       'INSERT INTO coin_balances (id, balance, last_ledger_created_at) '
       'VALUES (0, ?, ?) '
       'ON CONFLICT (id) DO UPDATE SET '
       'balance = balance + ?, last_ledger_created_at = ?',
-      [row.amount, row.createdAt, row.amount, row.createdAt],
+      variables: [
+        Variable<int>(row.amount),
+        Variable<int>(row.createdAt),
+        Variable<int>(row.amount),
+        Variable<int>(row.createdAt),
+      ],
+      updates: {coinBalances},
     );
   }
 
