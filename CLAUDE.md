@@ -313,7 +313,7 @@ an immutable **`GameFeel`** (`features/game/presentation/game/game_feel.dart`) h
 to `DeadbounceGame` (like the meta loadout, kept OUT of `GameBalance`):
 `screenShakeEnabled`/`hitStopEnabled` gate `JuiceController.addTrauma`/`hitStop`;
 `aimGuideEnabled` gates `trajectory.visible` in `InputController`; `combatTextEnabled`
-gates the three popup spawn sites (bounce counter, chain label, Warden CLANG);
+gates the four popup spawn sites (bounce counter, chain label, Warden CLANG, Ironhide CLANG);
 `particleQuality` (`ParticleQuality.low/medium/high` → budget 250/600/1200) feeds the
 `ParticleFactory` budget. The screen (`settings_screen.dart`, over `MetaScaffold`) is
 sectioned AUDIO / GAME FEEL / DATA & SYNC / ACCOUNT / ABOUT / DANGER ZONE /
@@ -375,7 +375,12 @@ BOTH markdown files) and every user is re-prompted to accept on next launch.**
 
 - **Account linking** (guest→Google): the architecture supports it (per-account
   file survives, `accountLinked` event exists), but the Profile CTA currently shows
-  "coming soon". Real `linkWithCredential` is the next step.
+  "coming soon". Real `linkWithCredential` is the next step. **REMINDER (deferred
+  2026-06-27 settings audit):** this is the single remaining placeholder on the
+  Settings→Profile path — everything else there is fully wired. Pick this up when
+  ready: implement `linkWithCredential` (Google first, Apple after), surface
+  success/error UX on the Profile CTA, and emit the existing `accountLinked` sync
+  event.
 - **Apple Sign-In**: button placeholder (Phase 1).
 - Final art (the logo is a styled Material icon, default launcher icon),
   shop/monetization (the ledger prepares for it), PvP.
