@@ -213,8 +213,12 @@ subclass that rides the existing bullet sweep but gates `canBeDamagedBy` on
 `TrickShotPage` is its own `GameSessionGateway` with no-op `onWaveCleared`/`onRunEnded`
 (so nothing hits runs/leaderboards/stats); completion fires `DeadbounceGame.onTrickShot
 Complete`/`onTrickShotProgress` callbacks instead. Routes: `Routes.trickShot` (gallery) +
-`Routes.trickShotRun/:id`; Home → "TRICKS" nav tile. Best-score persistence is a planned
-fast-follow (v1 ships the ladder + per-clear shots-vs-par).
+`Routes.trickShotRun/:id`; Home → "TRICKS" nav tile. Progress is persisted
+**locally, offline-first** (`trick_shot_progress` Drift table + `TrickShotDao` +
+`TrickShotProgressRepository`): a clear records the per-level cleared flag + best
+(fewest) shots (keep-min), and the gallery shows a cleared check + best-vs-par.
+Single-player puzzle progress — **not synced** (no leaderboard; survives app
+restarts, not a reinstall).
 
 ## Offline-first architecture (the spine)
 

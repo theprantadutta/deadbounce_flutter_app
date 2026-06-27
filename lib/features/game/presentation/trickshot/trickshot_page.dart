@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -75,6 +77,7 @@ class _TrickShotPageState extends State<TrickShotPage>
 
   Future<void> _build() async {
     final session = context.sessionDependencies;
+    final progressRepo = session.trickShotProgressRepository;
     final settings = await session.settingsRepository.load();
     final cosmetics = await session.cosmeticsRepository.loadout();
     final sound = FlameAudioSoundManager(enabled: settings.soundEnabled);
@@ -98,7 +101,10 @@ class _TrickShotPageState extends State<TrickShotPage>
       ),
       onTrickShotProgress: (r) => _remaining.value = r,
       onTrickShotComplete: () {
-        if (mounted) setState(() => _complete = true);
+        if (!mounted) return;
+        // Persist the clear locally (offline-first), keeping the best shots.
+        unawaited(progressRepo.recordClear(_level.id, _shotsUsed));
+        setState(() => _complete = true);
       },
     );
 

@@ -13,6 +13,7 @@ import 'daos/stats_dao.dart';
 import 'daos/streak_dao.dart';
 import 'daos/sync_outbox_dao.dart';
 import 'daos/tournament_dao.dart';
+import 'daos/trick_shot_dao.dart';
 import 'tables/achievement_states_table.dart';
 import 'tables/challenge_attempts_table.dart';
 import 'tables/coin_balance_table.dart';
@@ -28,6 +29,7 @@ import 'tables/settings_table.dart';
 import 'tables/stat_counters_table.dart';
 import 'tables/sync_outbox_table.dart';
 import 'tables/tournament_table.dart';
+import 'tables/trick_shot_progress_table.dart';
 
 part 'app_database.g.dart';
 
@@ -55,6 +57,7 @@ part 'app_database.g.dart';
     TournamentLeaderboardCache,
     CosmeticOwned,
     CosmeticEquipped,
+    TrickShotProgress,
   ],
   daos: [
     ProfileDao,
@@ -70,13 +73,14 @@ part 'app_database.g.dart';
     MetaUpgradesDao,
     TournamentDao,
     CosmeticsDao,
+    TrickShotDao,
   ],
 )
 class AppDatabase extends _$AppDatabase {
   AppDatabase(super.e);
 
   @override
-  int get schemaVersion => 5;
+  int get schemaVersion => 6;
 
   /// Wipes all gameplay/account data on this device in one transaction,
   /// **preserving the settings table** (device preferences). Clearing the
@@ -100,6 +104,7 @@ class AppDatabase extends _$AppDatabase {
         await delete(tournamentLeaderboardCache).go();
         await delete(cosmeticOwned).go();
         await delete(cosmeticEquipped).go();
+        await delete(trickShotProgress).go();
       });
 
   @override
@@ -127,6 +132,9 @@ class AppDatabase extends _$AppDatabase {
             // TableMigration recreates the table from the current schema,
             // copying every still-present column (data-preserving).
             await m.alterTable(TableMigration(tournaments));
+          }
+          if (from < 6) {
+            await m.createTable(trickShotProgress);
           }
           // Indexes are added with IF NOT EXISTS, so this is safe on every
           // upgrade path — and crucially repairs installs created before the

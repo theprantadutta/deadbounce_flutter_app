@@ -6,6 +6,7 @@ import '../../features/challenges/data/repositories/daily_challenge_repository_i
 import '../../features/challenges/domain/repositories/daily_challenge_repository.dart';
 import '../../features/cosmetics/data/repositories/cosmetics_repository_impl.dart';
 import '../../features/cosmetics/domain/repositories/cosmetics_repository.dart';
+import '../../features/game/presentation/trickshot/trickshot_progress_repository.dart';
 import '../../features/economy/data/repositories/wallet_repository_impl.dart';
 import '../../features/economy/domain/repositories/wallet_repository.dart';
 import '../../features/leaderboards/data/datasources/leaderboard_api.dart';
@@ -61,6 +62,7 @@ class SessionDependencies {
     required this.metaRepository,
     required this.tournamentRepository,
     required this.cosmeticsRepository,
+    required this.trickShotProgressRepository,
   });
 
   factory SessionDependencies.create({
@@ -120,6 +122,7 @@ class SessionDependencies {
         db: db,
         outboxWriter: outboxWriter,
       ),
+      trickShotProgressRepository: TrickShotProgressRepository(db),
     );
   }
 
@@ -142,6 +145,7 @@ class SessionDependencies {
   final MetaRepository metaRepository;
   final TournamentRepository tournamentRepository;
   final CosmeticsRepository cosmeticsRepository;
+  final TrickShotProgressRepository trickShotProgressRepository;
 
   bool _started = false;
   bool _disposed = false;
