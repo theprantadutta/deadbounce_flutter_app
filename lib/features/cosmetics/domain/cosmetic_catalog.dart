@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_colors.dart';
 
-/// The three cosmetic slots. Wire names (`name`) are what sync/Drift store.
+/// The three cosmetic slots. Drift stores the enum `.name` (e.g. `bulletTrail`);
+/// the sync wire (cosmeticState + snapshot) uses the snake_case [wireName]
+/// (`bullet_trail`), matching the backend's snake_case JSON convention.
 enum CosmeticSlot { bulletTrail, gunslinger, arenaTheme }
 
 extension CosmeticSlotLabel on CosmeticSlot {
@@ -16,6 +18,15 @@ extension CosmeticSlotLabel on CosmeticSlot {
         CosmeticSlot.bulletTrail => Icons.auto_graph,
         CosmeticSlot.gunslinger => Icons.person,
         CosmeticSlot.arenaTheme => Icons.grid_on,
+      };
+
+  /// snake_case key used on the sync wire, so the `cosmeticState` event the
+  /// client emits matches the casing the backend stores and returns in the
+  /// snapshot.
+  String get wireName => switch (this) {
+        CosmeticSlot.bulletTrail => 'bullet_trail',
+        CosmeticSlot.gunslinger => 'gunslinger',
+        CosmeticSlot.arenaTheme => 'arena_theme',
       };
 }
 

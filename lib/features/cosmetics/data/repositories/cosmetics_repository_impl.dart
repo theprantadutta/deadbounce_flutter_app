@@ -114,7 +114,13 @@ class CosmeticsRepositoryImpl implements CosmeticsRepository {
       SyncEntityType.cosmeticState,
       {
         'owned': ownedRows.map((r) => r.cosmeticId).toList(),
-        'equipped': {for (final r in equippedRows) r.slot: r.cosmeticId},
+        // Emit snake_case slot keys (wireName) so ingest matches the casing the
+        // backend stores and returns in the snapshot. Falls back to the raw
+        // stored name if the slot is somehow unrecognized.
+        'equipped': {
+          for (final r in equippedRows)
+            (_slotByName(r.slot)?.wireName ?? r.slot): r.cosmeticId,
+        },
         'updated_at': nowMs,
       },
       eventId: _uuid.v4(),

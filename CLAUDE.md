@@ -157,10 +157,14 @@ leak across cases (keeps daily-challenge wave goldens deterministic).
   local Drift tables (`CosmeticOwned`/`CosmeticEquipped`, DB schema v4) and **syncs** as a
   `cosmeticState` aggregate event (owned ids + equipped-per-slot, last-writer-wins by
   `updated_at`; backend `CosmeticStateProcessor` + `PlayerCosmetic`; restored via
-  `/sync/snapshot`) so paid items survive reinstall. Catalog in Dart
+  `/sync/snapshot`) so paid items survive reinstall. Buying/equipping are offline-first
+  (local Drift + outbox, no network). The wire uses snake_case slot keys
+  (`CosmeticSlot.wireName`, e.g. `bullet_trail`) on both ingest and snapshot; the server
+  validates the aggregate against its catalog (`CosmeticDefinitions`: unknown owned ids
+  dropped, equipped kept only when the id belongs to that slot). Catalog in Dart
   (`cosmetic_catalog.dart`), free stock looks always owned. Applied at run start via an
   immutable `CosmeticLoadout` (sibling of `MetaLoadout`/`GameFeel`): trail color in
-  `bullet_component`/`fire_trail_component`, core/trim in `player_component`, grid color in
+  `bullet_component`, core/trim in `player_component`, grid color in
   `arena_component`. **Guardrail: cosmetics never touch `GameBalance`/`BulletStats`** — pure
   render layer, so they're fair in every mode.
 - **Achievements** (24, `features/achievements/domain/achievement_catalog.dart`):
