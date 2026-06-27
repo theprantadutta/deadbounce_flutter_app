@@ -113,10 +113,13 @@ void main() {
     );
 
     final outbox = await db.select(db.syncOutbox).get();
-    expect(outbox.map((e) => e.entityType),
-        containsAll(['coinTxn', 'achievementUnlock']));
+    final types = outbox.map((e) => e.entityType).toList();
+    // The reward is credited server-side via the validated achievementUnlock
+    // event — no separate (unvalidated) coinTxn is synced for it.
+    expect(types, contains('achievementUnlock'));
+    expect(types, isNot(contains('coinTxn')));
 
-    // Claiming again does nothing.
+    // Claiming again does nothing (local balance unchanged, no new events).
     await repo.claim('first_blood');
     expect(await db.coinLedgerDao.getBalance(), 10);
   });

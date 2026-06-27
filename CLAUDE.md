@@ -177,9 +177,15 @@ leak across cases (keeps daily-challenge wave goldens deterministic).
   render layer, so they're fair in every mode.
 - **Achievements** (24, `features/achievements/domain/achievement_catalog.dart`):
   in-app definitions; ids + coin rewards mirror the backend's validation catalog
-  exactly. Evaluated locally after each run against lifetime stats. **Unlock and
-  claim are separate** — claiming grants the coin reward (ledger) and emits the one
-  `achievementUnlock` sync event.
+  exactly. Evaluated locally (offline) after each run against lifetime stats **and
+  this-run fields** (score/wave/chain/`isDailyChallenge`…) — unlocks write to local
+  Drift, no network. **Unlock and claim are separate** — claiming credits the reward
+  locally (ledger, for instant offline display) and emits the one `achievementUnlock`
+  sync event, which is **the authoritative reward credit**: the backend validates
+  id+reward against `AchievementDefinitions`, dedupes by `(user, achievementId)`, and
+  **credits the coins itself** (so the reward can't be inflated or double-credited —
+  no separate `coinTxn` is synced for it). Restored as unlocked+claimed via the
+  snapshot.
 - **Leaderboards**: cache-first (Drift) with last-synced + pinned player rank;
   the cubit emits the cached board instantly, refreshes in the background, and on a
   failed (offline) refresh keeps the cache up with an **offline indicator** (`cloud_off`

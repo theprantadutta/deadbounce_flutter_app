@@ -89,6 +89,10 @@ class AchievementsRepositoryImpl implements AchievementsRepository {
       await _db.achievementsDao.markClaimed(achievementId, nowMs);
 
       if (def.coinReward > 0) {
+        // Local credit for instant, offline display. The reward is credited
+        // server-side by the achievementUnlock event below (catalog-validated,
+        // idempotent per achievement) — so we do NOT sync a separate, unvalidated
+        // coinTxn for it.
         await _db.coinLedgerDao.insertTransaction(CoinLedgerRow(
           id: txnId,
           amount: def.coinReward,
@@ -96,21 +100,11 @@ class AchievementsRepositoryImpl implements AchievementsRepository {
           runId: null,
           createdAt: nowMs,
         ));
-        await _outboxWriter.enqueue(
-          SyncEntityType.coinTxn,
-          {
-            'txn_id': txnId,
-            'amount': def.coinReward,
-            'reason': CoinReason.achievementClaim.name,
-            'run_id': null,
-            'created_at': now.toIso8601String(),
-          },
-          eventId: txnId,
-        );
       }
 
-      // The unlock event carries the reward; the backend dedupes by
-      // (user, achievementId) and validates id+reward against its catalog.
+      // The unlock event is the authoritative reward credit: the backend dedupes
+      // by (user, achievementId), validates id+reward against its catalog, and
+      // credits the coins itself.
       final unlockedAtMs = state.unlockedAt ?? nowMs;
       await _outboxWriter.enqueue(SyncEntityType.achievementUnlock, {
         'achievement_id': achievementId,
