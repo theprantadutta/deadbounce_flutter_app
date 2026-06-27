@@ -8,6 +8,7 @@ class LeaderboardState extends Equatable {
     required this.status,
     this.board,
     this.refreshing = false,
+    this.offline = false,
     this.error,
   });
 
@@ -16,12 +17,17 @@ class LeaderboardState extends Equatable {
         status = LeaderboardStatus.loading,
         board = null,
         refreshing = false,
+        offline = false,
         error = null;
 
   final LeaderboardTab tab;
   final LeaderboardStatus status;
   final LeaderboardBoard? board;
   final bool refreshing;
+
+  /// True when the latest refresh failed (offline) but a cached board is shown,
+  /// so the UI can flag the standings as stale/last-synced rather than live.
+  final bool offline;
   final String? error;
 
   LeaderboardState copyWith({
@@ -29,6 +35,7 @@ class LeaderboardState extends Equatable {
     LeaderboardStatus? status,
     LeaderboardBoard? board,
     bool? refreshing,
+    bool? offline,
     String? error,
     bool clearError = false,
   }) {
@@ -37,10 +44,11 @@ class LeaderboardState extends Equatable {
       status: status ?? this.status,
       board: board ?? this.board,
       refreshing: refreshing ?? this.refreshing,
+      offline: offline ?? this.offline,
       error: clearError ? null : (error ?? this.error),
     );
   }
 
   @override
-  List<Object?> get props => [tab, status, board, refreshing, error];
+  List<Object?> get props => [tab, status, board, refreshing, offline, error];
 }

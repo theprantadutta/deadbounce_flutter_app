@@ -54,8 +54,11 @@ class _LeaderboardView extends StatelessWidget {
                     message: state.error ??
                         'No gunslingers on the board yet. Draw first.',
                   ),
-                LeaderboardStatus.ready =>
-                  _BoardList(board: state.board, refreshing: state.refreshing),
+                LeaderboardStatus.ready => _BoardList(
+                    board: state.board,
+                    refreshing: state.refreshing,
+                    offline: state.offline,
+                  ),
               },
             );
           },
@@ -66,10 +69,15 @@ class _LeaderboardView extends StatelessWidget {
 }
 
 class _BoardList extends StatelessWidget {
-  const _BoardList({required this.board, required this.refreshing});
+  const _BoardList({
+    required this.board,
+    required this.refreshing,
+    required this.offline,
+  });
 
   final LeaderboardBoard? board;
   final bool refreshing;
+  final bool offline;
 
   @override
   Widget build(BuildContext context) {
@@ -94,13 +102,16 @@ class _BoardList extends StatelessWidget {
                     child: CircularProgressIndicator(strokeWidth: 1.5),
                   )
                 else
-                  const Icon(Icons.cloud_done,
-                      size: 13, color: AppColors.ink300),
+                  Icon(offline ? Icons.cloud_off : Icons.cloud_done,
+                      size: 13,
+                      color: offline ? AppColors.amber400 : AppColors.ink300),
                 const SizedBox(width: 6),
                 Text(
                   refreshing
                       ? 'Refreshing…'
-                      : 'Synced ${_ago(board!.lastSynced!)}',
+                      : offline
+                          ? 'Offline · last synced ${_ago(board!.lastSynced!)}'
+                          : 'Synced ${_ago(board!.lastSynced!)}',
                   style: textTheme.labelSmall,
                 ),
               ],

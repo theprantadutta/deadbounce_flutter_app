@@ -181,7 +181,14 @@ leak across cases (keeps daily-challenge wave goldens deterministic).
   claim are separate** — claiming grants the coin reward (ledger) and emits the one
   `achievementUnlock` sync event.
 - **Leaderboards**: cache-first (Drift) with last-synced + pinned player rank;
-  refreshed from the server. Daily/Weekly/All-time/Daily-Challenge tabs.
+  the cubit emits the cached board instantly, refreshes in the background, and on a
+  failed (offline) refresh keeps the cache up with an **offline indicator** (`cloud_off`
+  + "Offline · last synced …") rather than erroring. The cache is **period-aware**:
+  it's keyed by the real period (`leaderboard_period.dart` mirrors the backend's
+  `LeaderboardPeriod` — `yyyy-MM-dd` / ISO `yyyy-Www` / `alltime` / `dc:yyyy-MM-dd`),
+  so a board from a previous period (after a UTC day/week rollover) is treated as
+  no-cache-for-today instead of being shown as current. Read-only — submission is the
+  run-end `scoreSubmit`/`challengeResult` outbox. Daily/Weekly/All-time/Daily-Challenge tabs.
 
 ## Trick-Shot Gallery (`features/game/presentation/trickshot/`)
 

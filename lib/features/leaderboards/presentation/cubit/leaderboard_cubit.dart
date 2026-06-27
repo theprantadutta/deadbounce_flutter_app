@@ -48,21 +48,24 @@ class LeaderboardCubit extends Cubit<LeaderboardState> {
           board: fresh,
           status: LeaderboardStatus.ready,
           refreshing: false,
+          offline: false,
           clearError: true,
         ),
       );
     } catch (e, st) {
       AppLogger.talker.handle(e, st, '[leaderboard] load failed');
       if (isClosed || state.tab != tab) return;
+      final hasCache = state.board != null;
+      // Offline: keep the cached board up (flagged stale) rather than erroring;
+      // only a board we never cached shows the empty/error state.
       emit(
         state.copyWith(
-          status: state.board == null
-              ? LeaderboardStatus.error
-              : LeaderboardStatus.ready,
+          status:
+              hasCache ? LeaderboardStatus.ready : LeaderboardStatus.error,
           refreshing: false,
-          error: state.board == null
-              ? 'No connection — and nothing cached yet.'
-              : null,
+          offline: true,
+          error: hasCache ? null : 'No connection — and nothing cached yet.',
+          clearError: hasCache,
         ),
       );
     }
