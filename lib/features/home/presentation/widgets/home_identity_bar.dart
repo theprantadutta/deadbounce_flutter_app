@@ -6,6 +6,8 @@ import '../../../../core/router/routes.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_dimens.dart';
 import '../../../../core/theme/app_effects.dart';
+import '../../../../core/widgets/player_avatar.dart';
+import '../../../auth/presentation/cubit/auth_cubit.dart';
 import '../../../economy/presentation/cubit/wallet_cubit.dart';
 import '../../../streak/presentation/cubit/daily_reward_cubit.dart';
 import '../../domain/entities/home_summary.dart';
@@ -22,6 +24,9 @@ class HomeIdentityBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
     final effects = Theme.of(context).extension<AppEffects>()!;
+    final authState = context.watch<AuthCubit>().state;
+    final photoUrl =
+        authState is AuthAuthenticated ? authState.user.photoUrl : null;
 
     return Row(
       children: [
@@ -41,6 +46,7 @@ class HomeIdentityBar extends StatelessWidget {
                       builder: (context, state) => _AvatarBadge(
                         gradient: effects.brandGradient,
                         streak: _streakOf(state),
+                        photoUrl: photoUrl,
                       ),
                     ),
                     const SizedBox(width: AppSpacing.sm),
@@ -104,10 +110,15 @@ class HomeIdentityBar extends StatelessWidget {
 
 /// Gradient avatar with the streak count fused on as a flame badge.
 class _AvatarBadge extends StatelessWidget {
-  const _AvatarBadge({required this.gradient, required this.streak});
+  const _AvatarBadge({
+    required this.gradient,
+    required this.streak,
+    required this.photoUrl,
+  });
 
   final Gradient gradient;
   final int streak;
+  final String? photoUrl;
 
   @override
   Widget build(BuildContext context) {
@@ -123,12 +134,10 @@ class _AvatarBadge extends StatelessWidget {
             height: 46,
             padding: const EdgeInsets.all(2),
             decoration: BoxDecoration(gradient: gradient, shape: BoxShape.circle),
-            child: const DecoratedBox(
-              decoration: BoxDecoration(
-                color: AppColors.ink900,
-                shape: BoxShape.circle,
-              ),
-              child: Icon(Icons.person, color: AppColors.amber300, size: 24),
+            child: PlayerAvatar(
+              photoUrl: photoUrl,
+              size: 42,
+              background: AppColors.ink900,
             ),
           ),
           if (streak > 0)

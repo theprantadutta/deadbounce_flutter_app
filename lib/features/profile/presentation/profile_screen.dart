@@ -7,6 +7,8 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_dimens.dart';
 import '../../../core/widgets/db_button.dart';
 import '../../../core/widgets/meta_scaffold.dart';
+import '../../../core/widgets/player_avatar.dart';
+import '../../auth/presentation/cubit/auth_cubit.dart';
 import '../domain/entities/profile_data.dart';
 import 'cubit/profile_cubit.dart';
 
@@ -30,6 +32,9 @@ class _ProfileView extends StatelessWidget {
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
     final syncStatus = context.sessionDependencies.syncStatus;
+    final authState = context.watch<AuthCubit>().state;
+    final photoUrl =
+        authState is AuthAuthenticated ? authState.user.photoUrl : null;
 
     return MetaScaffold(
       title: 'PROFILE',
@@ -49,15 +54,16 @@ class _ProfileView extends StatelessWidget {
                   child: Container(
                     width: 84,
                     height: 84,
+                    padding: const EdgeInsets.all(2),
                     decoration: BoxDecoration(
                       color: AppColors.ink700,
                       shape: BoxShape.circle,
                       border: Border.all(color: AppColors.amber500, width: 2),
                     ),
-                    child: const Icon(
-                      Icons.person,
-                      size: 44,
-                      color: AppColors.amber300,
+                    child: PlayerAvatar(
+                      photoUrl: photoUrl,
+                      size: 78,
+                      background: AppColors.ink700,
                     ),
                   ),
                 ),
