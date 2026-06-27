@@ -85,7 +85,6 @@ class RunsRepositoryImpl implements RunsRepository {
           RunStatDeltas(
             kills: r.kills,
             wavesCleared: r.waveReached,
-            coinsEarned: r.coinsEarned,
             playMs: r.duration.inMilliseconds,
             score: isConstrained ? 0 : r.score,
             chain: isConstrained ? 0 : r.bestChain,

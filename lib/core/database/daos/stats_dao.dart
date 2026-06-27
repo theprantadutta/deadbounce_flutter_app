@@ -11,7 +11,6 @@ class RunStatDeltas {
   const RunStatDeltas({
     required this.kills,
     required this.wavesCleared,
-    required this.coinsEarned,
     required this.playMs,
     required this.score,
     required this.chain,
@@ -23,7 +22,6 @@ class RunStatDeltas {
 
   final int kills;
   final int wavesCleared;
-  final int coinsEarned;
   final int playMs;
 
   /// Candidates for the "best" fields — folded with MAX.
@@ -66,11 +64,13 @@ class StatsDao extends DatabaseAccessor<AppDatabase> with _$StatsDaoMixin {
     await ensureRow();
     final now = DateTime.now().toUtc().millisecondsSinceEpoch;
     await customStatement(
+      // total_coins_earned is NOT folded here — it's bumped centrally by
+      // CoinLedgerDao.insertTransaction for every positive entry (the run reward
+      // included), so all earning sources count, not just runs.
       'UPDATE player_stats SET '
       'runs_played = runs_played + 1, '
       'total_kills = total_kills + ?, '
       'total_waves_cleared = total_waves_cleared + ?, '
-      'total_coins_earned = total_coins_earned + ?, '
       'total_play_ms = total_play_ms + ?, '
       'best_score = MAX(best_score, ?), '
       'best_chain = MAX(best_chain, ?), '
@@ -81,7 +81,6 @@ class StatsDao extends DatabaseAccessor<AppDatabase> with _$StatsDaoMixin {
       [
         d.kills,
         d.wavesCleared,
-        d.coinsEarned,
         d.playMs,
         d.score,
         d.chain,

@@ -95,6 +95,11 @@ leak across cases (keeps daily-challenge wave goldens deterministic).
 - **Coins are a ledger, never a mutated int.** Every change is a `coin_ledger`
   transaction (reason enum) in Drift; the cached `coin_balance` row is updated in
   the same transaction. Run earnings are one txn at run end (not per pickup).
+  `CoinLedgerDao.insertTransaction` also folds every **positive** entry (except the
+  `snapshotRestore` seed) into `player_stats.total_coins_earned` — mirroring the
+  backend's `CoinTxnProcessor` — so the lifetime "coins earned" stat counts ALL
+  sources (runs/login/achievements/tournaments), not just runs, and matches the
+  server across a reinstall.
 - **Earn amounts flow from `GameBalance.I.economy`** (coins/kill, wave-clear bonus,
   chain bonus, drop chance/value) and the 7-day login table
   (`economy.loginRewardsByDay`) — all panel-tunable. Tuning only changes the

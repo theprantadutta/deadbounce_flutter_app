@@ -43,7 +43,7 @@ class GameStatistics extends Equatable {
   final int bestWave;
 
   /// Kills per enemy id ('drifter', 'small_drifter', 'charger', 'splitter',
-  /// 'turret', 'warden').
+  /// 'turret', 'warden', 'powderkeg', 'sawbones', 'ironhide', 'mirror').
   final Map<String, int> enemyKills;
 
   /// Most-picked upgrade id across all runs, or null when none yet.
@@ -58,14 +58,6 @@ class GameStatistics extends Equatable {
       runsPlayed == 0 ? 0 : totalWavesCleared / runsPlayed;
   double get avgCoinsPerRun =>
       runsPlayed == 0 ? 0 : totalCoinsEarned / runsPlayed;
-
-  /// The enemy id the player has killed the most, or null when none yet.
-  String? get mostKilledEnemyId {
-    if (enemyKills.isEmpty) return null;
-    return enemyKills.entries
-        .reduce((a, b) => a.value >= b.value ? a : b)
-        .key;
-  }
 
   @override
   List<Object?> get props => [

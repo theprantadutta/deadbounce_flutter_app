@@ -3,17 +3,26 @@ import 'package:drift/drift.dart';
 import '../app_database.dart';
 import '../tables/coin_balance_table.dart';
 import '../tables/coin_ledger_table.dart';
+import '../tables/player_stats_table.dart';
 
 part 'coin_ledger_dao.g.dart';
 
-@DriftAccessor(tables: [CoinLedgerEntries, CoinBalances])
+@DriftAccessor(tables: [CoinLedgerEntries, CoinBalances, PlayerStatsTable])
 class CoinLedgerDao extends DatabaseAccessor<AppDatabase>
     with _$CoinLedgerDaoMixin {
   CoinLedgerDao(super.db);
 
-  /// Inserts a ledger row AND bumps the cached balance. Must be called
-  /// inside the caller's transaction so ledger + balance + outbox commit
-  /// together.
+  // The one balance-restore entry the snapshot seeds already carries the
+  // server's lifetime-earned total, so it must NOT also bump it (would double).
+  // Names are stored verbatim (see CoinReason) — safe to match literally.
+  static const String _snapshotRestoreReason = 'snapshotRestore';
+
+  /// Inserts a ledger row AND bumps the cached balance. A positive (earning)
+  /// entry also folds into `player_stats.total_coins_earned` — mirroring the
+  /// backend's `CoinTxnProcessor`, so the lifetime "coins earned" stat counts
+  /// EVERY source (runs, login, achievements, tournaments), not just runs, and
+  /// stays consistent across a reinstall. Must be called inside the caller's
+  /// transaction so ledger + balance + stat + outbox commit together.
   Future<void> insertTransaction(CoinLedgerRow row) async {
     await into(coinLedgerEntries).insert(row);
     // Use customUpdate (NOT customStatement) and declare the affected table so
@@ -36,6 +45,23 @@ class CoinLedgerDao extends DatabaseAccessor<AppDatabase>
       ],
       updates: {coinBalances},
     );
+
+    // Lifetime "coins earned" = every positive entry except the snapshot seed.
+    if (row.amount > 0 && row.reason != _snapshotRestoreReason) {
+      await customUpdate(
+        'INSERT INTO player_stats (id, total_coins_earned, updated_at) '
+        'VALUES (0, ?, ?) '
+        'ON CONFLICT (id) DO UPDATE SET '
+        'total_coins_earned = total_coins_earned + ?, updated_at = ?',
+        variables: [
+          Variable<int>(row.amount),
+          Variable<int>(row.createdAt),
+          Variable<int>(row.amount),
+          Variable<int>(row.createdAt),
+        ],
+        updates: {playerStatsTable},
+      );
+    }
   }
 
   Future<int> getBalance() async {
