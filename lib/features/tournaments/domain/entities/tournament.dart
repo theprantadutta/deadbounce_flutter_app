@@ -53,7 +53,6 @@ class Tournament extends Equatable {
     required this.entryFeeCoins,
     required this.rewardTableJson,
     required this.joined,
-    required this.paid,
     required this.bestScore,
     required this.rank,
     required this.rewardCoins,
@@ -73,7 +72,6 @@ class Tournament extends Equatable {
   final String rewardTableJson;
 
   final bool joined;
-  final bool paid;
   final int bestScore;
   final int? rank;
   final int? rewardCoins;
@@ -138,7 +136,6 @@ class Tournament extends Equatable {
         entryFeeCoins,
         rewardTableJson,
         joined,
-        paid,
         bestScore,
         rank,
         rewardCoins,

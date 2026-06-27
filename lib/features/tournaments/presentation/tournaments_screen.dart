@@ -9,6 +9,7 @@ import '../../../core/theme/app_dimens.dart';
 import '../../../core/widgets/meta_scaffold.dart';
 import '../domain/entities/tournament.dart';
 import 'cubit/tournaments_cubit.dart';
+import 'tournament_actions.dart';
 import 'widgets/tournament_card.dart';
 
 class TournamentsScreen extends StatelessWidget {
@@ -18,10 +19,8 @@ class TournamentsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final session = context.sessionDependencies;
     return BlocProvider(
-      create: (_) => TournamentsCubit(
-        repository: session.tournamentRepository,
-        syncWorker: session.syncWorker,
-      ),
+      create: (_) =>
+          TournamentsCubit(repository: session.tournamentRepository),
       child: const _TournamentsView(),
     );
   }
@@ -75,46 +74,24 @@ class _TournamentsView extends StatelessWidget {
     );
   }
 
-  Future<void> _join(BuildContext context, Tournament t) async {
-    final cubit = context.read<TournamentsCubit>();
-    final messenger = ScaffoldMessenger.of(context);
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: AppColors.ink800,
-        title: Text('Join ${t.name}?'),
-        content: Text(
-            'Entry costs ${t.entryFeeCoins} coins. Play as many times as you '
-            'like before it ends — your best score counts.'),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('CANCEL')),
-          TextButton(
-              onPressed: () => Navigator.pop(ctx, true),
-              child: const Text('JOIN')),
-        ],
-      ),
+  Future<void> _join(BuildContext context, Tournament t) {
+    final session = context.sessionDependencies;
+    return confirmAndJoinTournament(
+      context,
+      t,
+      repo: session.tournamentRepository,
+      syncWorker: session.syncWorker,
     );
-    if (confirmed != true) return;
-
-    final error = await cubit.join(t.id);
-    messenger
-      ..clearSnackBars()
-      ..showSnackBar(SnackBar(
-        content: Text(error ?? "You're in. Good luck, partner."),
-      ));
   }
 
-  Future<void> _claim(BuildContext context, Tournament t) async {
-    final messenger = ScaffoldMessenger.of(context);
-    final error = await context.read<TournamentsCubit>().claim(t);
-    messenger
-      ..clearSnackBars()
-      ..showSnackBar(SnackBar(
-        content: Text(
-            error ?? 'Claimed ${t.rewardCoins} coins. Well shot.'),
-      ));
+  Future<void> _claim(BuildContext context, Tournament t) {
+    final session = context.sessionDependencies;
+    return claimTournamentReward(
+      context,
+      t,
+      repo: session.tournamentRepository,
+      syncWorker: session.syncWorker,
+    );
   }
 }
 

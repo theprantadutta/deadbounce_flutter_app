@@ -20,7 +20,6 @@ class Tournaments extends Table {
 
   // Player entry state.
   BoolColumn get joined => boolean().withDefault(const Constant(false))();
-  BoolColumn get paid => boolean().withDefault(const Constant(false))();
   IntColumn get bestScore => integer().withDefault(const Constant(0))();
   IntColumn get rank => integer().nullable()();
   IntColumn get rewardCoins => integer().nullable()();

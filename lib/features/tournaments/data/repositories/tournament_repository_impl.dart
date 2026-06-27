@@ -123,11 +123,12 @@ class TournamentRepositoryImpl implements TournamentRepository {
       );
     } on ApiException catch (e) {
       AppLogger.talker.warning('[tournament] board offline: ${e.message}');
-      return _cachedBoard(id);
+      return cachedBoard(id);
     }
   }
 
-  Future<TournamentBoard> _cachedBoard(String id) async {
+  @override
+  Future<TournamentBoard> cachedBoard(String id) async {
     final rows = await _db.tournamentDao.getBoard(id);
     TournamentLeaderboardRow? me;
     for (final r in rows) {
@@ -191,7 +192,6 @@ class TournamentRepositoryImpl implements TournamentRepository {
     entryFeeCoins: d.entryFeeCoins,
     rewardTableJson: d.rewardTableJson,
     joined: d.joined,
-    paid: d.paid,
     bestScore: d.bestScore,
     rank: d.rank,
     rewardCoins: d.rewardCoins,
@@ -212,7 +212,6 @@ class TournamentRepositoryImpl implements TournamentRepository {
     entryFeeCoins: r.entryFeeCoins,
     rewardTableJson: r.rewardTableJson,
     joined: r.joined,
-    paid: r.paid,
     bestScore: r.bestScore,
     rank: r.rank,
     rewardCoins: r.rewardCoins,

@@ -126,11 +126,15 @@ leak across cases (keeps daily-challenge wave goldens deterministic).
   you can **play offline** (best score counts; the run enqueues a `tournamentScore`
   outbox event and updates the local best — it does NOT emit the global `scoreSubmit`).
   When the window closes a Hangfire sweep ranks paid entries and assigns rank rewards;
-  the client fetches the result and **claims** (`CoinReason.tournamentReward` coinTxn,
-  amount validated server-side against the finalized payout, single-claim). Run path:
-  `GameSessionCubit.tournamentContext` → `Routes.tournamentRun`. **Offline:**
-  list/board/result are cache-first with an offline banner; **join + claim need
-  connectivity**, playing a joined tournament does not. (`TournamentRunContext`,
+  the client then **claims** the finalized reward — **offline-capable**: it credits the
+  local ledger and enqueues a `CoinReason.tournamentReward` `coinTxn` carrying the
+  `tournament_id`, and when that event eventually syncs the server **re-validates the
+  amount against the finalized payout and enforces single-claim** before crediting. Run
+  path: `GameSessionCubit.tournamentContext` → `Routes.tournamentRun`. **Offline:**
+  list/board/result are cache-first with an offline banner, and **playing a joined
+  tournament + claiming a reward both work offline**; only **join needs connectivity**
+  (it pays the entry fee online). Join/claim UI flows are shared via
+  `tournament_actions.dart`. (`TournamentRunContext`,
   `tournaments_screen`/`tournament_detail_screen`, `tournaments_feature_card` on home.)
 - **The Gunsmith** (`features/meta/`): the coin SINK / permanent meta-progression.
   Spend coins on tiered perks that apply to **every normal run** (not daily

@@ -16,7 +16,6 @@ class TournamentDto {
     required this.entryFeeCoins,
     required this.rewardTableJson,
     required this.joined,
-    required this.paid,
     required this.bestScore,
     required this.rank,
     required this.rewardCoins,
@@ -36,7 +35,6 @@ class TournamentDto {
         entryFeeCoins: (j['entry_fee_coins'] as num?)?.toInt() ?? 0,
         rewardTableJson: j['reward_table_json'] as String? ?? '{}',
         joined: j['joined'] as bool? ?? false,
-        paid: j['paid'] as bool? ?? false,
         bestScore: (j['best_score'] as num?)?.toInt() ?? 0,
         rank: (j['rank'] as num?)?.toInt(),
         rewardCoins: (j['reward_coins'] as num?)?.toInt(),
@@ -55,7 +53,6 @@ class TournamentDto {
   final int entryFeeCoins;
   final String rewardTableJson;
   final bool joined;
-  final bool paid;
   final int bestScore;
   final int? rank;
   final int? rewardCoins;

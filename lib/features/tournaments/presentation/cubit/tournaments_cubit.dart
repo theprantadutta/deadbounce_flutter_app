@@ -4,17 +4,16 @@ import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/network/api_client.dart';
-import '../../../../core/sync/sync_worker.dart';
 import '../../domain/entities/tournament.dart';
 import '../../domain/repositories/tournament_repository.dart';
 
 part 'tournaments_state.dart';
 
 /// Cache-first tournaments list: streams the local cache and refreshes from
-/// the server in the background (offline-tolerant). Issues join/claim
-/// mutations and nudges the sync engine.
+/// the server in the background (offline-tolerant). Join/claim mutations live
+/// in `tournament_actions.dart` (shared with the detail screen).
 class TournamentsCubit extends Cubit<TournamentsState> {
-  TournamentsCubit({required this._repository, required this._syncWorker})
+  TournamentsCubit({required this._repository})
     : super(const TournamentsState()) {
     _sub = _repository.watchAll().listen((list) {
       emit(state.copyWith(tournaments: list, status: TournamentsStatus.ready));
@@ -23,7 +22,6 @@ class TournamentsCubit extends Cubit<TournamentsState> {
   }
 
   final TournamentRepository _repository;
-  final SyncWorker _syncWorker;
   late final StreamSubscription<List<Tournament>> _sub;
 
   Future<void> refresh() async {
@@ -37,34 +35,6 @@ class TournamentsCubit extends Cubit<TournamentsState> {
       emit(state.copyWith(refreshing: false, offline: true));
     }
   }
-
-  /// Returns null on success, or an error message to show.
-  Future<String?> join(String id) async {
-    try {
-      await _repository.join(id);
-      _syncWorker.requestSync();
-      return null;
-    } on TournamentException catch (e) {
-      return e.message;
-    } on ApiException catch (e) {
-      return e.message;
-    }
-  }
-
-  /// Returns null on success, or an error message to show.
-  Future<String?> claim(Tournament tournament) async {
-    try {
-      await _repository.claimReward(tournament);
-      _syncWorker.requestSync();
-      return null;
-    } on TournamentException catch (e) {
-      return e.message;
-    } on ApiException catch (e) {
-      return e.message;
-    }
-  }
-
-  Future<TournamentBoard> board(String id) => _repository.leaderboard(id);
 
   @override
   Future<void> close() {

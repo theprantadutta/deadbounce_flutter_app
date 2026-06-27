@@ -76,7 +76,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase(super.e);
 
   @override
-  int get schemaVersion => 4;
+  int get schemaVersion => 5;
 
   /// Wipes all gameplay/account data on this device in one transaction,
   /// **preserving the settings table** (device preferences). Clearing the
@@ -121,6 +121,12 @@ class AppDatabase extends _$AppDatabase {
           if (from < 4) {
             await m.createTable(cosmeticOwned);
             await m.createTable(cosmeticEquipped);
+          }
+          if (from < 5) {
+            // Drop the unused `paid` column from the tournaments cache.
+            // TableMigration recreates the table from the current schema,
+            // copying every still-present column (data-preserving).
+            await m.alterTable(TableMigration(tournaments));
           }
           // Indexes are added with IF NOT EXISTS, so this is safe on every
           // upgrade path — and crucially repairs installs created before the

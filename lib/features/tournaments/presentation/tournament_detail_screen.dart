@@ -2,13 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app.dart';
-import '../../../core/network/api_client.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_dimens.dart';
 import '../../../core/widgets/meta_scaffold.dart';
 import '../domain/entities/tournament.dart';
-import '../domain/repositories/tournament_repository.dart';
+import 'tournament_actions.dart';
 import 'widgets/tournament_countdown.dart';
 
 /// Full tournament view: rules, the primary action (join/play/claim), and the
@@ -162,43 +161,14 @@ class _PrimaryAction extends StatelessWidget {
     );
   }
 
-  Future<void> _join(BuildContext context, Tournament t) async {
-    final repo = context.sessionDependencies.tournamentRepository;
-    final syncWorker = context.sessionDependencies.syncWorker;
-    final messenger = ScaffoldMessenger.of(context);
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: AppColors.ink800,
-        title: Text('Join ${t.name}?'),
-        content: Text('Entry costs ${t.entryFeeCoins} coins.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('CANCEL'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('JOIN'),
-          ),
-        ],
-      ),
+  Future<void> _join(BuildContext context, Tournament t) {
+    final session = context.sessionDependencies;
+    return confirmAndJoinTournament(
+      context,
+      t,
+      repo: session.tournamentRepository,
+      syncWorker: session.syncWorker,
     );
-    if (confirmed != true) return;
-    String? error;
-    try {
-      await repo.join(t.id);
-      syncWorker.requestSync();
-    } on TournamentException catch (e) {
-      error = e.message;
-    } on ApiException catch (e) {
-      error = e.message;
-    }
-    messenger
-      ..clearSnackBars()
-      ..showSnackBar(
-        SnackBar(content: Text(error ?? "You're in. Good luck, partner.")),
-      );
   }
 }
 
@@ -258,26 +228,14 @@ class _ResultPanel extends StatelessWidget {
     );
   }
 
-  Future<void> _claim(BuildContext context, Tournament t) async {
-    final repo = context.sessionDependencies.tournamentRepository;
-    final syncWorker = context.sessionDependencies.syncWorker;
-    final messenger = ScaffoldMessenger.of(context);
-    String? error;
-    try {
-      await repo.claimReward(t);
-      syncWorker.requestSync();
-    } on TournamentException catch (e) {
-      error = e.message;
-    } on ApiException catch (e) {
-      error = e.message;
-    }
-    messenger
-      ..clearSnackBars()
-      ..showSnackBar(
-        SnackBar(
-          content: Text(error ?? 'Claimed ${t.rewardCoins} coins. Well shot.'),
-        ),
-      );
+  Future<void> _claim(BuildContext context, Tournament t) {
+    final session = context.sessionDependencies;
+    return claimTournamentReward(
+      context,
+      t,
+      repo: session.tournamentRepository,
+      syncWorker: session.syncWorker,
+    );
   }
 }
 
@@ -290,62 +248,88 @@ class _Leaderboard extends StatefulWidget {
 }
 
 class _LeaderboardState extends State<_Leaderboard> {
-  // Created once (not inline in build) so the standings don't refetch on
-  // every rebuild driven by the parent's tournament stream.
-  Future<TournamentBoard>? _future;
+  TournamentBoard? _board;
+  bool _loading = true;
+  bool _offlineNoCache = false;
+  bool _started = false;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    _future ??= context.sessionDependencies.tournamentRepository.leaderboard(
-      widget.tournamentId,
-    );
+    if (_started) return;
+    _started = true;
+    _load();
+  }
+
+  /// Cache-first: paint cached standings instantly, then refresh from the
+  /// server (which restores the pinned player + latest scores).
+  Future<void> _load() async {
+    final repo = context.sessionDependencies.tournamentRepository;
+    final cached = await repo.cachedBoard(widget.tournamentId);
+    if (!mounted) return;
+    if (cached.standings.isNotEmpty) {
+      setState(() {
+        _board = cached;
+        _loading = false;
+      });
+    }
+    try {
+      final fresh = await repo.leaderboard(widget.tournamentId);
+      if (!mounted) return;
+      setState(() {
+        _board = fresh;
+        _loading = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _loading = false;
+        _offlineNoCache = _board == null;
+      });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<TournamentBoard>(
-      future: _future,
-      builder: (context, snapshot) {
-        if (snapshot.hasError) {
-          return Padding(
-            padding: const EdgeInsets.all(AppSpacing.lg),
-            child: Text(
-              'Standings are offline right now — pull back later.',
-              style: Theme.of(context).textTheme.bodySmall,
+    if (_offlineNoCache) {
+      return Padding(
+        padding: const EdgeInsets.all(AppSpacing.lg),
+        child: Text(
+          'Standings are offline right now — pull back later.',
+          style: Theme.of(context).textTheme.bodySmall,
+        ),
+      );
+    }
+    final board = _board;
+    if (board == null) {
+      return _loading
+          ? const Padding(
+              padding: EdgeInsets.all(AppSpacing.lg),
+              child: Center(child: CircularProgressIndicator()),
+            )
+          : const SizedBox.shrink();
+    }
+    if (board.standings.isEmpty) {
+      return Text(
+        'No scores posted yet — be the first.',
+        style: Theme.of(context).textTheme.bodySmall,
+      );
+    }
+    return Column(
+      children: [
+        for (final s in board.standings) _StandingRow(standing: s),
+        if (board.shouldPinPlayer)
+          _StandingRow(
+            standing: TournamentStanding(
+              rank: board.playerRank!,
+              userId: 'me',
+              username: 'You',
+              score: board.playerScore ?? 0,
+              isPlayer: true,
             ),
-          );
-        }
-        if (!snapshot.hasData) {
-          return const Padding(
-            padding: EdgeInsets.all(AppSpacing.lg),
-            child: Center(child: CircularProgressIndicator()),
-          );
-        }
-        final board = snapshot.data!;
-        if (board.standings.isEmpty) {
-          return Text(
-            'No scores posted yet — be the first.',
-            style: Theme.of(context).textTheme.bodySmall,
-          );
-        }
-        return Column(
-          children: [
-            for (final s in board.standings) _StandingRow(standing: s),
-            if (board.shouldPinPlayer)
-              _StandingRow(
-                standing: TournamentStanding(
-                  rank: board.playerRank!,
-                  userId: 'me',
-                  username: 'You',
-                  score: board.playerScore ?? 0,
-                  isPlayer: true,
-                ),
-                pinned: true,
-              ),
-          ],
-        );
-      },
+            pinned: true,
+          ),
+      ],
     );
   }
 }

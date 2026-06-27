@@ -23,11 +23,18 @@ abstract interface class TournamentRepository {
   /// error. Caches the tournament so it can then be played offline.
   Future<Tournament> join(String id);
 
-  /// Cache-first per-tournament leaderboard; refreshes from the server when
-  /// online.
+  /// The locally-cached standings for instant (cache-first) paint. Returns an
+  /// empty board when nothing is cached yet.
+  Future<TournamentBoard> cachedBoard(String id);
+
+  /// Fetches the per-tournament board from the server and refreshes the cache,
+  /// falling back to [cachedBoard] when offline. Pair with [cachedBoard] to
+  /// paint cache immediately, then update with this.
   Future<TournamentBoard> leaderboard(String id);
 
-  /// Claims the finalized rank reward (writes the reward coin txn). Online
-  /// fetch of the authoritative amount happens in [refresh]/the result fetch.
+  /// Claims the finalized rank reward. Offline-capable: it credits the local
+  /// ledger and enqueues a `coinTxn` (reason `tournamentReward`) carrying the
+  /// tournament id; the server re-validates the amount against the finalized
+  /// payout and enforces single-claim when the event eventually syncs.
   Future<void> claimReward(Tournament tournament);
 }
