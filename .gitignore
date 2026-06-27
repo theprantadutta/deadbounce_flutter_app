@@ -33,6 +33,9 @@ migrate_working_dir/
 /build/
 /coverage/
 
+# Generated code (regenerate with: dart run build_runner build --delete-conflicting-outputs)
+*.g.dart
+
 # Symbolication related
 app.*.symbols
 

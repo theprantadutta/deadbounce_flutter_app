@@ -263,8 +263,9 @@ post-auth screens via `context.sessionDependencies`.
 - 3-anchor tap-dash movement (documented above).
 - Achievement & challenge definitions ship in-app; only results/unlocks sync.
 - One Drift file per account; period-keyed leaderboards on the backend.
-- Generated `*.g.dart` (Drift) is committed (no CI codegen step; `flutter analyze`
-  is the gate).
+- Generated `*.g.dart` (Drift) is **gitignored**, not committed — regenerate with
+  `dart run build_runner build --delete-conflicting-outputs` after a fresh clone or
+  Drift schema change. (`flutter analyze` is still the commit gate.)
 - `kotlin.incremental=false` in `android/gradle.properties` — the incremental cache
   corrupts on this drive. Don't remove it.
 - Config in `.env` (loaded by flutter_dotenv); dev/prod API URL by `kDebugMode`.
