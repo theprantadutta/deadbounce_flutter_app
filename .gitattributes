@@ -1,0 +1,7 @@
+# Flutter regenerates these plugin registrants with LF line endings. Pin them to
+# LF so Git's core.autocrlf (CRLF on checkout) doesn't flip them back and create
+# endless spurious "modified" diffs after every `flutter pub get` / build.
+**/generated_plugin_registrant.cc text eol=lf
+**/generated_plugin_registrant.h text eol=lf
+**/generated_plugins.cmake text eol=lf
+**/GeneratedPluginRegistrant.swift text eol=lf
