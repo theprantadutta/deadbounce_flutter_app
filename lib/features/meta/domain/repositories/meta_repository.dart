@@ -1,7 +1,9 @@
 import '../meta_catalog.dart';
 
-/// Owned permanent upgrades + purchasing. Spending goes through the coin
-/// ledger (synced); ownership is local for now.
+/// Owned permanent upgrades + purchasing. Both the coin spend (ledger, as a
+/// `shopPurchase` coinTxn) and the owned-levels aggregate (as a `metaState`
+/// event) sync via the outbox, and ownership is restored from the snapshot on
+/// reinstall. Reads are local-first (Drift), so purchasing works offline.
 abstract interface class MetaRepository {
   /// perkId → owned level (absent = level 0).
   Stream<Map<String, int>> watchOwnedLevels();

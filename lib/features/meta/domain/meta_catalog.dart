@@ -1,14 +1,5 @@
 import 'package:flutter/material.dart';
 
-/// What kind of thing a Gunsmith entry is.
-enum MetaPerkKind {
-  /// A tiered permanent stat/economy boost applied to every run.
-  perk,
-
-  /// Unlocks a new upgrade card into the wave-clear draft pool.
-  unlockCard,
-}
-
 /// A purchasable permanent ("Gunsmith") perk. Definitions live in Dart; the
 /// database only stores the owned LEVEL per [id].
 class MetaPerk {
@@ -20,8 +11,6 @@ class MetaPerk {
     required this.maxLevel,
     required this.baseCost,
     this.costStep = 0,
-    this.kind = MetaPerkKind.perk,
-    this.unlocksCardId,
   });
 
   final String id;
@@ -35,11 +24,6 @@ class MetaPerk {
   /// Cost of the first level; each further level costs [costStep] more.
   final int baseCost;
   final int costStep;
-
-  final MetaPerkKind kind;
-
-  /// For [MetaPerkKind.unlockCard], the upgrade-card id it unlocks.
-  final String? unlocksCardId;
 
   /// Coins to buy the NEXT level, given how many are already owned.
   int costForLevel(int ownedLevel) => baseCost + costStep * ownedLevel;

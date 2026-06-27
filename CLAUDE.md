@@ -141,9 +141,13 @@ leak across cases (keeps daily-challenge wave goldens deterministic).
   challenges — those stay fair): Reinforced Heart, Iron Resolve, Quick Hands, Keen
   Eye, Lucky Strike, Second Wind. **Guardrail: perks never add flat bullet damage**
   (that would break "no damage till it bounces") — survivability/utility/economy only.
-  Catalog in Dart (`meta_catalog.dart`); ownership LEVEL per perk in the local
-  `meta_upgrades` Drift table (local-only for now; the coin *spend* syncs via the
-  ledger as `shopPurchase`). `RunModifiers.addPermanent` pre-loads the perk as a
+  Catalog in Dart (`meta_catalog.dart`); ownership LEVEL per perk in the
+  `meta_upgrades` Drift table. Purchasing is offline-first (local ledger + level
+  write), then both halves sync: the coin *spend* as a `shopPurchase` coinTxn and
+  the owned-levels aggregate as a `metaState` event (last-writer-wins, restored
+  from the snapshot on reinstall — mirrors cosmetics). The server validates the
+  `metaState` aggregate against its perk catalog (`MetaPerkDefinitions`: unknown
+  perks dropped, levels clamped to maxLevel). `RunModifiers.addPermanent` pre-loads the perk as a
   modifier (reusing existing card modifiers: heart_container/quickdraw/longer_sight/
   coin_magnet) without counting it as a wave pick; permanent stacks still respect each
   card's max-stacks cap. Applied in `game_session_cubit.startRun` via `MetaLoadout`.

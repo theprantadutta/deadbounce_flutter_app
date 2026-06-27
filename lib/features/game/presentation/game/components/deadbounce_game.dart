@@ -377,6 +377,9 @@ class DeadbounceGame extends FlameGame implements GameWorldOps {
       final card = UpgradeCatalog.tryById(cardId);
       if (card == null) return; // stale/removed card id — skip, don't crash
       for (var i = 0; i < stacks; i++) {
+        // Never exceed the card's own stack cap, even if a future perk's
+        // maxLevel is raised above it.
+        if (modifiers.stacksOf(card.id) >= card.maxStacks) break;
         modifiers.addPermanent(card);
       }
     });
