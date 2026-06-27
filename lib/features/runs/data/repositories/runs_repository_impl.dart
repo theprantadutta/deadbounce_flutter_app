@@ -30,6 +30,14 @@ class RunsRepositoryImpl implements RunsRepository {
       upgradePicks[id] = (upgradePicks[id] ?? 0) + 1;
     }
 
+    // Daily-challenge and tournament runs are seeded/constrained (forced
+    // enemies, heart caps, score multipliers, perks off), so their results
+    // aren't comparable to standard runs: they never set lifetime PERSONAL
+    // BESTS (local stats AND the synced statsDelta) and never feed the global
+    // leaderboards. Activity counters (runs/kills/waves/play time/coins) still
+    // count — the player really did play.
+    final isConstrained = r.tournamentId != null || r.isDailyChallenge;
+
     AppLogger.talker.info(
       '[run] recordCompletedRun score=${r.score} wave=${r.waveReached} '
       'kills=${r.kills}',
@@ -79,10 +87,10 @@ class RunsRepositoryImpl implements RunsRepository {
             wavesCleared: r.waveReached,
             coinsEarned: r.coinsEarned,
             playMs: r.duration.inMilliseconds,
-            score: r.score,
-            chain: r.bestChain,
-            bounceKill: r.maxBounceKill,
-            wave: r.waveReached,
+            score: isConstrained ? 0 : r.score,
+            chain: isConstrained ? 0 : r.bestChain,
+            bounceKill: isConstrained ? 0 : r.maxBounceKill,
+            wave: isConstrained ? 0 : r.waveReached,
             enemyKills: r.enemyKills,
             upgradePicks: upgradePicks,
           ),
@@ -143,10 +151,10 @@ class RunsRepositoryImpl implements RunsRepository {
           'waves_cleared': r.waveReached,
           'coins_earned': r.coinsEarned,
           'play_ms': r.duration.inMilliseconds,
-          'best_score': r.score,
-          'best_chain': r.bestChain,
-          'best_bounce_kill': r.maxBounceKill,
-          'best_wave': r.waveReached,
+          'best_score': isConstrained ? 0 : r.score,
+          'best_chain': isConstrained ? 0 : r.bestChain,
+          'best_bounce_kill': isConstrained ? 0 : r.maxBounceKill,
+          'best_wave': isConstrained ? 0 : r.waveReached,
           'enemy_kills': r.enemyKills,
           'upgrade_picks': upgradePicks,
         });
@@ -163,7 +171,9 @@ class RunsRepositoryImpl implements RunsRepository {
             'kills': r.kills,
             'ended_at': r.endedAt.toUtc().toIso8601String(),
           });
-        } else {
+        } else if (!r.isDailyChallenge) {
+          // Standard runs only — daily-challenge runs feed the dc board via
+          // challengeResult below, never the global daily/weekly/all-time boards.
           await _outboxWriter.enqueue(SyncEntityType.scoreSubmit, {
             'run_id': r.id,
             'score': r.score,
@@ -175,11 +185,16 @@ class RunsRepositoryImpl implements RunsRepository {
         }
 
         if (attemptId != null) {
+          // Carry wave/duration/kills so the server can sanity-validate the
+          // score and show real wave counts on the daily-challenge board.
           await _outboxWriter.enqueue(SyncEntityType.challengeResult, {
             'attempt_id': attemptId,
             'challenge_date': r.challengeDate,
             'seed': r.challengeSeed ?? 0,
             'score': r.score,
+            'wave_reached': r.waveReached,
+            'duration_ms': r.duration.inMilliseconds,
+            'kills': r.kills,
             'run_id': r.id,
             'completed_at': r.endedAt.toUtc().toIso8601String(),
           }, eventId: attemptId);

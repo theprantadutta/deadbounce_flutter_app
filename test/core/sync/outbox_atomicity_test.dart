@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:deadbounce_flutter_app/core/database/app_database.dart';
 import 'package:deadbounce_flutter_app/core/sync/sync_event.dart';
 import 'package:deadbounce_flutter_app/core/sync/sync_outbox_writer.dart';
@@ -83,6 +85,51 @@ void main() {
     });
     // Run id doubles as the runCompleted event id.
     expect(outbox.any((e) => e.id == 'run-1'), isTrue);
+  });
+
+  test('daily-challenge run feeds the dc board only — no global pollution',
+      () async {
+    final repo = RunsRepositoryImpl(db: db, outboxWriter: writer);
+
+    await repo.recordCompletedRun(RunResult(
+      id: 'dc-1',
+      score: 9000, // score-multiplied challenge total
+      waveReached: 6,
+      kills: 30,
+      bestChain: 5,
+      maxBounceKill: 4,
+      duration: const Duration(minutes: 4),
+      coinsEarned: 40,
+      arenaId: 'arena_clean',
+      upgradesPicked: const [],
+      endedAt: DateTime.utc(2026, 6, 27, 12),
+      enemyKills: const {'drifter': 30},
+      isDailyChallenge: true,
+      challengeDate: '2026-06-27',
+      challengeSeed: 123,
+    ));
+
+    final outbox = await db.select(db.syncOutbox).get();
+    final types = outbox.map((e) => e.entityType).toSet();
+    // dc board via challengeResult; NO scoreSubmit → no global-board pollution.
+    expect(types, contains('challengeResult'));
+    expect(types, isNot(contains('scoreSubmit')));
+
+    // Personal-best stats are NOT set by a constrained run...
+    final stats = await db.statsDao.getStats();
+    expect(stats!.bestScore, 0);
+    expect(stats.bestChain, 0);
+    // ...but activity counters still count the real play.
+    expect(stats.runsPlayed, 1);
+    expect(stats.totalKills, 30);
+
+    // challengeResult carries wave/duration/kills for server sanity validation.
+    final cr = outbox.firstWhere((e) => e.entityType == 'challengeResult');
+    final payload = jsonDecode(cr.payload) as Map<String, dynamic>;
+    expect(payload['challenge_date'], '2026-06-27');
+    expect(payload['wave_reached'], 6);
+    expect(payload['duration_ms'], const Duration(minutes: 4).inMilliseconds);
+    expect(payload['kills'], 30);
   });
 
   test('best fields fold with MAX across runs', () async {

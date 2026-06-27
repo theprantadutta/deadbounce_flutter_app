@@ -111,9 +111,17 @@ leak across cases (keeps daily-challenge wave goldens deterministic).
   local day before today, else resets to 1; the server dedupes by date string and
   only ever advances.*
 - **Daily challenges**: a run-shaping `ChallengeConfig` derived from the UTC-date
-  seed (`engine/challenge/`), identical worldwide and offline — forced enemy type,
-  +wall damage, heart cap, score multiplier, or random-dealt upgrades. Scores submit
-  to a separate daily-challenge board.
+  seed (`engine/challenge/`; `dailySeed = fnv1a64("deadbounce-dc-yyyy-MM-dd")`),
+  identical worldwide and **fully offline** (today's config + your best + attempt
+  count are computed locally — no fetch to view or play) — forced enemy type,
+  +wall damage, heart cap, score multiplier, or random-dealt upgrades. A run is
+  recorded as a local `challenge_attempts` row and submits a `challengeResult`
+  outbox event (carrying wave/duration/kills so the server **sanity-validates**
+  the score like `scoreSubmit`, with 3× density headroom for the multiplier), which
+  drives the **separate** daily-challenge board (`dc:yyyy-MM-dd`). Like tournaments,
+  daily-challenge runs are seeded/constrained, so they **do NOT** emit `scoreSubmit`
+  (no global-leaderboard pollution) and **do NOT** set lifetime personal-best stats
+  (best_*), though activity counters (runs/kills/waves/play time) still count.
 - **Tournaments** (`features/tournaments/`): the **backend generates** seeded,
   time-limited competitions in **daily/weekly/monthly** cadences (fees + reward pools
   scale by length); the client fetches them **cache-first** (`tournament_cache` Drift
