@@ -8,6 +8,8 @@ import '../legal/legal_consent_store.dart';
 import '../logging/app_logger.dart';
 import '../../features/auth/presentation/cubit/auth_cubit.dart';
 import '../../features/legal/presentation/legal_consent_page.dart';
+import '../../features/onboarding/onboarding_store.dart';
+import '../../features/onboarding/tutorial_page.dart';
 import '../../features/legal/presentation/legal_viewer_page.dart';
 import '../../features/about/presentation/credits_screen.dart';
 import '../../features/about/presentation/how_to_play_screen.dart';
@@ -41,14 +43,17 @@ import 'routes.dart';
 GoRouter buildRouter({
   required AuthCubit authCubit,
   required LegalConsentStore legalConsent,
+  required OnboardingStore onboarding,
 }) {
   return GoRouter(
     initialLocation: Routes.splash,
-    // Re-evaluate the redirect whenever auth state changes (e.g. sign-out) OR
-    // legal consent is granted (lets the user past the first-launch gate).
+    // Re-evaluate the redirect whenever auth state changes (e.g. sign-out),
+    // legal consent is granted, or the walkthrough is completed/skipped — each
+    // lets the user past a first-launch gate.
     refreshListenable: Listenable.merge([
       GoRouterRefreshStream(authCubit.stream),
       legalConsent,
+      onboarding,
     ]),
     // Boot order: splash (loading) → legal consent → login/home.
     //  0. Splash always shows first — it owns the boot sequence (restore
@@ -82,6 +87,18 @@ GoRouter buildRouter({
       if (authCubit.state is AuthUnauthenticated && !onAuthScreen) {
         return Routes.login;
       }
+
+      //  3. First-run walkthrough (post-auth): funnel a first-time signed-in
+      //     user's Home landing into the interactive tutorial. Only the Home
+      //     landing is intercepted, so the tutorial's own route (and the run it
+      //     launches on completion) pass through, and replays from Settings /
+      //     How to Play still work. Completing/skipping calls markComplete(),
+      //     which re-runs this redirect and allows Home.
+      if (authCubit.state is AuthAuthenticated &&
+          !onboarding.hasCompletedTutorial &&
+          loc == Routes.home) {
+        return Routes.onboarding;
+      }
       return null;
     },
     routes: [
@@ -113,6 +130,11 @@ GoRouter buildRouter({
         path: Routes.signup,
         pageBuilder: (context, state) =>
             dbPage(state: state, child: const SignupPage()),
+      ),
+      GoRoute(
+        path: Routes.onboarding,
+        pageBuilder: (context, state) =>
+            dbPage(state: state, child: TutorialPage(store: onboarding)),
       ),
       GoRoute(
         path: Routes.home,

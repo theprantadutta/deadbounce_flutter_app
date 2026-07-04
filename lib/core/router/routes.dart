@@ -12,6 +12,11 @@ abstract final class Routes {
 
   static const String login = '/login';
   static const String signup = '/signup';
+
+  /// Interactive new-user walkthrough. Shown once after first sign-in (gated by
+  /// the redirect), and replayable from Settings / How to Play.
+  static const String onboarding = '/onboarding';
+
   static const String home = '/home';
   static const String game = '/game';
   static const String dailyChallengeRun = '/game/daily';

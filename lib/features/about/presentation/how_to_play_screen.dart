@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
+import '../../../core/router/routes.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_dimens.dart';
+import '../../../core/widgets/db_button.dart';
 import '../../../core/widgets/meta_scaffold.dart';
 
 /// Static rulebook in the Deadbounce voice: the bounce rule, controls,
@@ -15,47 +18,53 @@ class HowToPlayScreen extends StatelessWidget {
       title: 'HOW TO PLAY',
       child: ListView(
         padding: const EdgeInsets.symmetric(vertical: AppSpacing.lg),
-        children: const [
-          _GoldenRule(),
-          SizedBox(height: AppSpacing.lg),
-          _Step(
+        children: [
+          const _GoldenRule(),
+          const SizedBox(height: AppSpacing.md),
+          DbPrimaryButton(
+            label: 'TRY THE INTERACTIVE TUTORIAL',
+            icon: Icons.school_outlined,
+            onPressed: () => context.push(Routes.onboarding),
+          ),
+          const SizedBox(height: AppSpacing.lg),
+          const _Step(
             icon: Icons.my_location,
             title: 'AIM',
             body: 'Drag anywhere to aim — it slingshots from where your thumb '
                 'lands, so your hand never covers the arena. A live line shows '
                 'exactly where your shot will ricochet. Longer drag = more power.',
           ),
-          _Step(
+          const _Step(
             icon: Icons.sports_esports,
             title: 'FIRE',
             body: 'Release past the deadzone to shoot. Your bullet keeps living '
                 'after a kill — chain it through a crowd before it expires.',
           ),
-          _Step(
+          const _Step(
             icon: Icons.swipe,
             title: 'DASH',
             body: 'A quick tap (or a tiny drag) dashes you to the nearest of '
                 'three positions along the bottom. Aiming is the skill — '
                 'movement is just for dodging.',
           ),
-          _Step(
+          const _Step(
             icon: Icons.favorite,
             title: 'STAY ALIVE',
             body: 'You start with 3 hearts. Touching an enemy costs a heart and '
                 'grants a short window of invulnerability. Zero hearts ends '
                 'the run.',
           ),
-          _Step(
+          const _Step(
             icon: Icons.auto_awesome,
             title: 'UPGRADE',
             body: 'Clear a wave and pick 1 of 3 cards. They stack and combine — '
                 'split shots, incendiary trails, rubber walls, ghost rounds and '
                 'more. Build a loadout that fits your aim.',
           ),
-          SizedBox(height: AppSpacing.lg),
-          _EnemyList(),
-          SizedBox(height: AppSpacing.lg),
-          _Tips(),
+          const SizedBox(height: AppSpacing.lg),
+          const _EnemyList(),
+          const SizedBox(height: AppSpacing.lg),
+          const _Tips(),
         ],
       ),
     );

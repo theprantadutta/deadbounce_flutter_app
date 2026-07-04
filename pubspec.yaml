@@ -57,6 +57,7 @@ dependencies:
   talker_bloc_logger: ^5.1.17
   flutter_animate: ^4.5.2
   in_app_update: ^4.2.5
+  in_app_review: ^2.0.12 # Play in-app review prompt + "Rate" store-listing button
 
 dev_dependencies:
   flutter_test:

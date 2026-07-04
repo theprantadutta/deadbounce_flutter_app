@@ -68,7 +68,7 @@ We use the information above to:
 The App relies on the following third-party services, which process limited data on our behalf:
 
 - **Google Firebase Authentication** — to create and manage sign-in (email, Google, and guest accounts).
-- **Google Play Services** — for app distribution and platform features.
+- **Google Play Services** — for app distribution and platform features, including the optional in-app rating prompt (the rating is submitted to Google Play; we do not receive your review).
 
 These providers process your data under their own privacy policies, including Google at https://policies.google.com/privacy.
 

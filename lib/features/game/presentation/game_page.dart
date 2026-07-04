@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app.dart';
+import '../../../core/review/app_review_service.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_dimens.dart';
@@ -60,10 +61,27 @@ class _GameView extends StatefulWidget {
 }
 
 class _GameViewState extends State<_GameView> with WidgetsBindingObserver {
+  /// One review prompt per game screen at most (guards rebuilds/re-emits).
+  bool _reviewPromptRequested = false;
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+  }
+
+  /// After a normal run ends, offer the native "rate this app" sheet — but only
+  /// when the throttle allows it ([ReviewPromptStore]). Seeded/constrained modes
+  /// (daily challenge, tournaments) are skipped so we ask on the core loop.
+  Future<void> _maybePromptReview() async {
+    if (_reviewPromptRequested) return;
+    final cubit = context.read<GameSessionCubit>();
+    if (cubit.dailyChallenge || cubit.tournamentContext != null) return;
+    _reviewPromptRequested = true;
+    final reviewService = context.read<AppReviewService>();
+    final stats =
+        await context.sessionDependencies.statisticsRepository.getStatistics();
+    await reviewService.maybePromptReview(runsPlayed: stats.runsPlayed);
   }
 
   @override
@@ -89,7 +107,10 @@ class _GameViewState extends State<_GameView> with WidgetsBindingObserver {
     final cubit = context.read<GameSessionCubit>();
 
     return Scaffold(
-      body: BlocBuilder<GameSessionCubit, GameSessionState>(
+      body: BlocConsumer<GameSessionCubit, GameSessionState>(
+        listener: (context, state) {
+          if (state is SessionRunOver) _maybePromptReview();
+        },
         builder: (context, state) {
           final game = cubit.game;
           if (state is SessionIdle || game == null) {

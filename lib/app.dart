@@ -6,7 +6,10 @@ import 'core/audio/music_manager.dart';
 import 'core/di/session_dependencies.dart';
 import 'core/legal/legal_consent_store.dart';
 import 'core/network/api_client.dart';
+import 'core/review/app_review_service.dart';
+import 'core/review/review_prompt_store.dart';
 import 'core/router/app_router.dart';
+import 'features/onboarding/onboarding_store.dart';
 import 'core/storage/token_storage.dart';
 import 'core/theme/app_theme.dart';
 import 'features/auth/data/datasources/auth_firebase_datasource.dart';
@@ -29,11 +32,23 @@ import 'features/auth/presentation/cubit/auth_cubit.dart';
 ///    game-data repositories) built when auth lands on a Firebase uid and
 ///    torn down on sign-out — managed by [_SessionScope].
 class DeadbounceApp extends StatefulWidget {
-  const DeadbounceApp({super.key, required this.legalConsent});
+  const DeadbounceApp({
+    super.key,
+    required this.legalConsent,
+    required this.reviewPromptStore,
+    required this.onboarding,
+  });
 
   /// Device-level legal-consent record (loaded in main before runApp), used by
   /// the router to gate the first launch behind the Privacy Policy + Terms.
   final LegalConsentStore legalConsent;
+
+  /// Device-level throttle backing the in-app review prompt.
+  final ReviewPromptStore reviewPromptStore;
+
+  /// Device-level "seen the walkthrough" flag, used by the router to route
+  /// first-time users into the interactive tutorial after sign-in.
+  final OnboardingStore onboarding;
 
   @override
   State<DeadbounceApp> createState() => _DeadbounceAppState();
@@ -44,6 +59,8 @@ class _DeadbounceAppState extends State<DeadbounceApp>
   late final TokenStorage _tokenStorage = TokenStorage();
   late final ApiClient _apiClient = ApiClient(_tokenStorage);
   late final AuthRepository _authRepository = _buildAuthRepository();
+  late final AppReviewService _reviewService =
+      InAppReviewService(widget.reviewPromptStore);
 
   // Owned here (not in a BlocProvider's create:) so the router can observe it
   // for its auth redirect; closed in dispose().
@@ -59,6 +76,7 @@ class _DeadbounceAppState extends State<DeadbounceApp>
   late final _router = buildRouter(
     authCubit: _authCubit,
     legalConsent: widget.legalConsent,
+    onboarding: widget.onboarding,
   );
 
   AuthRepository _buildAuthRepository() {
@@ -112,15 +130,18 @@ class _DeadbounceAppState extends State<DeadbounceApp>
       value: _authRepository,
       child: RepositoryProvider.value(
         value: _apiClient,
-        child: BlocProvider.value(
-          value: _authCubit,
-          child: _SessionScope(
-            apiClient: _apiClient,
-            child: MaterialApp.router(
-              title: 'Deadbounce',
-              debugShowCheckedModeBanner: false,
-              theme: AppTheme.dark,
-              routerConfig: _router,
+        child: RepositoryProvider<AppReviewService>.value(
+          value: _reviewService,
+          child: BlocProvider.value(
+            value: _authCubit,
+            child: _SessionScope(
+              apiClient: _apiClient,
+              child: MaterialApp.router(
+                title: 'Deadbounce',
+                debugShowCheckedModeBanner: false,
+                theme: AppTheme.dark,
+                routerConfig: _router,
+              ),
             ),
           ),
         ),

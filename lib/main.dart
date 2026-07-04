@@ -11,6 +11,8 @@ import 'app.dart';
 import 'core/config/game_balance_store.dart';
 import 'core/legal/legal_consent_store.dart';
 import 'core/logging/app_logger.dart';
+import 'core/review/review_prompt_store.dart';
+import 'features/onboarding/onboarding_store.dart';
 import 'firebase_options.dart';
 
 Future<void> main() async {
@@ -66,9 +68,17 @@ Future<void> main() async {
     await GameBalanceStore.load();
   }
 
-  // Device-level legal consent — loaded synchronously here so the router's
-  // first-launch gate (Privacy Policy + Terms) can read it without async.
-  final legalConsent = LegalConsentStore(await SharedPreferences.getInstance());
+  // Device-level prefs, loaded once and shared. Both stores are per-install
+  // (not per-account): consent gates the very first launch (pre-sign-in), and
+  // the review throttle is a device action independent of who's signed in.
+  final prefs = await SharedPreferences.getInstance();
+  final legalConsent = LegalConsentStore(prefs);
+  final reviewPromptStore = ReviewPromptStore(prefs);
+  final onboarding = OnboardingStore(prefs);
 
-  runApp(DeadbounceApp(legalConsent: legalConsent));
+  runApp(DeadbounceApp(
+    legalConsent: legalConsent,
+    reviewPromptStore: reviewPromptStore,
+    onboarding: onboarding,
+  ));
 }

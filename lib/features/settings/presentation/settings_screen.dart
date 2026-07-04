@@ -6,6 +6,7 @@ import 'package:package_info_plus/package_info_plus.dart';
 
 import '../../../app.dart';
 import '../../../core/di/session_dependencies.dart';
+import '../../../core/review/app_review_service.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/sync/sync_status.dart';
 import '../../../core/theme/app_colors.dart';
@@ -138,6 +139,19 @@ class _SettingsView extends StatelessWidget {
                 icon: Icons.help_outline,
                 label: 'How to play',
                 onTap: () => context.push(Routes.howToPlay),
+              ),
+              const SizedBox(height: AppSpacing.xs),
+              _NavTile(
+                icon: Icons.school_outlined,
+                label: 'Replay walkthrough',
+                onTap: () => context.push(Routes.onboarding),
+              ),
+              const SizedBox(height: AppSpacing.xs),
+              _NavTile(
+                icon: Icons.star_outline,
+                label: 'Rate Deadbounce',
+                external: true,
+                onTap: () => context.read<AppReviewService>().openStoreListing(),
               ),
               const SizedBox(height: AppSpacing.xs),
               _NavTile(
