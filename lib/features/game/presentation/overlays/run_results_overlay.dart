@@ -32,118 +32,122 @@ class RunResultsOverlay extends StatelessWidget {
     return AnimatedArenaBackground(
       child: SafeArea(
         child: Center(
-          // The whole screen never scrolls — the compact layout fits a normal
-          // phone. Only the unlocked-awards list scrolls internally (capped),
-          // so a big haul of awards can't make the results screen scrollable.
-          child: Padding(
-            padding: const EdgeInsets.all(AppSpacing.lg),
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 400),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  FittedHeadline('RUN OVER', style: textTheme.headlineLarge),
-                  const SizedBox(height: AppSpacing.xxs),
-                  Text(
-                    result.isDailyChallenge
-                        ? 'Daily challenge attempt logged.'
-                        : 'Every legend eats dirt sometimes.',
-                    style: textTheme.bodyMedium,
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: AppSpacing.md),
-                  if (isNewBestScore)
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: AppSpacing.xs),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          vertical: AppSpacing.xs,
-                        ),
-                        decoration: BoxDecoration(
-                          borderRadius: AppRadii.mdAll,
-                          border: Border.all(color: AppColors.amber400),
-                          boxShadow: [
-                            BoxShadow(
-                              color:
-                                  AppColors.amber500.withValues(alpha: 0.35),
-                              blurRadius: 18,
-                            ),
-                          ],
-                        ),
-                        child: Text(
-                          '★ NEW BEST SCORE ★',
-                          style: textTheme.labelLarge
-                              ?.copyWith(color: AppColors.amber300),
-                          textAlign: TextAlign.center,
-                        ),
-                      ),
+          // Compact layout that fits a normal phone with no visible scroll. On
+          // short screens the whole card scrolls instead of overflowing (the
+          // unlocked-awards list is still separately capped below).
+          child: SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.all(AppSpacing.lg),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 400),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    FittedHeadline('RUN OVER', style: textTheme.headlineLarge),
+                    const SizedBox(height: AppSpacing.xxs),
+                    Text(
+                      result.isDailyChallenge
+                          ? 'Daily challenge attempt logged.'
+                          : 'Every legend eats dirt sometimes.',
+                      style: textTheme.bodyMedium,
+                      textAlign: TextAlign.center,
                     ),
-                  FittedHeadline(
-                    '${result.score}',
-                    style: textTheme.displayMedium,
-                  ),
-                  Text(
-                    'SCORE',
-                    style: textTheme.labelSmall,
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: AppSpacing.md),
-                  // Compact 2x2 stat grid keeps the screen scroll-free.
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _StatCell(
-                          label: 'WAVES',
-                          value: '${result.waveReached}',
+                    const SizedBox(height: AppSpacing.md),
+                    if (isNewBestScore)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: AppSpacing.xs),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            vertical: AppSpacing.xs,
+                          ),
+                          decoration: BoxDecoration(
+                            borderRadius: AppRadii.mdAll,
+                            border: Border.all(color: AppColors.amber400),
+                            boxShadow: [
+                              BoxShadow(
+                                color: AppColors.amber500.withValues(
+                                  alpha: 0.35,
+                                ),
+                                blurRadius: 18,
+                              ),
+                            ],
+                          ),
+                          child: Text(
+                            '★ NEW BEST SCORE ★',
+                            style: textTheme.labelLarge?.copyWith(
+                              color: AppColors.amber300,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
                         ),
                       ),
-                      const SizedBox(width: AppSpacing.xs),
-                      Expanded(
-                        child: _StatCell(
-                          label: 'KILLS',
-                          value: '${result.kills}',
+                    FittedHeadline(
+                      '${result.score}',
+                      style: textTheme.displayMedium,
+                    ),
+                    Text(
+                      'SCORE',
+                      style: textTheme.labelSmall,
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+                    // Compact 2x2 stat grid keeps the screen scroll-free.
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _StatCell(
+                            label: 'WAVES',
+                            value: '${result.waveReached}',
+                          ),
                         ),
-                      ),
+                        const SizedBox(width: AppSpacing.xs),
+                        Expanded(
+                          child: _StatCell(
+                            label: 'KILLS',
+                            value: '${result.kills}',
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: AppSpacing.xs),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _StatCell(
+                            label: 'BEST CHAIN',
+                            value: 'x${result.bestChain}',
+                          ),
+                        ),
+                        const SizedBox(width: AppSpacing.xs),
+                        Expanded(
+                          child: _StatCell(
+                            label: 'HOTTEST KILL',
+                            value: '${result.maxBounceKill} bnc',
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+                    _CoinCountUp(coins: result.coinsEarned),
+                    if (unlockedAchievements.isNotEmpty) ...[
+                      const SizedBox(height: AppSpacing.sm),
+                      _UnlockedAchievements(names: unlockedAchievements),
                     ],
-                  ),
-                  const SizedBox(height: AppSpacing.xs),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _StatCell(
-                          label: 'BEST CHAIN',
-                          value: 'x${result.bestChain}',
-                        ),
-                      ),
-                      const SizedBox(width: AppSpacing.xs),
-                      Expanded(
-                        child: _StatCell(
-                          label: 'HOTTEST KILL',
-                          value: '${result.maxBounceKill} bnc',
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: AppSpacing.md),
-                  _CoinCountUp(coins: result.coinsEarned),
-                  if (unlockedAchievements.isNotEmpty) ...[
+                    const SizedBox(height: AppSpacing.lg),
+                    DbPrimaryButton(
+                      label: 'RIDE AGAIN',
+                      icon: Icons.replay,
+                      onPressed: onRetry,
+                    ),
                     const SizedBox(height: AppSpacing.sm),
-                    _UnlockedAchievements(names: unlockedAchievements),
+                    DbSecondaryButton(
+                      label: 'BACK TO CAMP',
+                      icon: Icons.home_outlined,
+                      onPressed: onHome,
+                    ),
                   ],
-                  const SizedBox(height: AppSpacing.lg),
-                  DbPrimaryButton(
-                    label: 'RIDE AGAIN',
-                    icon: Icons.replay,
-                    onPressed: onRetry,
-                  ),
-                  const SizedBox(height: AppSpacing.sm),
-                  DbSecondaryButton(
-                    label: 'BACK TO CAMP',
-                    icon: Icons.home_outlined,
-                    onPressed: onHome,
-                  ),
-                ],
+                ),
               ),
             ),
           ),
@@ -210,12 +214,18 @@ class _UnlockedAchievements extends StatelessWidget {
         children: [
           Row(
             children: [
-              const Icon(Icons.emoji_events,
-                  color: AppColors.amber400, size: 18),
+              const Icon(
+                Icons.emoji_events,
+                color: AppColors.amber400,
+                size: 18,
+              ),
               const SizedBox(width: AppSpacing.xs),
-              Text('AWARD${names.length > 1 ? 'S' : ''} UNLOCKED',
-                  style: textTheme.labelMedium
-                      ?.copyWith(color: AppColors.amber300)),
+              Text(
+                'AWARD${names.length > 1 ? 'S' : ''} UNLOCKED',
+                style: textTheme.labelMedium?.copyWith(
+                  color: AppColors.amber300,
+                ),
+              ),
             ],
           ),
           const SizedBox(height: AppSpacing.sm),
@@ -227,8 +237,7 @@ class _UnlockedAchievements extends StatelessWidget {
               shrinkWrap: true,
               padding: EdgeInsets.zero,
               itemCount: names.length,
-              separatorBuilder: (_, _) =>
-                  const SizedBox(height: AppSpacing.xs),
+              separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.xs),
               itemBuilder: (_, i) => _AwardChip(name: names[i]),
             ),
           ),
@@ -298,8 +307,9 @@ class _CoinCountUp extends StatelessWidget {
           const SizedBox(width: AppSpacing.xs),
           Text(
             '+${value.round()}',
-            style:
-                textTheme.headlineMedium?.copyWith(color: AppColors.amber300),
+            style: textTheme.headlineMedium?.copyWith(
+              color: AppColors.amber300,
+            ),
           ),
           const SizedBox(width: AppSpacing.xs),
           Text('COINS EARNED', style: textTheme.labelSmall),

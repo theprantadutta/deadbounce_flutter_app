@@ -1,8 +1,8 @@
 # Terms and Conditions
 
-**Version 1**
+**Version 2**
 
-**Last updated: 24 June 2026**
+**Last updated: 4 July 2026**
 
 These Terms and Conditions ("Terms") govern your use of **Deadbounce** ("the App", "the game", "we", "us", or "our"). Please read them carefully.
 
@@ -36,11 +36,14 @@ We grant you a personal, non-exclusive, non-transferable, revocable licence to d
 
 ---
 
-## 4. Virtual Items and In-Game Currency
+## 4. Virtual Items, Currency, Purchases, and Subscriptions
 
-- The App includes virtual currency ("coins") and virtual items, such as perks from the Gunsmith and cosmetics from the Outfitter.
+- The App includes virtual currency ("coins") and virtual items, such as perks from the Gunsmith and cosmetics from the Outfitter. Currently, coins and items are **earned through play**.
 - Coins and virtual items have **no real-world monetary value**, cannot be exchanged for cash, and cannot be transferred between accounts.
 - Virtual currency and items are licensed to you for use within the App only; you do not own them.
+- The App may, now or in the future, offer optional **paid products** (such as coin packs) and **subscriptions** that renew automatically. Any such purchases are processed by **Google Play** under its terms; we do not process payments or store your card details.
+- Subscriptions renew automatically until you cancel them in Google Play. You may cancel at any time and keep access until the end of the current billing period.
+- Refunds and cancellations are governed by our **Refund Policy** and Google Play's policies.
 - We may adjust, manage, or remove virtual items and currency, or change game balance, at any time as part of normal game operation.
 
 ---

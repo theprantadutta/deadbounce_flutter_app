@@ -173,6 +173,12 @@ class _SettingsView extends StatelessWidget {
               ),
               const SizedBox(height: AppSpacing.xs),
               _NavTile(
+                icon: Icons.receipt_long_outlined,
+                label: 'Refund Policy',
+                onTap: () => context.push('${Routes.legalView}?tab=2'),
+              ),
+              const SizedBox(height: AppSpacing.xs),
+              _NavTile(
                 icon: Icons.public,
                 label: 'Visit pranta.dev',
                 external: true,

@@ -28,6 +28,7 @@ class _LegalConsentPageState extends State<LegalConsentPage> {
   late final Future<List<String>> _docs = Future.wait([
     rootBundle.loadString(LegalDocuments.privacyAsset),
     rootBundle.loadString(LegalDocuments.termsAsset),
+    rootBundle.loadString(LegalDocuments.refundAsset),
   ]);
 
   bool _accepting = false;
@@ -49,7 +50,7 @@ class _LegalConsentPageState extends State<LegalConsentPage> {
         emberCount: 12,
         child: SafeArea(
           child: DefaultTabController(
-            length: 2,
+            length: 3,
             child: Column(
               children: [
                 Padding(
@@ -65,8 +66,8 @@ class _LegalConsentPageState extends State<LegalConsentPage> {
                       Text('BEFORE YOU PLAY', style: textTheme.headlineSmall),
                       const SizedBox(height: AppSpacing.xxs),
                       Text(
-                        'Please review and accept our Privacy Policy and Terms '
-                        'to continue.',
+                        'Please review and accept our Privacy Policy, Terms, '
+                        'and Refund Policy to continue.',
                         style: textTheme.bodyMedium,
                       ),
                     ],
@@ -76,9 +77,11 @@ class _LegalConsentPageState extends State<LegalConsentPage> {
                   labelColor: AppColors.amber300,
                   unselectedLabelColor: AppColors.ink300,
                   indicatorColor: AppColors.amber400,
+                  labelPadding: EdgeInsets.symmetric(horizontal: AppSpacing.xs),
                   tabs: [
-                    Tab(text: 'PRIVACY POLICY'),
+                    Tab(text: 'PRIVACY'),
                     Tab(text: 'TERMS'),
+                    Tab(text: 'REFUND'),
                   ],
                 ),
                 Expanded(
@@ -123,6 +126,7 @@ class _LegalConsentPageState extends State<LegalConsentPage> {
                           children: [
                             MarkdownView(data: docs[0]),
                             MarkdownView(data: docs[1]),
+                            MarkdownView(data: docs[2]),
                           ],
                         );
                       },
@@ -166,8 +170,9 @@ class _LegalConsentPageState extends State<LegalConsentPage> {
                       ),
                       const SizedBox(height: AppSpacing.xs),
                       Text(
-                        'By tapping Agree, you accept the Privacy Policy and '
-                        'Terms (version ${LegalDocuments.version}).',
+                        'By tapping Agree, you accept the Privacy Policy, '
+                        'Terms, and Refund Policy '
+                        '(version ${LegalDocuments.version}).',
                         textAlign: TextAlign.center,
                         style: textTheme.labelSmall,
                       ),

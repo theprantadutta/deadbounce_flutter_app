@@ -1,8 +1,8 @@
 # Privacy Policy
 
-**Version 1**
+**Version 2**
 
-**Last updated: 24 June 2026**
+**Last updated: 4 July 2026**
 
 This Privacy Policy explains how **Deadbounce** ("the App", "we", "us", or "our") collects, uses, and protects your information when you play the game.
 
@@ -33,6 +33,15 @@ We collect only the information needed to run the game, save your progress, and 
 - Leaderboard and tournament entries, including the display name shown on boards.
 - Your in-game coin balance and the cosmetic and loadout selections you make.
 
+### Purchase information
+
+The App is free to play, and coins and virtual items are earned through play. The
+App may, now or in the future, offer optional paid products or subscriptions. If
+you choose to buy one, the payment is processed by **Google Play** — we do **not**
+receive or store your payment card details. We receive a confirmation from Google
+Play (such as a purchase token and the item or subscription purchased) so we can
+grant, restore, and manage your purchase.
+
 ### Technical data
 
 - Authentication tokens used to keep you signed in.
@@ -50,6 +59,7 @@ We use the information above to:
 - Save your progress and synchronise it across your devices.
 - Display leaderboards, tournaments, and your ranking.
 - Operate the in-game economy: coins, the Gunsmith perks, and the Outfitter cosmetics.
+- Grant, restore, and manage any paid products or subscriptions you buy.
 - Detect and prevent cheating, fraud, and abuse.
 - Diagnose crashes and improve the game.
 
@@ -69,6 +79,7 @@ The App relies on the following third-party services, which process limited data
 
 - **Google Firebase Authentication** — to create and manage sign-in (email, Google, and guest accounts).
 - **Google Play Services** — for app distribution and platform features, including the optional in-app rating prompt (the rating is submitted to Google Play; we do not receive your review).
+- **Google Play Billing** — to process any optional in-app purchases or subscriptions. Google Play handles the payment; we do not receive or store your card details.
 
 These providers process your data under their own privacy policies, including Google at https://policies.google.com/privacy.
 

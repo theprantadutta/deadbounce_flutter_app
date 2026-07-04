@@ -391,17 +391,23 @@ End-to-end logging via **Talker**, **debug-only** (zero cost in release):
   this app, so `talker_bloc_logger` is the state-management integration (not
   `talker_riverpod_logger`).
 
-## Legal & consent (privacy / terms) — keep in sync with features
+## Legal & consent (privacy / terms / refund) — keep in sync with features
 
-First-launch legal gate: `assets/legal/{privacy,terms}.md` are shown in a
-two-tab consent screen (`features/legal/`, rendered by a small in-house
-markdown widget) **after** the boot splash and **before** login. Acceptance is
+First-launch legal gate: `assets/legal/{privacy,terms,refund}.md` are shown in a
+**three-tab** consent screen (`features/legal/`, rendered by a small in-house
+markdown widget) **after** the boot splash and **before** login — all three are
+swipeable and one **AGREE & CONTINUE** accepts them together. Acceptance is
 device-level in `SharedPreferences` (pre-auth, per-install), gated by the
-GoRouter redirect; the read-only viewer is linked from Settings → About.
+GoRouter redirect; the read-only three-tab viewer is linked from Settings → About
+(Privacy / Terms / Refund, `?tab=0|1|2`).
 
 `lib/core/legal/legal_documents.dart` holds `LegalDocuments.version` — the
-single source of truth. **Bump it (and the matching `**Version N**` line in
-BOTH markdown files) and every user is re-prompted to accept on next launch.**
+single **shared** source of truth for all three docs. **Bump it (and the matching
+`**Version N**` line in ALL THREE markdown files) and every user is re-prompted to
+accept on next launch.** (Currently **version 2** — refund.md was added and the
+purchase/subscription clauses went in, forward-looking: no real-money IAP ships
+yet, but products + subscriptions are planned, so the docs already describe Google
+Play Billing / auto-renewal / the Google Play refund flow.)
 
 > **RULE — when you ship or change a feature, check whether the Privacy Policy /
 > Terms / Refund need updating.** If a feature changes what data is collected,
@@ -409,9 +415,9 @@ BOTH markdown files) and every user is re-prompted to accept on next launch.**
 > the relevant `assets/legal/*.md`, **bump `LegalDocuments.version`**, and
 > **re-copy the files to `G:\MyProjects\privacy-project\Projects\deadbounce\`**
 > (privacy.md, terms.md, refund.md) so the hosted copies stay byte-identical to
-> what users accept in-app, then commit that repo. Refund.md is hosted-only (not
-> bundled in the app). The big one is monetization — see the
-> `monetization-legal-checklist` memory.
+> what users accept in-app, then commit that repo. All three are now **bundled in
+> the app AND hosted**. The big one is monetization — flipping on real-money IAP /
+> subscriptions means revisiting all three docs (and bumping the version).
 
 ## Intentionally stubbed / next phase
 

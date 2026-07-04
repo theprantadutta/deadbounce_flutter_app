@@ -7,13 +7,13 @@ import '../../../core/theme/app_dimens.dart';
 import '../../../core/widgets/meta_scaffold.dart';
 import 'widgets/markdown_view.dart';
 
-/// Read-only view of the Privacy Policy and Terms, reachable any time from
-/// Settings → About. Same two-tab layout as the first-launch gate, but with
-/// the standard meta chrome (back button) and no Agree button.
+/// Read-only view of the Privacy Policy, Terms, and Refund Policy, reachable any
+/// time from Settings → About. Same three-tab layout as the first-launch gate,
+/// but with the standard meta chrome (back button) and no Agree button.
 class LegalViewerPage extends StatefulWidget {
   const LegalViewerPage({super.key, this.initialTab = 0});
 
-  /// 0 = Privacy Policy, 1 = Terms.
+  /// 0 = Privacy Policy, 1 = Terms, 2 = Refund Policy.
   final int initialTab;
 
   @override
@@ -24,23 +24,26 @@ class _LegalViewerPageState extends State<LegalViewerPage> {
   late final Future<List<String>> _docs = Future.wait([
     rootBundle.loadString(LegalDocuments.privacyAsset),
     rootBundle.loadString(LegalDocuments.termsAsset),
+    rootBundle.loadString(LegalDocuments.refundAsset),
   ]);
 
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
     return DefaultTabController(
-      length: 2,
-      initialIndex: widget.initialTab.clamp(0, 1),
+      length: 3,
+      initialIndex: widget.initialTab.clamp(0, 2),
       child: MetaScaffold(
         title: 'LEGAL',
         bottom: const TabBar(
           labelColor: AppColors.amber300,
           unselectedLabelColor: AppColors.ink300,
           indicatorColor: AppColors.amber400,
+          labelPadding: EdgeInsets.symmetric(horizontal: AppSpacing.xs),
           tabs: [
-            Tab(text: 'PRIVACY POLICY'),
+            Tab(text: 'PRIVACY'),
             Tab(text: 'TERMS'),
+            Tab(text: 'REFUND'),
           ],
         ),
         child: FutureBuilder<List<String>>(
@@ -66,6 +69,7 @@ class _LegalViewerPageState extends State<LegalViewerPage> {
               children: [
                 MarkdownView(data: docs[0], padding: padding),
                 MarkdownView(data: docs[1], padding: padding),
+                MarkdownView(data: docs[2], padding: padding),
               ],
             );
           },
