@@ -51,6 +51,12 @@ app.*.map.json
 /android/build/
 /android/app/build/
 
+# Android build caches (regenerated on every build, never committed)
+/android/.gradle/
+/android/.kotlin/
+.kotlin/
+.gradle/
+
 # Firebase config (contains API keys — re-download from console)
 **/google-services.json
 ios/Runner/GoogleService-Info.plist
