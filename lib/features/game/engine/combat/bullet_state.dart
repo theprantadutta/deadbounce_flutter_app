@@ -8,6 +8,8 @@ class BulletFlags {
     this.ghostPassesRemaining = 0,
     this.hasSplit = false,
     this.trailCooldown = 0,
+    this.hasFlashed = false,
+    this.suppressKillSpawn = false,
   });
 
   /// Ghost Round: walls this bullet may pass through (consumed by the
@@ -19,6 +21,14 @@ class BulletFlags {
 
   /// Incendiary Trail drop timer.
   double trailCooldown;
+
+  /// Flashpoint: the one-shot deep-bounce burst has already fired.
+  bool hasFlashed;
+
+  /// Bullets spawned by an on-kill hook (Shrapnel / Chain Lightning) — they
+  /// must NOT themselves trigger more kill-spawns, or a single shot could
+  /// cascade into an unbounded chain reaction.
+  bool suppressKillSpawn;
 }
 
 /// The live state of one bullet — mutated by the RicochetSolver.

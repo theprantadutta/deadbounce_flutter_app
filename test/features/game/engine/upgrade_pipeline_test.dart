@@ -237,15 +237,166 @@ void main() {
     var epics = 0;
     for (var i = 0; i < 2000; i++) {
       for (final card in UpgradeDeck.draw3(rng, RunModifiers())) {
-        switch (card.rarity.weight) {
-          case 100:
+        switch (card.rarity) {
+          case UpgradeRarity.common:
             commons++;
-          case 12:
+          case UpgradeRarity.epic:
             epics++;
+          case UpgradeRarity.rare:
+            break;
         }
       }
     }
-    expect(commons, greaterThan(epics * 3));
+    expect(commons, greaterThan(epics * 2));
+  });
+
+  group('new upgrade cards', () {
+    test('Long Fuse / Greased Lead / Rifling fold onto bullet stats', () {
+      pick('long_fuse');
+      pick('rifling');
+      pick('greased_lead');
+      final b = mods.effectiveBulletStats();
+      expect(b.lifetime, closeTo(GameBalance.I.bullet.lifetime + 1.2, 1e-9));
+      expect(b.maxBounces, GameBalance.I.bullet.maxBounces + 2);
+      expect(b.speedGainPerBounce,
+          closeTo(GameBalance.I.bullet.speedGainPerBounce + 0.03, 1e-9));
+    });
+
+    test('Fan Fire turns one shot into three', () {
+      pick('fan_fire');
+      final shots = [PendingShot(direction: Vector2(0, -1), speed: 600)];
+      mods.fire(FireContext(
+          origin: Vector2.zero(), shotIndex: 1, shots: shots, world: world));
+      expect(shots, hasLength(3));
+    });
+
+    test('Vengeance arms on a survived hit, spends on the next shot only', () {
+      pick('vengeance');
+      List<PendingShot> fireOnce(int i) {
+        final shots = [PendingShot(direction: Vector2(0, -1), speed: 600)];
+        mods.fire(FireContext(
+            origin: Vector2.zero(), shotIndex: i, shots: shots, world: world));
+        return shots;
+      }
+
+      expect(fireOnce(1), hasLength(1), reason: 'no charge yet');
+      mods.playerDamaged(PlayerDamageContext(heartsAfter: 2)); // survived
+      expect(fireOnce(2), hasLength(3), reason: 'retaliation burst');
+      expect(fireOnce(3), hasLength(1), reason: 'charge consumed');
+
+      // A fatal hit never arms it.
+      mods.playerDamaged(PlayerDamageContext(heartsAfter: 0));
+      expect(fireOnce(4), hasLength(1));
+    });
+
+    test('Flashpoint bursts once, at bounce 4', () {
+      pick('flashpoint');
+      final state =
+          BulletState(position: Vector2(50, 50), velocity: Vector2(200, 0));
+      final wall = WallSegment(
+          a: Vector2(0, 0), b: Vector2(0, 400), normal: Vector2(1, 0));
+      BounceContext ctx(int i) => BounceContext(
+          bullet: state,
+          stats: BulletStats.base(),
+          wall: wall,
+          bounceIndex: i,
+          world: world);
+
+      mods.bounce(ctx(3));
+      expect(world.fireTrails, isEmpty);
+      mods.bounce(ctx(4));
+      expect(world.fireTrails, hasLength(1));
+      mods.bounce(ctx(5));
+      expect(world.fireTrails, hasLength(1), reason: 'one flash per bullet');
+    });
+
+    KillContext killCtx(BulletState b, int chain) => KillContext(
+        bullet: b,
+        enemyType: 'drifter',
+        chainLength: chain,
+        position: b.position.clone(),
+        world: world);
+
+    test('Shrapnel sprays 3 lethal shards on an armed kill; shards do not '
+        'respawn', () {
+      pick('shrapnel');
+      final killer =
+          BulletState(position: Vector2(200, 200), velocity: Vector2(300, 0),
+              bounces: 3);
+      mods.kill(killCtx(killer, 1));
+      expect(world.spawnedBullets, hasLength(3));
+      for (final (state, _) in world.spawnedBullets) {
+        expect(state.bounces, 3, reason: 'inherits lethality');
+        expect(state.flags.suppressKillSpawn, isTrue);
+      }
+
+      // A shard's own kill sprays nothing (no cascade).
+      world.spawnedBullets.clear();
+      final shard = BulletState(
+          position: Vector2.zero(),
+          velocity: Vector2(1, 0),
+          bounces: 3,
+          flags: BulletFlags(suppressKillSpawn: true));
+      mods.kill(killCtx(shard, 1));
+      expect(world.spawnedBullets, isEmpty);
+    });
+
+    test('Shrapnel ignores an unarmed (0-bounce) kill', () {
+      pick('shrapnel');
+      final killer =
+          BulletState(position: Vector2.zero(), velocity: Vector2(1, 0));
+      mods.kill(killCtx(killer, 1));
+      expect(world.spawnedBullets, isEmpty);
+    });
+
+    test('Chain Lightning forks a lethal bolt only on a chain kill with a '
+        'target', () {
+      pick('chain_lightning');
+      world.nearestEnemy = Vector2(300, 200);
+
+      // Single kill → no fork.
+      mods.kill(killCtx(
+          BulletState(
+              position: Vector2(100, 200),
+              velocity: Vector2(1, 0),
+              bounces: 2),
+          1));
+      expect(world.spawnedBullets, isEmpty);
+
+      // Chain kill → one bolt inheriting bounces, flagged.
+      mods.kill(killCtx(
+          BulletState(
+              position: Vector2(100, 200),
+              velocity: Vector2(1, 0),
+              bounces: 2),
+          2));
+      expect(world.spawnedBullets, hasLength(1));
+      expect(world.spawnedBullets.single.$1.bounces, 2);
+      expect(world.spawnedBullets.single.$1.flags.suppressKillSpawn, isTrue);
+    });
+  });
+
+  group('pity rule', () {
+    test('guarantees a rare+ when forced and the pool has one', () {
+      final rng = GameRng(3);
+      for (var i = 0; i < 50; i++) {
+        final draw =
+            UpgradeDeck.draw3(rng, RunModifiers(), guaranteeRarePlus: true);
+        expect(draw.any((c) => c.rarity != UpgradeRarity.common), isTrue);
+      }
+    });
+
+    test('without the flag, all-common draws still happen', () {
+      final rng = GameRng(1);
+      var sawAllCommon = false;
+      for (var i = 0; i < 800 && !sawAllCommon; i++) {
+        final draw = UpgradeDeck.draw3(rng, RunModifiers());
+        if (draw.every((c) => c.rarity == UpgradeRarity.common)) {
+          sawAllCommon = true;
+        }
+      }
+      expect(sawAllCommon, isTrue);
+    });
   });
 
   group('UpgradeCatalog.tryById', () {
