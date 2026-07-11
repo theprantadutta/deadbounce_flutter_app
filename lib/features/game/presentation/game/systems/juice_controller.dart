@@ -86,7 +86,8 @@ class JuiceController {
   }
 
   /// Composed kill feedback: shatter + sound + haptic, escalating with
-  /// chain length (hit-stop and big shake on multi-kills).
+  /// chain length. Every kill gets a hit-stop — single kills are the game's
+  /// most common event and must have punch; multi-kills freeze longer.
   void killFeedback({
     required Vector2 position,
     required Color color,
@@ -102,6 +103,7 @@ class JuiceController {
       sound.play(Sfx.chain);
       haptics.heavy();
     } else {
+      hitStop(GameBalance.I.juice.hitStopKill);
       sound.play(Sfx.kill);
       haptics.medium();
     }

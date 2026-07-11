@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flame/components.dart';
 import 'package:flame/events.dart';
 
@@ -11,7 +13,8 @@ import '../components/deadbounce_game.dart';
 ///    preview goes live; drag length maps to launch power. Release fires.
 ///    Dragging back under the deadzone dims the line = cancel affordance.
 ///  - TAP (or a release under the deadzone) = dash to the anchor whose x
-///    is nearest the touch.
+///    is nearest the touch; a tap in your own zone hops one anchor toward
+///    the tap side, so a tap is never a silent no-op.
 class InputController extends PositionComponent
     with HasGameReference<DeadbounceGame>, DragCallbacks, TapCallbacks {
   InputController()
@@ -101,6 +104,19 @@ class InputController extends PositionComponent
         best = i;
       }
     }
+
+    // Tapping your own zone must never be a silent no-op: hop one anchor
+    // toward the tap side instead (tap left of you = dash left). Only an
+    // outward tap at an edge anchor stays put — there's nowhere to go.
+    final current = game.player.anchorIndex;
+    if (best == current) {
+      if (x < anchors[current].x) {
+        best = math.max(0, current - 1);
+      } else {
+        best = math.min(anchors.length - 1, current + 1);
+      }
+    }
+
     game.player.dashTo(best);
   }
 }

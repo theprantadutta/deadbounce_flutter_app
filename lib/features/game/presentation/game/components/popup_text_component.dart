@@ -16,6 +16,10 @@ class PopupTextComponent extends TextComponent implements OpacityProvider {
   PopupTextComponent.chainLabel(String text, Vector2 position)
       : this._(text, position, _chainBase, riseDistance: 56, life: 0.9);
 
+  /// The first bounce — the moment the bullet goes lethal (the core rule).
+  PopupTextComponent.armedLabel(Vector2 position)
+      : this._('ARMED', position, _armedBase, riseDistance: 40, life: 0.55);
+
   PopupTextComponent._(
     String text,
     Vector2 position,
@@ -42,6 +46,15 @@ class PopupTextComponent extends TextComponent implements OpacityProvider {
     fontWeight: FontWeight.w800,
     color: AppColors.amber300,
     letterSpacing: 1.2,
+  );
+
+  static const TextStyle _armedBase = TextStyle(
+    fontFamily: 'monospace',
+    fontSize: 22,
+    fontWeight: FontWeight.w900,
+    color: AppColors.amber200,
+    letterSpacing: 2.0,
+    shadows: [Shadow(color: AppColors.amber500, blurRadius: 12)],
   );
 
   static const TextStyle _chainBase = TextStyle(

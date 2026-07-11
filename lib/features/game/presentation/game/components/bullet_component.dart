@@ -102,15 +102,15 @@ class BulletComponent extends PositionComponent
         world: game,
       ));
 
-      // Bounce counter popup once per new bounce ("x2", "x3"...).
-      if (state.bounces >= 2 &&
-          state.bounces != _lastPopupBounce &&
-          game.gameFeel.combatText) {
+      // Per-bounce popups: the first bounce is the moment the bullet goes
+      // lethal ("ARMED" — the core rule made visible), later bounces show
+      // the escalating counter ("x2", "x3"...).
+      if (state.bounces != _lastPopupBounce && game.gameFeel.combatText) {
         _lastPopupBounce = state.bounces;
-        game.world.add(PopupTextComponent.bounceCounter(
-          'x${state.bounces}',
-          bounce.point + Vector2(0, -24),
-        ));
+        final at = bounce.point + Vector2(0, -24);
+        game.world.add(state.bounces == 1
+            ? PopupTextComponent.armedLabel(at)
+            : PopupTextComponent.bounceCounter('x${state.bounces}', at));
       }
     }
   }

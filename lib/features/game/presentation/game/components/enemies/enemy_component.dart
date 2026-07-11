@@ -1,6 +1,9 @@
+import 'dart:math' as math;
 import 'dart:ui';
 
 import 'package:flame/components.dart';
+
+import 'package:deadbounce_flutter_app/core/config/game_balance.dart';
 
 import '../../../../engine/combat/bullet_state.dart';
 import '../deadbounce_game.dart';
@@ -107,12 +110,36 @@ abstract class EnemyComponent extends PositionComponent
     }
   }
 
-  /// Steers gently toward the player, capped at [speed].
+  /// Steers gently toward the player, capped at [speed]. A separation force
+  /// pushes overlapping neighbors apart so groups spread into arcs instead
+  /// of stacking into a single blob (stacked enemies read as one enemy and
+  /// hide the multi-kill fantasy).
   void seekPlayer(double dt, double speed) {
-    final toPlayer = game.player.position - position;
-    if (toPlayer.length2 < 1) return;
-    toPlayer.normalize();
-    position.addScaled(toPlayer, speed * speedMult * dt);
+    final desired = game.player.position - position;
+    if (desired.length2 < 1) return;
+    desired.normalize();
+
+    final cfg = GameBalance.I.enemies;
+    if (cfg.separationStrength > 0) {
+      final push = Vector2.zero();
+      for (final other in game.aliveEnemies) {
+        if (identical(other, this)) continue;
+        final away = position - other.position;
+        final minDist = bodyRadius + other.bodyRadius + cfg.separationPadding;
+        final d2 = away.length2;
+        if (d2 < 0.01 || d2 >= minDist * minDist) continue;
+        // Away-vector weighted by how deep the overlap is (1 at full overlap
+        // → 0 at the edge of the separation ring).
+        final d = math.sqrt(d2);
+        push.addScaled(away..scale(1 / d), 1 - d / minDist);
+      }
+      if (push.length2 > 0) {
+        desired.addScaled(push, cfg.separationStrength);
+        if (desired.length2 > 0.0001) desired.normalize();
+      }
+    }
+
+    position.addScaled(desired, speed * speedMult * dt);
   }
 
   /// Keeps the body inside the arena bounds.
