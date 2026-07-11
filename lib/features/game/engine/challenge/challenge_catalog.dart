@@ -81,6 +81,33 @@ abstract final class ChallengeCatalog {
       rules: ['Splitters only.', 'The arena fills fast.'],
       config: ChallengeConfig(forcedEnemyType: EnemyType.splitter),
     ),
+    _Template(
+      name: 'QUICKSILVER',
+      tagline: "Blink and they're on you.",
+      rules: ['Skitters only — fast and fragile.', 'Score counts double.'],
+      config: ChallengeConfig(
+        forcedEnemyType: EnemyType.skitter,
+        scoreMultiplier: 2,
+      ),
+    ),
+    _Template(
+      name: 'SHOOTING GALLERY',
+      tagline: 'Lead the moving marks.',
+      rules: ['Lancers only.', 'Every target strafes — read the lane.'],
+      config: ChallengeConfig(forcedEnemyType: EnemyType.lancer),
+    ),
+    _Template(
+      name: 'GLASS CANNON',
+      tagline: 'Hit like thunder, fold like paper.',
+      rules: ['Start with a single heart.', 'Every bounce deals +2 damage.'],
+      config: ChallengeConfig(startingHearts: 1, extraWallDamage: 2),
+    ),
+    _Template(
+      name: 'TIN CAN ALLEY',
+      tagline: 'Nothing but shells to crack.',
+      rules: ['Ironhides only.', 'Bank it into their backs.'],
+      config: ChallengeConfig(forcedEnemyType: EnemyType.ironhide),
+    ),
   ];
 }
 
