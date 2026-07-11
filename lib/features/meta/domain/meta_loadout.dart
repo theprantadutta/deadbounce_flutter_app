@@ -6,6 +6,8 @@ class MetaLoadout {
     this.permanentCards = const {},
     this.invulnBonus = 0,
     this.grantFreeCard = false,
+    this.grantFreeRareCard = false,
+    this.chainWindowBonus = 0,
   });
 
   /// Upgrade-card id → permanent stacks pre-loaded into the run (e.g.
@@ -20,8 +22,20 @@ class MetaLoadout {
   /// Start the run with one free random common upgrade in hand (Second Wind).
   final bool grantFreeCard;
 
+  /// Start the run with one free random RARE upgrade in hand (Opening Hand) —
+  /// a build-defining head start, stronger than Second Wind's common.
+  final bool grantFreeRareCard;
+
+  /// Extra seconds added to the chain window (Gunfighter's Memory) — a longer
+  /// runway to land the game's signature chains.
+  final double chainWindowBonus;
+
   static const empty = MetaLoadout();
 
   bool get isEmpty =>
-      permanentCards.isEmpty && invulnBonus == 0 && !grantFreeCard;
+      permanentCards.isEmpty &&
+      invulnBonus == 0 &&
+      !grantFreeCard &&
+      !grantFreeRareCard &&
+      chainWindowBonus == 0;
 }

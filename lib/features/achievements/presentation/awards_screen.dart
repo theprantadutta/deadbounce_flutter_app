@@ -112,6 +112,11 @@ class _AwardTile extends StatelessWidget {
         'paid' => Icons.paid,
         'explore' => Icons.explore,
         'workspace_premium' => Icons.workspace_premium,
+        'bolt' => Icons.bolt,
+        'adjust' => Icons.adjust,
+        'verified' => Icons.verified,
+        'pest_control' => Icons.pest_control,
+        'dark_mode' => Icons.dark_mode,
         _ => Icons.emoji_events,
       };
 

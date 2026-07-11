@@ -292,6 +292,55 @@ abstract final class AchievementCatalog {
       secret: true,
       progress: (c) => _flag(c.bestScore >= 100000),
     ),
+
+    // --- Phase 4 skill-expressive tiers: pure mastery, no grind. Mirror ids +
+    // rewards in the backend AchievementDefinitions.cs exactly. ---
+    AchievementDefinition(
+      id: 'rampage',
+      name: 'RICOCHET RAMPAGE',
+      flavor: 'Six souls on one screaming bullet.',
+      iconName: 'bolt',
+      coinReward: 300,
+      target: 1,
+      progress: (c) => _flag(c.bestChain >= 6),
+    ),
+    AchievementDefinition(
+      id: 'dead_center',
+      name: 'DEAD CENTER',
+      flavor: 'Eight walls, then a grave.',
+      iconName: 'adjust',
+      coinReward: 300,
+      target: 1,
+      progress: (c) => _flag(c.bestBounceKill >= 8),
+    ),
+    AchievementDefinition(
+      id: 'flawless',
+      name: 'FLAWLESS',
+      flavor: 'Fifteen waves and not one scratch.',
+      iconName: 'verified',
+      coinReward: 400,
+      target: 1,
+      progress: (c) => _flag(c.runWave >= 15 && c.runHitsTaken == 0),
+    ),
+    AchievementDefinition(
+      id: 'exterminator',
+      name: 'EXTERMINATOR',
+      flavor: 'A thousand notches. The arena fears you.',
+      iconName: 'pest_control',
+      coinReward: 400,
+      target: 1000,
+      progress: (c) => c.lifetimeKills.clamp(0, 1000),
+    ),
+    AchievementDefinition(
+      id: 'the_abyss',
+      name: 'THE ABYSS',
+      flavor: 'Wave fifty. Nobody follows you down here.',
+      iconName: 'dark_mode',
+      coinReward: 600,
+      target: 50,
+      secret: true,
+      progress: (c) => c.bestWave.clamp(0, 50),
+    ),
   ];
 
   static AchievementDefinition byId(String id) =>

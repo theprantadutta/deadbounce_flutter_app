@@ -18,6 +18,7 @@ import 'package:deadbounce_flutter_app/features/cosmetics/domain/cosmetic_loadou
 import 'package:deadbounce_flutter_app/features/meta/domain/meta_loadout.dart';
 
 import '../../../engine/trajectory/trajectory_predictor.dart';
+import '../../../engine/waves/wave_scaling.dart';
 import '../../../engine/trickshot/trickshot_level.dart';
 import '../../../engine/upgrades/run_modifiers.dart';
 import '../../../engine/upgrades/upgrade_card.dart';
@@ -59,6 +60,7 @@ class DeadbounceGame extends FlameGame implements GameWorldOps {
     this.challenge,
     this.metaLoadout = const MetaLoadout(),
     this.gameFeel = const GameFeel(),
+    this.unlockedCardIds,
     this.trickShotLevel,
     this.onTrickShotComplete,
     this.onTrickShotProgress,
@@ -92,6 +94,10 @@ class DeadbounceGame extends FlameGame implements GameWorldOps {
   /// Player-chosen feel/accessibility options (shake, hit-stop, aim guide,
   /// combat text, particle budget). Read by the systems below.
   final GameFeel gameFeel;
+
+  /// Card ids the draft may offer this run (play-gated unlocks). Null = every
+  /// card (daily challenges / tournaments, which ignore unlocks for fairness).
+  final Set<String>? unlockedCardIds;
 
   /// Equipped cosmetics (visual only) — bullet trail, gunslinger skin, arena
   /// theme. Read live by the render code; never affects gameplay numbers.
@@ -127,6 +133,7 @@ class DeadbounceGame extends FlameGame implements GameWorldOps {
   );
   late final ScoreSystem scoreSystem = ScoreSystem(
     scoreMultiplier: challenge?.scoreMultiplier ?? 1,
+    chainWindowBonus: metaLoadout.chainWindowBonus,
   );
   late final SpawnDirector spawner;
   late final WaveRunner waveRunner;
@@ -141,6 +148,9 @@ class DeadbounceGame extends FlameGame implements GameWorldOps {
   int kills = 0;
   int coinsEarned = 0;
   int hitsTaken = 0;
+
+  /// Consecutive upgrade drafts that came up all-common (drives the pity rule).
+  int _draftsWithoutRarePlus = 0;
   final Map<String, int> enemyKills = {};
   bool runEnded = false;
 
@@ -384,18 +394,23 @@ class DeadbounceGame extends FlameGame implements GameWorldOps {
       }
     });
     metaInvulnBonus = metaLoadout.invulnBonus;
+    final metaRng = _runRng.fork('meta');
     if (metaLoadout.grantFreeCard) {
-      final commons = UpgradeCatalog.all
-          .where(
-            (c) =>
-                c.rarity == UpgradeRarity.common &&
-                modifiers.stacksOf(c.id) < c.maxStacks,
-          )
-          .toList();
-      if (commons.isNotEmpty) {
-        modifiers.addPermanent(_runRng.fork('meta').pick(commons));
-      }
+      _grantFreeCardOfRarity(UpgradeRarity.common, metaRng);
     }
+    if (metaLoadout.grantFreeRareCard) {
+      _grantFreeCardOfRarity(UpgradeRarity.rare, metaRng);
+    }
+  }
+
+  /// Pre-loads one random not-maxed card of [rarity] as a permanent stack
+  /// (Second Wind / Opening Hand). No-op if every card of that tier is capped.
+  void _grantFreeCardOfRarity(UpgradeRarity rarity, GameRng rng) {
+    final pool = UpgradeCatalog.all
+        .where((c) =>
+            c.rarity == rarity && modifiers.stacksOf(c.id) < c.maxStacks)
+        .toList();
+    if (pool.isNotEmpty) modifiers.addPermanent(rng.pick(pool));
   }
 
   void onWaveCleared(int wave) {
@@ -405,7 +420,25 @@ class DeadbounceGame extends FlameGame implements GameWorldOps {
     addRunCoins(GameBalance.I.economy.waveClearBonus.toDouble());
     sound.play(Sfx.waveClear);
 
-    final choices = UpgradeDeck.draw3(_upgradesRng, modifiers);
+    // Draft cadence: a pick after every wave early, then only every Nth wave,
+    // so the hard-pause stops chopping the mid-run rhythm. Score/coins above
+    // still reward every clear — only the interrupting picker is gated.
+    if (!_shouldDraft(wave)) {
+      waveRunner.startWave(wave + 1);
+      return;
+    }
+
+    // Pity rule: after two straight all-common drafts, guarantee a rare+.
+    final choices = UpgradeDeck.draw3(
+      _upgradesRng,
+      modifiers,
+      guaranteeRarePlus: _draftsWithoutRarePlus >= 2,
+      unlockedCardIds: unlockedCardIds,
+    );
+    _draftsWithoutRarePlus =
+        choices.any((c) => c.rarity != UpgradeRarity.common)
+            ? 0
+            : _draftsWithoutRarePlus + 1;
 
     // "Wild Draw" challenge: upgrades are dealt at random, no picker.
     if (challenge?.randomUpgrades ?? false) {
@@ -417,6 +450,23 @@ class DeadbounceGame extends FlameGame implements GameWorldOps {
     pauseEngine();
     gateway.onWaveCleared(wave, choices);
   }
+
+  /// Whether clearing [wave] offers an upgrade draft (see the cadence tunables
+  /// in [WaveBalance]): every wave up to `draftEveryWaveUntil`, then every
+  /// `draftCadence` waves.
+  bool _shouldDraft(int wave) {
+    final t = GameBalance.I.waves;
+    return WaveScaling.shouldDraft(wave,
+        everyWaveUntil: t.draftEveryWaveUntil, cadence: t.draftCadence);
+  }
+
+  /// Draws a fresh set of 3 draft choices (the coin-sink reroll). Consumes the
+  /// upgrade rng like a normal draw; the engine stays paused for the picker.
+  List<UpgradeCard> rerollChoices() => UpgradeDeck.draw3(
+        _upgradesRng,
+        modifiers,
+        unlockedCardIds: unlockedCardIds,
+      );
 
   /// Called by the cubit after the player picks a card.
   void applyUpgrade(UpgradeCard card) {
@@ -454,6 +504,37 @@ class DeadbounceGame extends FlameGame implements GameWorldOps {
       );
     }
     hud.activeUpgrades.value = list;
+  }
+
+  /// True once the run's one buy-back continue has been spent.
+  bool continueUsed = false;
+
+  /// A buy-back is offerable on a normal run (challenges/tournaments carry a
+  /// [challenge] config and stay pure) that hasn't used its one continue yet.
+  bool get continueAvailable => challenge == null && !continueUsed;
+
+  /// A fatal hit landed (and Last Stand didn't save it). If a paid continue is
+  /// available, freeze and let the cubit offer it; otherwise end the run.
+  void onWouldDie() {
+    if (runEnded) return;
+    if (continueAvailable) {
+      pauseEngine();
+      juice.hitStop(0.3);
+      juice.addTrauma(0.5);
+      gateway.onOfferContinue(waveRunner.currentWave);
+    } else {
+      endRun();
+    }
+  }
+
+  /// Buy-back accepted: revive at one heart with a generous i-frame window
+  /// (mirrors Last Stand's proven restore, so the fatal enemy's overlap can't
+  /// immediately re-kill) and resume. One per run.
+  void reviveForContinue() {
+    if (runEnded || continueUsed) return;
+    continueUsed = true;
+    player.reviveWithGrace();
+    resumeEngine();
   }
 
   void endRun() {

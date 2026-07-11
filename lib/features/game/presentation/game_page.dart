@@ -15,6 +15,7 @@ import 'debug/tuning_panel.dart';
 import 'game/components/deadbounce_game.dart';
 import 'game/hud_model.dart';
 import 'game/tournament_run_context.dart';
+import 'overlays/continue_overlay.dart';
 import 'overlays/hud_overlay.dart';
 import 'overlays/pause_overlay.dart';
 import 'overlays/run_ending_overlay.dart';
@@ -45,6 +46,8 @@ class GamePage extends StatelessWidget {
         syncWorker: session.syncWorker,
         metaRepository: session.metaRepository,
         cosmeticsRepository: session.cosmeticsRepository,
+        walletRepository: session.walletRepository,
+        statisticsRepository: session.statisticsRepository,
         dailyChallenge: dailyChallenge,
         tournamentContext: tournamentContext,
       )..startRun(),
@@ -160,6 +163,18 @@ class _GameViewState extends State<_GameView> with WidgetsBindingObserver {
                     waveCleared: state.waveCleared,
                     choices: state.choices,
                     onPick: cubit.selectUpgrade,
+                    rerollCost: state.rerollCost,
+                    canReroll: state.canReroll,
+                    onReroll: cubit.rerollDraft,
+                  ),
+                ),
+              if (state is SessionAwaitingContinue)
+                Positioned.fill(
+                  child: ContinueOverlay(
+                    wave: state.wave,
+                    cost: state.cost,
+                    onBuy: cubit.buyContinue,
+                    onDecline: cubit.declineContinue,
                   ),
                 ),
               if (state is SessionRunEnding)

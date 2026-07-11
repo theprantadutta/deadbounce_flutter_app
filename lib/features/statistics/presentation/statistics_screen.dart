@@ -5,6 +5,8 @@ import '../../../app.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_dimens.dart';
 import '../../../core/widgets/meta_scaffold.dart';
+import '../../game/engine/arena/arena_catalog.dart';
+import '../../game/engine/progression/unlock_catalog.dart';
 import '../../game/engine/upgrades/upgrade_catalog.dart';
 import '../domain/entities/game_statistics.dart';
 import 'cubit/statistics_cubit.dart';
@@ -147,6 +149,8 @@ class _StatsBody extends StatelessWidget {
         const SizedBox(height: AppSpacing.lg),
         _EnemyBreakdown(enemyKills: stats.enemyKills),
         const SizedBox(height: AppSpacing.lg),
+        _UnlocksSection(stats: stats),
+        const SizedBox(height: AppSpacing.lg),
         _FavoriteIron(upgradeId: stats.favoriteUpgradeId),
       ],
     );
@@ -250,6 +254,8 @@ class _EnemyBreakdown extends StatelessWidget {
     ('sawbones', 'Sawbones', Icons.healing),
     ('ironhide', 'Ironhides', Icons.security),
     ('mirror', 'Mirrors', Icons.flip),
+    ('skitter', 'Skitters', Icons.blur_circular),
+    ('lancer', 'Lancers', Icons.arrow_right_alt),
   ];
 
   @override
@@ -342,6 +348,84 @@ class _EnemyRow extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// Play-gated content still to earn — the "keep playing, keep unlocking" carrot.
+/// Unlocks are derived from lifetime stats (no server state), so this is just a
+/// read of the same numbers shown above.
+class _UnlocksSection extends StatelessWidget {
+  const _UnlocksSection({required this.stats});
+
+  final GameStatistics stats;
+
+  @override
+  Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+    final us = UnlockStats(
+      bestWave: stats.bestWave,
+      runsPlayed: stats.runsPlayed,
+      lifetimeKills: stats.totalKills,
+    );
+
+    final locked = <(String, String)>[
+      for (final e in UnlockCatalog.arenas.entries)
+        if (!e.value.met(us))
+          (ArenaCatalog.byId(e.key).displayName, e.value.label),
+      for (final e in UnlockCatalog.cards.entries)
+        if (!e.value.met(us))
+          ((UpgradeCatalog.tryById(e.key)?.name ?? e.key), e.value.label),
+    ];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('STILL TO UNLOCK', style: textTheme.labelMedium),
+        const SizedBox(height: AppSpacing.sm),
+        Container(
+          padding: const EdgeInsets.all(AppSpacing.md),
+          decoration: BoxDecoration(
+            color: AppColors.ink800.withValues(alpha: 0.8),
+            borderRadius: AppRadii.lgAll,
+            border: Border.all(color: AppColors.outlineFaint),
+          ),
+          child: locked.isEmpty
+              ? Row(
+                  children: [
+                    const Icon(Icons.emoji_events,
+                        size: 18, color: AppColors.amber400),
+                    const SizedBox(width: AppSpacing.sm),
+                    Expanded(
+                      child: Text('Everything\'s unlocked, partner.',
+                          style: textTheme.bodyMedium),
+                    ),
+                  ],
+                )
+              : Column(
+                  children: [
+                    for (final (name, req) in locked)
+                      Padding(
+                        padding:
+                            const EdgeInsets.symmetric(vertical: AppSpacing.xs),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.lock_outline,
+                                size: 16, color: AppColors.ink300),
+                            const SizedBox(width: AppSpacing.sm),
+                            Expanded(
+                              child: Text(name, style: textTheme.bodyMedium),
+                            ),
+                            Text(req,
+                                style: textTheme.labelSmall
+                                    ?.copyWith(color: AppColors.amber300)),
+                          ],
+                        ),
+                      ),
+                  ],
+                ),
+        ),
+      ],
     );
   }
 }

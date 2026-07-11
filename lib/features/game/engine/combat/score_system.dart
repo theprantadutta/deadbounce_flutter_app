@@ -24,10 +24,17 @@ class _ChainEntry {
 /// [scoreMultiplier] applies a flat run-wide factor (daily challenges).
 /// Pure Dart — fully unit-tested.
 class ScoreSystem {
-  ScoreSystem({this.scoreMultiplier = 1});
+  ScoreSystem({this.scoreMultiplier = 1, this.chainWindowBonus = 0});
 
   /// Run-wide score factor (1 normally; challenges may double/triple it).
   final double scoreMultiplier;
+
+  /// Extra seconds added to the chain window (Gunfighter's Memory perk). 0 for
+  /// challenges/tournaments (perks off).
+  final double chainWindowBonus;
+
+  /// The effective chain window for this run (tuning default + perk bonus).
+  double get _window => GameBalance.I.score.chainWindow + chainWindowBonus;
 
   int _score = 0;
   int _bestChain = 0;
@@ -48,7 +55,7 @@ class ScoreSystem {
   /// Null once the window has lapsed — which hides the HUD chain meter.
   ChainSnapshot? activeChain(double now) {
     if (_lastChainLength <= 0) return null;
-    final window = GameBalance.I.score.chainWindow;
+    final window = _window;
     final age = now - _lastChainTime;
     if (age > window) return null;
     return ChainSnapshot(
@@ -66,10 +73,11 @@ class ScoreSystem {
     required double now,
   }) {
     final t = GameBalance.I.score;
+    final window = _window;
 
     // Drop chains whose window has lapsed so the map can't grow unbounded over
     // a long endless run (one entry per distinct bullet otherwise lingers).
-    _chains.removeWhere((_, e) => now - e.time > t.chainWindow);
+    _chains.removeWhere((_, e) => now - e.time > window);
 
     final killScore =
         (t.killBase * (1 + t.bounceFactor * bounces)).round();
@@ -79,7 +87,7 @@ class ScoreSystem {
 
     final entry = _chains[bulletId];
     int chainLength;
-    if (entry != null && now - entry.time <= t.chainWindow) {
+    if (entry != null && now - entry.time <= window) {
       entry.length += 1;
       chainLength = entry.length;
       _addScore(t.chainBonus);

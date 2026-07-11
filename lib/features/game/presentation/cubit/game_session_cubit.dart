@@ -6,21 +6,27 @@ import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:uuid/uuid.dart';
 
+import '../../../../core/config/game_balance.dart';
 import '../../../../core/sync/sync_worker.dart';
 import '../../../../core/util/calendar_day.dart';
 import '../../../achievements/domain/repositories/achievements_repository.dart';
 import '../../../cosmetics/domain/repositories/cosmetics_repository.dart';
+import '../../../economy/domain/entities/coin_transaction.dart';
+import '../../../economy/domain/repositories/wallet_repository.dart';
 import '../../../meta/domain/meta_catalog.dart';
 import '../../../meta/domain/meta_loadout.dart';
 import '../../../meta/domain/repositories/meta_repository.dart';
 import '../../../runs/domain/entities/run_result.dart';
 import '../../../runs/domain/repositories/runs_repository.dart';
 import '../../../settings/domain/repositories/settings_repository.dart';
+import '../../../statistics/domain/repositories/statistics_repository.dart';
 import '../../engine/arena/arena_catalog.dart';
 import '../../engine/challenge/challenge_catalog.dart';
 import '../../engine/challenge/challenge_config.dart';
 import '../../engine/game_rng.dart';
+import '../../engine/progression/unlock_catalog.dart';
 import '../../engine/upgrades/upgrade_card.dart';
+import '../../engine/upgrades/upgrade_catalog.dart';
 import '../game/components/deadbounce_game.dart';
 import '../game/game_feel.dart';
 import '../game/game_session_gateway.dart';
@@ -44,6 +50,8 @@ class GameSessionCubit extends Cubit<GameSessionState>
     required this._syncWorker,
     required this._metaRepository,
     required this._cosmeticsRepository,
+    required this._walletRepository,
+    required this._statisticsRepository,
     this.dailyChallenge = false,
     this.tournamentContext,
     Uuid? uuid,
@@ -56,6 +64,8 @@ class GameSessionCubit extends Cubit<GameSessionState>
   final SyncWorker _syncWorker;
   final MetaRepository _metaRepository;
   final CosmeticsRepository _cosmeticsRepository;
+  final WalletRepository _walletRepository;
+  final StatisticsRepository _statisticsRepository;
   final bool dailyChallenge;
 
   /// Set when this session is a tournament run (mutually exclusive with
@@ -73,6 +83,12 @@ class GameSessionCubit extends Cubit<GameSessionState>
   String? _tournamentId;
   int _previousBestScore = 0;
 
+  /// Draft rerolls used this run — the coin cost escalates with each use.
+  int _rerollsThisRun = 0;
+
+  /// Reroll is a normal-run coin sink; seeded modes keep their draws pure.
+  bool get _rerollEnabled => !dailyChallenge && !_isTournament;
+
   /// Completes early when the player taps to skip the death beat.
   Completer<void>? _skipBeat;
 
@@ -80,6 +96,7 @@ class GameSessionCubit extends Cubit<GameSessionState>
   static const Duration _beatDuration = Duration(milliseconds: 1400);
 
   Future<void> startRun() async {
+    _rerollsThisRun = 0;
     final best = await _runsRepository.bestRun();
     _previousBestScore = best?.score ?? 0;
 
@@ -102,10 +119,28 @@ class GameSessionCubit extends Cubit<GameSessionState>
       rng = GameRng(DateTime.now().microsecondsSinceEpoch);
     }
 
-    final arena = rng.fork('arena').pick(ArenaCatalog.all);
+    // Play-gated unlocks apply to NORMAL runs only; daily challenges +
+    // tournaments use the full catalog so they stay identical worldwide.
+    Set<String>? unlockedCardIds;
+    var arenaPool = ArenaCatalog.all;
+    if (!dailyChallenge && !_isTournament) {
+      final stats = await _statisticsRepository.getStatistics();
+      final unlockStats = UnlockStats(
+        bestWave: stats.bestWave,
+        runsPlayed: stats.runsPlayed,
+        lifetimeKills: stats.totalKills,
+      );
+      unlockedCardIds = UnlockCatalog.unlockedCardIds(
+          UpgradeCatalog.all.map((c) => c.id), unlockStats);
+      arenaPool =
+          UnlockCatalog.unlockedArenas(ArenaCatalog.all, (a) => a.id, unlockStats);
+    }
+
+    final arena = rng.fork('arena').pick(arenaPool);
     AppLogger.talker.info(
       '[game] startRun dailyChallenge=$dailyChallenge '
-      'tournament=${_tournamentId ?? '-'} arena=${arena.id}',
+      'tournament=${_tournamentId ?? '-'} arena=${arena.id} '
+      'unlockedCards=${unlockedCardIds?.length ?? 'all'}',
     );
     final settings = await _settingsRepository.load();
 
@@ -136,6 +171,7 @@ class GameSessionCubit extends Cubit<GameSessionState>
       challenge: challengeConfig,
       metaLoadout: loadout,
       cosmetics: cosmetics,
+      unlockedCardIds: unlockedCardIds,
       gameFeel: GameFeel(
         screenShake: settings.screenShakeEnabled,
         hitStop: settings.hitStopEnabled,
@@ -145,12 +181,13 @@ class GameSessionCubit extends Cubit<GameSessionState>
       ),
     );
 
-    // Warm the audio during the pre-game beat so the arena-flavored
-    // loading scene reads as intentional, not a stutter, and the first
-    // shot isn't silent.
+    // Warm the audio during the pre-game beat so the first shot isn't
+    // silent. The delay floor only prevents a single-frame loading flash —
+    // it must stay short: this gate is paid on EVERY run and retry, and a
+    // long one taxes the "one more run" loop.
     await Future.wait([
       sound.preload(),
-      Future<void>.delayed(const Duration(milliseconds: 1300)),
+      Future<void>.delayed(const Duration(milliseconds: 350)),
     ]);
     if (isClosed) return;
     emit(const SessionPlaying());
@@ -175,6 +212,8 @@ class GameSessionCubit extends Cubit<GameSessionState>
       permanentCards: cards,
       invulnBonus: 0.25 * (owned[MetaCatalog.ironResolve] ?? 0),
       grantFreeCard: (owned[MetaCatalog.secondWind] ?? 0) > 0,
+      grantFreeRareCard: (owned[MetaCatalog.openingHand] ?? 0) > 0,
+      chainWindowBonus: 0.15 * (owned[MetaCatalog.chainMemory] ?? 0),
     );
   }
 
@@ -200,7 +239,72 @@ class GameSessionCubit extends Cubit<GameSessionState>
 
   @override
   void onWaveCleared(int wave, List<UpgradeCard> choices) {
-    emit(SessionUpgradePicking(wave, choices));
+    // Fire-and-forget: the engine is already paused, so the brief balance
+    // fetch before the picker shows is invisible.
+    _emitPicking(wave, choices);
+  }
+
+  Future<void> _emitPicking(int wave, List<UpgradeCard> choices) async {
+    final cost = _rerollEnabled ? _rerollCost() : 0;
+    final balance = cost > 0 ? await _walletRepository.getBalance() : 0;
+    if (isClosed) return;
+    emit(SessionUpgradePicking(wave, choices,
+        rerollCost: cost, balance: balance));
+  }
+
+  int _rerollCost() {
+    final e = GameBalance.I.economy;
+    return e.draftRerollBaseCost + e.draftRerollCostStep * _rerollsThisRun;
+  }
+
+  /// Spends coins to redraw the current draft (the escalating coin sink).
+  Future<void> rerollDraft() async {
+    final s = state;
+    if (s is! SessionUpgradePicking || !s.canReroll) return;
+    await _walletRepository.addTransaction(
+      amount: -s.rerollCost,
+      reason: CoinReason.draftReroll,
+    );
+    _rerollsThisRun++;
+    final fresh = game?.rerollChoices() ?? s.choices;
+    await _emitPicking(s.waveCleared, fresh);
+  }
+
+  @override
+  void onOfferContinue(int wave) {
+    // Only the game decides a continue is available (normal run, unused);
+    // here we gate on affordability. Can't afford → let the run end.
+    _offerContinue(wave);
+  }
+
+  Future<void> _offerContinue(int wave) async {
+    final cost = GameBalance.I.economy.continueRunCost;
+    final balance = await _walletRepository.getBalance();
+    if (isClosed) return;
+    if (balance < cost) {
+      game?.endRun();
+      return;
+    }
+    emit(SessionAwaitingContinue(wave: wave, cost: cost, canAfford: true));
+  }
+
+  /// Buys the one-per-run continue: spend coins, revive, resume.
+  Future<void> buyContinue() async {
+    final s = state;
+    if (s is! SessionAwaitingContinue || !s.canAfford) return;
+    await _walletRepository.addTransaction(
+      amount: -s.cost,
+      reason: CoinReason.continueRun,
+    );
+    if (isClosed) return;
+    game?.reviveForContinue();
+    emit(const SessionPlaying());
+  }
+
+  /// Declines the continue — the run ends normally (the death beat follows).
+  void declineContinue() {
+    if (state is! SessionAwaitingContinue) return;
+    game?.endRun();
   }
 
   /// Cuts the death beat short — straight to the results.
@@ -310,6 +414,8 @@ class GameSessionCubit extends Cubit<GameSessionState>
       'sawbones' => 'A Sawbones patched them up and ran you down.',
       'ironhide' => 'An Ironhide bulled you over.',
       'mirror' => 'A Mirror cut you down.',
+      'skitter' => 'A Skitter darted in before you could react.',
+      'lancer' => "A Lancer's strafe ran you through.",
       _ => 'The arena claimed you.',
     };
     return ('YOU FELL', detail);

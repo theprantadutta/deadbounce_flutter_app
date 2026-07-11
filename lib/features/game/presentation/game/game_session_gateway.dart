@@ -43,6 +43,11 @@ abstract interface class GameSessionGateway {
   /// upgrade cards.
   void onWaveCleared(int wave, List<UpgradeCard> choices);
 
+  /// The player just took a fatal hit but a paid buy-back is available (normal
+  /// runs, not yet used). The game has paused itself; the owner decides whether
+  /// to offer it (affordability) and either revives or finalizes the death.
+  void onOfferContinue(int wave);
+
   /// Player died; the game is over.
   void onRunEnded(RunStatsSnapshot stats);
 }

@@ -191,6 +191,9 @@ class _TutorialPageState extends State<TutorialPage>
   void onWaveCleared(int wave, List<UpgradeCard> choices) {}
 
   @override
+  void onOfferContinue(int wave) {}
+
+  @override
   void onRunEnded(RunStatsSnapshot stats) {}
 
   @override

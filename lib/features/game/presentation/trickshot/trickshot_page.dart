@@ -131,6 +131,9 @@ class _TrickShotPageState extends State<TrickShotPage>
   void onWaveCleared(int wave, List<UpgradeCard> choices) {}
 
   @override
+  void onOfferContinue(int wave) {}
+
+  @override
   void onRunEnded(RunStatsSnapshot stats) {}
 
   int get _shotsUsed => _game?.player.shotCounter ?? 0;

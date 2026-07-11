@@ -38,6 +38,8 @@ abstract final class MetaCatalog {
   static const keenEye = 'keen_eye';
   static const luckyStrike = 'lucky_strike';
   static const secondWind = 'second_wind';
+  static const chainMemory = 'chain_memory';
+  static const openingHand = 'opening_hand';
 
   static const List<MetaPerk> all = [
     MetaPerk(
@@ -79,7 +81,8 @@ abstract final class MetaCatalog {
     MetaPerk(
       id: luckyStrike,
       name: 'Lucky Strike',
-      blurb: '+15% coins earned per level.',
+      // Maps to Coin Magnet (×1.25/level = +25%); blurb now matches the effect.
+      blurb: '+25% coins earned per level.',
       icon: Icons.savings,
       maxLevel: 3,
       baseCost: 100,
@@ -88,10 +91,29 @@ abstract final class MetaCatalog {
     MetaPerk(
       id: secondWind,
       name: 'Second Wind',
-      blurb: 'Begin each run with one free upgrade in hand.',
+      blurb: 'Begin each run with one free common upgrade in hand.',
       icon: Icons.auto_awesome,
       maxLevel: 1,
       baseCost: 400,
+    ),
+    // --- Phase 4 build-defining perks (respect the no-flat-bullet-damage
+    // guardrail: chain runway + a stronger opening hand, never raw damage). ---
+    MetaPerk(
+      id: chainMemory,
+      name: "Gunfighter's Memory",
+      blurb: '+0.15s chain window per level — more runway for chains.',
+      icon: Icons.link,
+      maxLevel: 2,
+      baseCost: 200,
+      costStep: 300,
+    ),
+    MetaPerk(
+      id: openingHand,
+      name: 'Opening Hand',
+      blurb: 'Begin each run with one free RARE upgrade in hand.',
+      icon: Icons.style,
+      maxLevel: 1,
+      baseCost: 600,
     ),
   ];
 

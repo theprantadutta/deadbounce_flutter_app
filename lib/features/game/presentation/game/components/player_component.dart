@@ -131,7 +131,7 @@ class PlayerComponent extends PositionComponent
   void takeContactDamage(EnemyComponent from) => _takeDamage(from.enemyId);
 
   void takeProjectileDamage(EnemyProjectileComponent from) =>
-      _takeDamage('turret');
+      _takeDamage(from.cause);
 
   /// Environmental damage from a hazard zone (e.g. a Powderkeg blast),
   /// attributed to [cause] for the death-beat copy.
@@ -162,7 +162,17 @@ class PlayerComponent extends PositionComponent
     game.juice.haptics.heavy();
     game.juice.addTrauma(0.45);
 
-    if (hearts <= 0) game.endRun();
+    // A fatal hit routes through the game, which may offer a paid continue
+    // (normal runs) before actually ending.
+    if (hearts <= 0) game.onWouldDie();
+  }
+
+  /// Buy-back revive (the continue coin sink): back to one heart with a long
+  /// i-frame window so the fatal enemy's overlap can't immediately re-kill.
+  void reviveWithGrace() {
+    hearts = 1;
+    invulnRemaining = 2.0;
+    game.hud.hearts.value = hearts;
   }
 
   @override

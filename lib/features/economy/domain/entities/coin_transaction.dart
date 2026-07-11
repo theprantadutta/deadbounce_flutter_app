@@ -19,6 +19,12 @@ enum CoinReason {
 
   /// Coins awarded for a tournament final rank (positive).
   tournamentReward,
+
+  /// In-run coin sink: rerolling the upgrade draft (negative, escalating).
+  draftReroll,
+
+  /// In-run coin sink: buying back from death, once per run (negative).
+  continueRun,
 }
 
 /// One ledger entry. Balance is never a mutated integer — it is the sum
