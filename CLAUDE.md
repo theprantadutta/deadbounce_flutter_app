@@ -19,6 +19,8 @@ CLAUDE.md / SETUP.md).
 - **Fire**: release past the 24px deadzone. A tap (or sub-deadzone release)
   **dashes** the player to the nearest of 3 bottom-third anchors — movement is
   not the skill, aiming is. (Decision: 3-anchor tap-dash, not fixed position.)
+  A tap in your own anchor's zone hops one anchor toward the tap side, so a
+  tap is never a silent no-op (only an outward tap at an edge anchor stays put).
 - **Damage**: `bounces == 0 → 0 damage` (passes through enemies — enables
   skill shots lining enemies up behind walls). After N bounces: `N × damagePerBounce`.
 - **Bullets persist after kills** (chains are the point) until they expire
@@ -41,21 +43,37 @@ CLAUDE.md / SETUP.md).
 | Charger | 2 | roam → telegraph (0.7s, dash vector locks here = dodge window) → raycast-clamped dash → recover |
 | Splitter | 2 | Drifts; on death spawns 2 small Drifters via the SpawnDirector |
 | Turret | 4 | Claims a wall slot, dampens it, fires interceptable projectiles. Bulletproof release on remove. |
-| Warden (first at wave 10, then every 5th) | 3 phases × 14hp | Shield blocks <3-bounce bullets (CLANG reflect); phase break = hit-stop + shake + shield-down window |
+| Warden (first at wave 10, then every 5th) | 3 phases × 14hp | Shield blocks <3-bounce bullets (CLANG reflect); phase break = hit-stop + shake + shield-down window. **Phase 2: it fights now** — a periodic telegraphed **radial burst** of interceptable projectiles (holds still + warning ring while charging), and **summons small Drifters on each phase break** (`warden.attack*`/`summonOnPhaseBreak`). |
 | Powderkeg (intro w7) | 2 | Slow seeker; on death drops a telegraphed `ShockwaveComponent` that detonates after a fuse, hazard-damaging the player in a zone (`player.takeHazardDamage`). Spatial play — punishes camping kills; never buffs bullets. |
 | Sawbones (intro w11) | 3 | Mender: every `healInterval` heals living non-Sawbones enemies in `healRadius` via `EnemyComponent.receiveHeal`. Priority target. |
 | Ironhide (intro w9) | 6 | Directional armor: a frontal shield arc faces the player and CLANGs off shots (reuses the Warden reflect). Crack it from the side/back via bounces. |
 | Mirror (intro w13) | 2 | Carries a **one-sided `WallSegment`** (`isMirror`) added to `game.segments`, so the shared solver + aim preview reflect it truthfully (front = real bounce, a free-bounce tool). Front always faces the player; killable only from the back face (`canBeDamagedBy` gates on `velocity·normal > 0`). Removed from `segments` on death. ArenaComponent skips drawing `isMirror` segments. |
+| Skitter (intro w12) | 1 | **Fast, fragile** speed-threat: closes quickly (speed 150) on a sharp *rhythmic* lateral weave (readable, leadable — not random). 1 HP dies to any armed bounce; dash i-frames always beat it, so it pressures without punishing slow reflexes. Electric-violet dart. |
+| Lancer (intro w14) | 3 | **Standoff striker.** Holds at `standoffRange`, telegraphs a **locked horizontal lane** (drawn during the ≥0.6s wind-up), then strafes straight across the arena — a fast MOVING ricochet target you lead a bounce into, and a dodgeable threat. Teal lance. |
 
 **Difficulty philosophy (do not undo): the first 3 waves must feel trivial** —
 only slow Drifters with generous spacing — then difficulty stays near-flat early
 and accelerates later. Enemy introductions: Drifter w1, Charger w4 (long, obvious
 telegraph), Splitter w6, Powderkeg w7, Turret w8, Ironhide w9, **first Warden w10**
 (kept late so the early game is kind; every 5th thereafter — 15, 20, …), Sawbones
-w11, Mirror w13. Waves 1–15 are authored
+w11, Skitter w12, Mirror w13, Lancer w14. Waves 1–15 are authored
 (`engine/waves/wave_table.dart`); past 15 `wave_scaling.dart` composes endless
 waves where hp/speed grow as `growth × past^exponent` (shallow-then-steep, the
-exponent tunable). The on-ramp parameters (`firstWardenWave`, curve exponents,
+exponent tunable).
+
+**Spawn formations (Phase 2, chains lever):** a `SpawnGroup` carries a
+`SpawnFormation` (`scattered` = default/legacy behavior, `line`/`wedge`/`cluster`).
+A non-scattered group shares ONE anchor spawn zone and lays its members out as a
+threadable shape so a bounced bullet can thread several = a real, plannable chain
+(the game's identity). Pure layout math lives in `engine/waves/spawn_formation.dart`
+(`SpawnFormations.offsets`, unit-tested, edge-aware: spread parallel to the spawn
+edge, wedge/cluster push inward); `SpawnDirector.planFormation` picks the anchor
+(seeded → daily-challenge-deterministic) and clamps each slot in-arena; `WaveRunner`
+attaches each pre-planned slot to its scheduled spawn (scattered → null → director
+picks per-spawn as before). Fodder (Drifter/Splitter) groups in the authored table
+and endless scaling use formations; wave 3 is the first `line` (teaches chaining
+early). Formations add zero threat — same enemies, just lined up — so they're safe
+in the trivial early waves. The on-ramp parameters (`firstWardenWave`, curve exponents,
 Charger telegraph, post-hit i-frames) live in `GameBalance` and are panel-tunable.
 
 ## Upgrades — composable modifier pipeline (`engine/upgrades/`)
@@ -63,10 +81,19 @@ Charger telegraph, post-hit i-frames) live in `GameBalance` and are panel-tunabl
 Pure stat folds (`transformPlayerStats`/`transformBulletStats`) + behavior hooks
 (`onFire/onBounce/onBulletUpdate/onKill/onPlayerDamaged/onCoinEarned`) over a
 fakeable `GameWorldOps`. **No if-else spaghetti** — bullet/player code dispatches
-hooks at fixed points and never knows which upgrades exist. 12 cards: Split Shot,
-Incendiary Trail, Rubber Walls, Longer Sight, Magnet Rounds, Ghost Round,
-Quickdraw, Heart Container, Coin Magnet, Last Stand, Heavy Caliber, Echo Shot.
-Rarity weights common 100 / rare 40 / epic 12.
+hooks at fixed points and never knows which upgrades exist. **20 cards** (Phase 3
+added 8): the original 12 (Split Shot, Incendiary Trail, Rubber Walls, Longer Sight,
+Magnet Rounds, Ghost Round, Quickdraw, Heart Container, Coin Magnet, Last Stand,
+Heavy Caliber, Echo Shot) plus **Long Fuse** (+lifetime), **Greased Lead**
+(+speed/bounce), **Rifling** (+max bounces), **Flashpoint** (one-shot AoE at bounce 4,
+`onBounce`), **Chain Lightning** (a chain kill forks a lethal seeking bolt, `onKill`),
+**Shrapnel** (an armed kill sprays 3 lethal shards, `onKill`), **Fan Fire** (tri-shot,
+`onFire`), **Vengeance** (retaliation burst after a survived hit). Kill-spawned bullets
+carry `BulletFlags.suppressKillSpawn` so they can't cascade. Each card carries an
+`effect` string (the mechanical line shown on the pick card). Rarity weights
+**common 100 / rare 50 / epic 22** (Phase 3 pass), plus a **pity rule**:
+`UpgradeDeck.draw3(guaranteeRarePlus:)` forces a rare+ after two straight all-common
+drafts (counter lives in `DeadbounceGame`).
 
 > **Accepted divergence**: Magnet Rounds curves bullets after bounce 2; the aim
 > preview stays geometric (homing is a forgiveness mechanic, not an aiming one).
@@ -78,12 +105,37 @@ Every tunable gameplay number lives in **`lib/core/config/game_balance.dart`** a
 live (no const-folding), so values can change at runtime and be felt on the next
 read (next shot / wave / event). It is pure Dart (no Flutter import) so the engine
 and tests stay testable. Sections: bullet, player, drifter, charger, splitter,
-turret, warden, waves, juice, input, trajectory, economy, score — field
-initializers ARE the shipped defaults; `resetToDefaults()` restores them.
+turret, warden, powderkeg, sawbones, ironhide, mirror, skitter, lancer, enemies,
+waves, juice, input, trajectory, economy, score — field initializers ARE the
+shipped defaults; `resetToDefaults()` restores them.
 
 Highlights (defaults): bullet base/max speed 420/780, +12%/bounce, 8 max bounces /
-4s lifetime; player 3 hearts, 0.55s fire cooldown, 2 preview bounces; hit-stop
-45/60ms; particle budget 600.
+4s lifetime; player 3 hearts, 0.55s fire cooldown, 3 preview bounces, 0.35s dash
+i-frames; hit-stop 30ms every kill / 45ms multi-kill / 60ms Warden; particle
+budget 600.
+
+**2026-07 Phase 1 game-feel retune** (the "not fun" fix — do not quietly revert):
+enemy speeds raised ~60% across the roster (Drifter 95, Charger roam 75, Splitter
+70, Powderkeg 60, Sawbones 56, Mirror 52, Ironhide 46, Warden 36, turret
+projectile 190) so the arena feels threatened instead of taking 20s+ to cross;
+every kill now hit-stops (`juice.hitStopKill`); the first bounce shows an
+**"ARMED"** popup (the go-lethal moment made visible); all seeking enemies get
+separation steering (`GameBalance.I.enemies.separationPadding/Strength`, applied
+in `EnemyComponent.seekPlayer`) so groups spread into arcs instead of stacking
+into one blob; waves 1–3 are denser (3/4/5 drifters, tighter staggers) — still
+trivial in threat, no longer empty; the pre-run gate in
+`GameSessionCubit.startRun` dropped 1300ms → 350ms (paid on every run/retry —
+keep it short).
+
+**2026-07 Phase 2 "make it dangerous" retune** (client-only; do not quietly revert):
+the Warden gained offense (`warden.attackInterval/attackTelegraph/burstCount/
+projectileSpeed/summonOnPhaseBreak`); two fast archetypes shipped (Skitter, Lancer);
+late scaling moved from HP-sponge to tension — `hpGrowthPerWave` 0.08→0.055,
+`hpCurveExponent` 1.3→1.2, `speedGrowthCap` 0.6→1.2, `speedGrowthPerWave` 0.015→0.02,
+`extraCountPerWave` 0.8→1.1 (fast + numerous, not tanky); Powderkeg `fuseDuration`
+0.6→0.5 + `blastRadius` 78→96; and the upgrade draft is gated to every wave until
+`draftEveryWaveUntil` (5) then every `draftCadence` (2) waves (`WaveScaling.shouldDraft`)
+so the hard-pause stops chopping the rhythm while score/coins still reward every clear.
 
 A flat `params` registry (each a `TuningParam` with get/set + min/max/step/scope)
 is the single source driving the debug tuning panel, JSON persistence, reset, and
@@ -152,7 +204,29 @@ leak across cases (keeps daily-challenge wave goldens deterministic).
 - **The Gunsmith** (`features/meta/`): the coin SINK / permanent meta-progression.
   Spend coins on tiered perks that apply to **every normal run** (not daily
   challenges — those stay fair): Reinforced Heart, Iron Resolve, Quick Hands, Keen
-  Eye, Lucky Strike, Second Wind. **Guardrail: perks never add flat bullet damage**
+  Eye, Lucky Strike, Second Wind, **Gunfighter's Memory** (+0.15s chain window/level,
+  Phase 4 — via `ScoreSystem.chainWindowBonus`), **Opening Hand** (start with a free
+  RARE card, Phase 4). Perk levels map to `MetaLoadout` in `_buildLoadout`.
+- **In-run coin sinks** (Phase 4, normal runs only): **draft reroll** — the picker shows
+  a REROLL button costing `economy.draftRerollBaseCost + step·rerollsThisRun`
+  (`CoinReason.draftReroll`, spent via `WalletRepository`, `GameSessionCubit.rerollDraft`);
+  `SessionUpgradePicking` carries `rerollCost`+`balance`. **Continue-once-per-run** — a
+  fatal hit routes `player._takeDamage` → `game.onWouldDie()`; on a normal run
+  (`challenge == null`, unused) it freezes and calls `gateway.onOfferContinue`, the cubit
+  gates on affordability and emits `SessionAwaitingContinue` (`ContinueOverlay`). Buying
+  spends `economy.continueRunCost` (`CoinReason.continueRun`), `reviveForContinue` →
+  `player.reviveWithGrace` (1 heart + 2s i-frames, the Last Stand restore) + resume;
+  declining/unaffordable ends the run through the SAME idempotent `endRun` (no
+  double-record). Backend `CoinTxnProcessor` gates both new reasons as negative spends
+  ≤ 5000.
+- **Unlock curve** (Phase 4, `engine/progression/unlock_catalog.dart`): content gated by
+  *play*, computed as a **pure function of lifetime stats** (best wave / runs / kills) —
+  no new table, no sync event, reinstall-safe because the stats already restore. The 6
+  Phase-3 arenas + 8 Phase-3 cards unlock at escalating milestones; the starting kit is
+  always open. **Normal runs only** (daily/tournament use the full catalog to stay
+  identical worldwide): `GameSessionCubit.startRun` derives the unlocked set → gates the
+  arena pick and `UpgradeDeck.draw3(unlockedCardIds:)` / `DeadbounceGame.unlockedCardIds`.
+  Statistics screen shows a "STILL TO UNLOCK" progress list. **Guardrail: perks never add flat bullet damage**
   (that would break "no damage till it bounces") — survivability/utility/economy only.
   Catalog in Dart (`meta_catalog.dart`); ownership LEVEL per perk in the
   `meta_upgrades` Drift table. Purchasing is offline-first (local ledger + level
@@ -203,7 +277,9 @@ leak across cases (keeps daily-challenge wave goldens deterministic).
 
 ## Trick-Shot Gallery (`features/game/presentation/trickshot/`)
 
-A puzzle mode and the best teacher for the core mechanic: curated bounce puzzles (hit each
+A puzzle mode and the best teacher for the core mechanic (**22 levels** after the Phase 3
+authoring pass, spanning all 9 arenas, with explicit chain teachers — 2–3 marks at par 1,
+"one bullet, both marks"): curated bounce puzzles (hit each
 target with ≥ N ricochets), **no enemies/waves**. Levels are pure data
 (`engine/trickshot/trickshot_level.dart` + `trickshot_catalog.dart`, referencing existing
 arenas). Reuses the whole engine: `DeadbounceGame.trickShotLevel` makes `onLoad` skip
