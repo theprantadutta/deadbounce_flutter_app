@@ -7,47 +7,86 @@ import 'wave_definition.dart';
 /// near-flat and accelerates later. Enemy introductions: Drifter w1, Charger
 /// w4 (long telegraph), Splitter w6, Turret w8, first Warden w10. Beyond 15,
 /// WaveScaling composes endless waves.
+///
+/// Chain teaching: fodder groups (Drifters/Splitters) spawn in [SpawnFormation]s
+/// — a line/wedge/cluster near one anchor — so a bounced bullet can thread
+/// several at once. Formations add zero threat (same slow enemies), just the
+/// opportunity for the game's signature chain, so they're safe even in the
+/// trivial early waves.
 abstract final class WaveTable {
   static const List<WaveDefinition> authored = [
-    // --- Waves 1–3: tutorial-easy. Drifters only, slowed, lots of space. ---
+    // --- Waves 1–3: tutorial-easy but never empty. Drifters only (1 HP,
+    // slowed) so the threat stays trivial — the counts/staggers just keep
+    // targets on screen instead of drip-feeding dead air. Wave 3 lines them
+    // up to plant the "one bullet, many kills" idea early. ---
     WaveDefinition(wave: 1, groups: [
-      SpawnGroup(type: EnemyType.drifter, count: 2, stagger: 1.4),
-    ], speedMult: 0.8),
-    WaveDefinition(wave: 2, groups: [
-      SpawnGroup(type: EnemyType.drifter, count: 3, stagger: 1.2),
+      SpawnGroup(type: EnemyType.drifter, count: 3, stagger: 0.9),
     ], speedMult: 0.85),
-    WaveDefinition(wave: 3, groups: [
-      SpawnGroup(type: EnemyType.drifter, count: 4, stagger: 1.0),
+    WaveDefinition(wave: 2, groups: [
+      SpawnGroup(type: EnemyType.drifter, count: 4, stagger: 0.8),
     ], speedMult: 0.9),
+    WaveDefinition(wave: 3, groups: [
+      SpawnGroup(
+          type: EnemyType.drifter,
+          count: 5,
+          stagger: 0.5,
+          formation: SpawnFormation.line),
+    ], speedMult: 0.95),
     // --- Waves 4–6: gentle introduction. Charger (long telegraph), Splitter. ---
     WaveDefinition(wave: 4, groups: [
-      SpawnGroup(type: EnemyType.drifter, count: 4, stagger: 0.9),
+      SpawnGroup(
+          type: EnemyType.drifter,
+          count: 4,
+          stagger: 0.6,
+          formation: SpawnFormation.line),
       SpawnGroup(type: EnemyType.charger, count: 1, delay: 3),
     ]),
     WaveDefinition(wave: 5, groups: [
-      SpawnGroup(type: EnemyType.drifter, count: 5, stagger: 0.8),
+      SpawnGroup(
+          type: EnemyType.drifter,
+          count: 5,
+          stagger: 0.5,
+          formation: SpawnFormation.line),
       SpawnGroup(type: EnemyType.charger, count: 1, delay: 2.5),
     ]),
     WaveDefinition(wave: 6, groups: [
-      SpawnGroup(type: EnemyType.drifter, count: 4, stagger: 0.7),
+      SpawnGroup(
+          type: EnemyType.drifter,
+          count: 4,
+          stagger: 0.5,
+          formation: SpawnFormation.wedge),
       SpawnGroup(type: EnemyType.splitter, count: 1, delay: 2.5),
     ]),
     // --- Waves 7+: the real ramp begins. New enemies introduced one at a
     // time, after the on-ramp: Powderkeg w7, Ironhide w9, Sawbones w11,
     // Mirror w13 — each with breathing room to learn it. ---
     WaveDefinition(wave: 7, groups: [
-      SpawnGroup(type: EnemyType.splitter, count: 2, stagger: 1.2),
+      SpawnGroup(
+          type: EnemyType.splitter,
+          count: 2,
+          stagger: 0.8,
+          formation: SpawnFormation.line),
       SpawnGroup(type: EnemyType.powderkeg, count: 1, delay: 2),
       SpawnGroup(type: EnemyType.charger, count: 2, delay: 4, stagger: 1),
     ]),
     WaveDefinition(wave: 8, groups: [
       SpawnGroup(type: EnemyType.turret, count: 1),
-      SpawnGroup(type: EnemyType.drifter, count: 5, delay: 1.5, stagger: 0.6),
+      SpawnGroup(
+          type: EnemyType.drifter,
+          count: 5,
+          delay: 1.5,
+          stagger: 0.4,
+          formation: SpawnFormation.line),
     ]),
     WaveDefinition(wave: 9, groups: [
       SpawnGroup(type: EnemyType.turret, count: 1),
       SpawnGroup(type: EnemyType.ironhide, count: 1, delay: 1.5),
-      SpawnGroup(type: EnemyType.splitter, count: 2, delay: 3, stagger: 1.2),
+      SpawnGroup(
+          type: EnemyType.splitter,
+          count: 2,
+          delay: 3,
+          stagger: 0.9,
+          formation: SpawnFormation.line),
       SpawnGroup(type: EnemyType.charger, count: 1, delay: 5),
     ]),
     WaveDefinition(wave: 10, groups: [
@@ -55,28 +94,61 @@ abstract final class WaveTable {
       SpawnGroup(type: EnemyType.charger, count: 2, delay: 4, stagger: 1.5),
     ], hpMult: 1.05),
     WaveDefinition(wave: 11, groups: [
-      SpawnGroup(type: EnemyType.drifter, count: 8, stagger: 0.4),
+      SpawnGroup(
+          type: EnemyType.drifter,
+          count: 8,
+          stagger: 0.3,
+          formation: SpawnFormation.wedge),
       SpawnGroup(type: EnemyType.sawbones, count: 1, delay: 1.5),
-      SpawnGroup(type: EnemyType.splitter, count: 3, delay: 3, stagger: 1),
+      SpawnGroup(
+          type: EnemyType.splitter,
+          count: 3,
+          delay: 3,
+          stagger: 0.8,
+          formation: SpawnFormation.line),
     ], hpMult: 1.1),
     WaveDefinition(wave: 12, groups: [
       SpawnGroup(type: EnemyType.turret, count: 2, stagger: 2),
       SpawnGroup(type: EnemyType.charger, count: 3, delay: 2, stagger: 0.9),
+      // First Skitters — fast, fragile pressure once the dash is second nature.
+      SpawnGroup(type: EnemyType.skitter, count: 2, delay: 3.5, stagger: 0.7),
     ], hpMult: 1.15),
     WaveDefinition(wave: 13, groups: [
       SpawnGroup(type: EnemyType.mirror, count: 1),
-      SpawnGroup(type: EnemyType.splitter, count: 3, delay: 2, stagger: 0.8),
-      SpawnGroup(type: EnemyType.drifter, count: 6, delay: 4, stagger: 0.4),
+      SpawnGroup(
+          type: EnemyType.splitter,
+          count: 3,
+          delay: 2,
+          stagger: 0.7,
+          formation: SpawnFormation.cluster),
+      SpawnGroup(
+          type: EnemyType.drifter,
+          count: 6,
+          delay: 4,
+          stagger: 0.3,
+          formation: SpawnFormation.line),
     ], hpMult: 1.2, speedMult: 1.05),
     WaveDefinition(wave: 14, groups: [
       SpawnGroup(type: EnemyType.turret, count: 2, stagger: 2),
-      SpawnGroup(type: EnemyType.splitter, count: 3, delay: 1.5, stagger: 1),
+      SpawnGroup(
+          type: EnemyType.splitter,
+          count: 3,
+          delay: 1.5,
+          stagger: 0.8,
+          formation: SpawnFormation.line),
       SpawnGroup(type: EnemyType.charger, count: 2, delay: 4, stagger: 1),
+      // First Lancer — a moving ricochet target that also strafes a lane.
+      SpawnGroup(type: EnemyType.lancer, count: 1, delay: 2),
     ], hpMult: 1.25, speedMult: 1.05),
     WaveDefinition(wave: 15, groups: [
       SpawnGroup(type: EnemyType.warden, count: 1),
       SpawnGroup(type: EnemyType.turret, count: 1, delay: 2),
-      SpawnGroup(type: EnemyType.drifter, count: 6, delay: 4, stagger: 0.5),
+      SpawnGroup(
+          type: EnemyType.drifter,
+          count: 6,
+          delay: 4,
+          stagger: 0.4,
+          formation: SpawnFormation.line),
     ], hpMult: 1.3, speedMult: 1.1),
   ];
 }

@@ -8,15 +8,18 @@ import '../../../engine/game_rng.dart';
 import 'package:deadbounce_flutter_app/core/config/game_balance.dart';
 
 import '../../../engine/physics/vector_utils.dart';
+import '../../../engine/waves/spawn_formation.dart';
 import '../../../engine/waves/wave_definition.dart';
 import '../components/deadbounce_game.dart';
 import '../components/enemies/charger_enemy.dart';
 import '../components/enemies/drifter_enemy.dart';
 import '../components/enemies/enemy_component.dart';
 import '../components/enemies/ironhide_enemy.dart';
+import '../components/enemies/lancer_enemy.dart';
 import '../components/enemies/mirror_enemy.dart';
 import '../components/enemies/powderkeg_enemy.dart';
 import '../components/enemies/sawbones_enemy.dart';
+import '../components/enemies/skitter_enemy.dart';
 import '../components/enemies/splitter_enemy.dart';
 import '../components/enemies/turret_enemy.dart';
 import '../components/enemies/warden_enemy.dart';
@@ -42,6 +45,9 @@ class SpawnDirector {
   int get activeCount =>
       _game.aliveEnemies.length + _pendingSpawns;
 
+  /// Keeps a spawned position off the walls (largest enemy radius + slack).
+  static const double _spawnMargin = 44;
+
   Vector2 _pickSpawnPosition() {
     final zone = _rng.pick(_arena.spawnZones);
     return Vector2(
@@ -50,19 +56,44 @@ class SpawnDirector {
     );
   }
 
-  /// Telegraphed spawn: glyph fades in, then the enemy materializes.
+  Vector2 _clampToArena(Vector2 p) => Vector2(
+        p.x.clamp(_spawnMargin, ArenaDefinition.width - _spawnMargin),
+        p.y.clamp(_spawnMargin, ArenaDefinition.height - _spawnMargin),
+      );
+
+  /// Positions for a group whose members should arrive as one threadable
+  /// shape (see [SpawnFormation]). Picks a single anchor spawn zone (seeded),
+  /// then lays [count] members out around it, clamped inside the arena. Called
+  /// once per formation group by the WaveRunner; scattered groups keep picking
+  /// an independent random point per spawn (via [spawnTelegraphed]).
+  List<Vector2> planFormation(SpawnFormation formation, int count) {
+    final zone = _rng.pick(_arena.spawnZones);
+    final base = Vector2(
+      zone.rect.left + _rng.nextDouble() * zone.rect.width,
+      zone.rect.top + _rng.nextDouble() * zone.rect.height,
+    );
+    return [
+      for (final off
+          in SpawnFormations.offsets(formation, zone.edge, count, _rng))
+        _clampToArena(base + off),
+    ];
+  }
+
+  /// Telegraphed spawn: glyph fades in, then the enemy materializes. When
+  /// [position] is null the director picks an independent random spawn point
+  /// (scattered groups); a formation group passes its pre-planned slot.
   void spawnTelegraphed(EnemyType type,
-      {required double hpMult, required double speedMult}) {
-    final position = _pickSpawnPosition();
+      {required double hpMult, required double speedMult, Vector2? position}) {
+    final spawnPos = position ?? _pickSpawnPosition();
     _pendingSpawns++;
     _game.world.add(_SpawnTelegraph(
-      position: position,
+      position: spawnPos,
       duration: GameBalance.I.waves.spawnTelegraph,
       onSpawn: () {
         _pendingSpawns--;
         if (_game.runEnded) return;
         _game.world
-            .add(_build(type, position, hpMult: hpMult, speedMult: speedMult));
+            .add(_build(type, spawnPos, hpMult: hpMult, speedMult: speedMult));
       },
     ));
   }
@@ -81,6 +112,22 @@ class SpawnDirector {
         small: true,
       );
       _game.world.add(child);
+    }
+  }
+
+  /// [count] small-Drifter reinforcements erupting around [origin] (the Warden
+  /// phase-break summon). No spawn telegraph — they burst from the boss.
+  void spawnMinions(Vector2 origin, int count,
+      {required double speedMult, required double hpMult}) {
+    for (var i = 0; i < count; i++) {
+      final offset = Vector2(0, -(GameBalance.I.warden.radius + 24))
+        ..rotateBy(_rng.range(0, 6.283185));
+      _game.world.add(DrifterEnemy(
+        position: origin + offset,
+        speedMult: speedMult,
+        hpMult: hpMult,
+        small: true,
+      ));
     }
   }
 
@@ -123,6 +170,12 @@ class SpawnDirector {
             position: position, speedMult: speedMult, hpMult: hpMult);
       case EnemyType.mirror:
         return MirrorEnemy(
+            position: position, speedMult: speedMult, hpMult: hpMult);
+      case EnemyType.skitter:
+        return SkitterEnemy(
+            position: position, speedMult: speedMult, hpMult: hpMult);
+      case EnemyType.lancer:
+        return LancerEnemy(
             position: position, speedMult: speedMult, hpMult: hpMult);
     }
   }

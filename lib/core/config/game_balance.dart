@@ -81,6 +81,9 @@ class GameBalance {
   final SawbonesBalance sawbones = SawbonesBalance();
   final IronhideBalance ironhide = IronhideBalance();
   final MirrorBalance mirror = MirrorBalance();
+  final SkitterBalance skitter = SkitterBalance();
+  final LancerBalance lancer = LancerBalance();
+  final EnemiesBalance enemies = EnemiesBalance();
   final WaveBalance waves = WaveBalance();
   final JuiceBalance juice = JuiceBalance();
   final InputBalance input = InputBalance();
@@ -102,6 +105,9 @@ class GameBalance {
     sawbones.copyFrom(SawbonesBalance());
     ironhide.copyFrom(IronhideBalance());
     mirror.copyFrom(MirrorBalance());
+    skitter.copyFrom(SkitterBalance());
+    lancer.copyFrom(LancerBalance());
+    enemies.copyFrom(EnemiesBalance());
     waves.copyFrom(WaveBalance());
     juice.copyFrom(JuiceBalance());
     input.copyFrom(InputBalance());
@@ -280,6 +286,21 @@ class GameBalance {
     _p('Warden', 'warden.hpScalePerAppearance', '+HP per appearance',
         () => warden.hpScalePerAppearance,
         (v) => warden.hpScalePerAppearance = v, 0, 1, 0.05),
+    _p('Warden', 'warden.attackInterval', 'Attack interval (s)',
+        () => warden.attackInterval, (v) => warden.attackInterval = v,
+        1.5, 10, 0.1),
+    _p('Warden', 'warden.attackTelegraph', 'Attack telegraph (s)',
+        () => warden.attackTelegraph, (v) => warden.attackTelegraph = v,
+        0.6, 2, 0.05),
+    _pi('Warden', 'warden.burstCount', 'Burst projectiles',
+        () => warden.burstCount.toDouble(),
+        (v) => warden.burstCount = v.round(), 0, 24, 1),
+    _p('Warden', 'warden.projectileSpeed', 'Projectile speed',
+        () => warden.projectileSpeed, (v) => warden.projectileSpeed = v,
+        60, 320, 5),
+    _pi('Warden', 'warden.summonOnPhaseBreak', 'Summon on phase break',
+        () => warden.summonOnPhaseBreak.toDouble(),
+        (v) => warden.summonOnPhaseBreak = v.round(), 0, 6, 1),
 
     // ---- Powderkeg ----
     _pi('Powderkeg', 'powderkeg.hp', 'HP', () => powderkeg.hp.toDouble(),
@@ -330,6 +351,44 @@ class GameBalance {
     _p('Mirror', 'mirror.width', 'Mirror width', () => mirror.width,
         (v) => mirror.width = v, 30, 120, 2),
 
+    // ---- Skitter ----
+    _pi('Skitter', 'skitter.hp', 'HP', () => skitter.hp.toDouble(),
+        (v) => skitter.hp = v.round(), 1, 6, 1, TuneScope.nextWave),
+    _p('Skitter', 'skitter.speed', 'Speed', () => skitter.speed,
+        (v) => skitter.speed = v, 60, 260, 2),
+    _p('Skitter', 'skitter.radius', 'Radius', () => skitter.radius,
+        (v) => skitter.radius = v, 8, 32, 1),
+    _p('Skitter', 'skitter.weaveAmplitude', 'Weave amplitude',
+        () => skitter.weaveAmplitude, (v) => skitter.weaveAmplitude = v,
+        0, 200, 5),
+    _p('Skitter', 'skitter.weaveFrequency', 'Weave frequency',
+        () => skitter.weaveFrequency, (v) => skitter.weaveFrequency = v,
+        0, 8, 0.1),
+
+    // ---- Lancer ----
+    _pi('Lancer', 'lancer.hp', 'HP', () => lancer.hp.toDouble(),
+        (v) => lancer.hp = v.round(), 1, 10, 1, TuneScope.nextWave),
+    _p('Lancer', 'lancer.roamSpeed', 'Roam speed', () => lancer.roamSpeed,
+        (v) => lancer.roamSpeed = v, 10, 140, 2),
+    _p('Lancer', 'lancer.strafeSpeed', 'Strafe speed', () => lancer.strafeSpeed,
+        (v) => lancer.strafeSpeed = v, 100, 700, 10),
+    _p('Lancer', 'lancer.telegraphDuration', 'Telegraph (s)',
+        () => lancer.telegraphDuration, (v) => lancer.telegraphDuration = v,
+        0.3, 2, 0.05),
+    _p('Lancer', 'lancer.standoffRange', 'Standoff range',
+        () => lancer.standoffRange, (v) => lancer.standoffRange = v,
+        150, 700, 10),
+    _p('Lancer', 'lancer.radius', 'Radius', () => lancer.radius,
+        (v) => lancer.radius = v, 12, 40, 1),
+
+    // ---- Enemies (shared) ----
+    _p('Enemies', 'enemies.separationPadding', 'Separation padding (px)',
+        () => enemies.separationPadding, (v) => enemies.separationPadding = v,
+        0, 60, 2),
+    _p('Enemies', 'enemies.separationStrength', 'Separation strength',
+        () => enemies.separationStrength, (v) => enemies.separationStrength = v,
+        0, 2, 0.05),
+
     // ---- Waves / difficulty ----
     _p('Waves', 'waves.spawnTelegraph', 'Spawn telegraph (s)',
         () => waves.spawnTelegraph, (v) => waves.spawnTelegraph = v,
@@ -361,6 +420,13 @@ class GameBalance {
     _pi('Waves', 'waves.wardenEvery', 'Warden every N waves',
         () => waves.wardenEvery.toDouble(),
         (v) => waves.wardenEvery = v.round(), 2, 12, 1, TuneScope.nextWave),
+    _pi('Waves', 'waves.draftEveryWaveUntil', 'Draft every wave until',
+        () => waves.draftEveryWaveUntil.toDouble(),
+        (v) => waves.draftEveryWaveUntil = v.round(), 1, 20, 1,
+        TuneScope.nextWave),
+    _pi('Waves', 'waves.draftCadence', 'Draft every N waves after',
+        () => waves.draftCadence.toDouble(),
+        (v) => waves.draftCadence = v.round(), 1, 5, 1, TuneScope.nextWave),
 
     // ---- Economy ---- (earn-rate feel)
     _pi('Economy', 'economy.coinPerKill', 'Coins per kill',
@@ -397,6 +463,9 @@ class GameBalance {
         (v) => score.waveClearBase = v.round(), 0, 1000, 10),
 
     // ---- Game feel ---- (lower priority to tune)
+    _p('Game feel', 'juice.hitStopKill', 'Hit-stop kill (s)',
+        () => juice.hitStopKill, (v) => juice.hitStopKill = v,
+        0, 0.2, 0.005),
     _p('Game feel', 'juice.hitStopMultiKill', 'Hit-stop multikill (s)',
         () => juice.hitStopMultiKill, (v) => juice.hitStopMultiKill = v,
         0, 0.2, 0.005),
@@ -510,8 +579,8 @@ class PlayerBalance {
   double minFireCooldown = 0.18;
   double dashDuration = 0.12;
   double invulnAfterHit = 1.2; // forgiving i-frames so early mistakes don't snowball
-  double invulnAfterDash = 0.15;
-  int previewBounces = 2;
+  double invulnAfterDash = 0.35; // must outlast the dash itself so it reads as a dodge
+  int previewBounces = 3;
   double radius = 26;
   double coinPickupRadius = 64;
 
@@ -530,7 +599,7 @@ class PlayerBalance {
 
 class DrifterBalance {
   int hp = 1;
-  double speed = 58;
+  double speed = 95;
   double radius = 22;
   double wobbleAmplitude = 26;
   double wobbleFrequency = 1.4;
@@ -550,7 +619,7 @@ class DrifterBalance {
 
 class ChargerBalance {
   int hp = 2;
-  double roamSpeed = 46;
+  double roamSpeed = 75;
   double dashSpeed = 460;
   double telegraphDuration = 0.7; // long, obvious wind-up = generous dodge window
   double recoverDuration = 0.9;
@@ -572,7 +641,7 @@ class ChargerBalance {
 
 class SplitterBalance {
   int hp = 2;
-  double speed = 42;
+  double speed = 70;
   double radius = 28;
   double childSpread = 70; // offset of spawned children
 
@@ -588,7 +657,7 @@ class TurretBalance {
   int hp = 4;
   double radius = 26;
   double fireInterval = 2.4;
-  double projectileSpeed = 140;
+  double projectileSpeed = 190;
   double projectileRadius = 10;
   double chargeGlowDuration = 0.6;
 
@@ -612,11 +681,29 @@ class WardenBalance {
   int phaseHp = 14; // per phase
   int phases = 3;
   double radius = 56;
-  double speed = 26;
+  double speed = 36;
   double rotationSpeed = 0.8; // rad/s
   int shieldMinBounces = 3; // bullets below this clang off
   double shieldDownDuration = 2.0; // after a phase break
   double hpScalePerAppearance = 0.25; // +25% phase HP each Warden wave
+
+  // ---- Offense (Phase 2): the Warden was a shielded HP bag; now it fights.
+  /// Seconds between radial bursts (the primary telegraphed attack).
+  double attackInterval = 4.5;
+
+  /// Wind-up before a burst fires — MUST stay >= 0.6s (accessibility: every
+  /// attack is telegraphed long enough to read and dodge).
+  double attackTelegraph = 0.75;
+
+  /// Interceptable projectiles per radial burst (0 disables the burst).
+  int burstCount = 12;
+
+  /// Speed of the Warden's burst projectiles (slow enough to dodge/intercept).
+  double projectileSpeed = 165;
+
+  /// Small Drifters summoned each time a phase breaks (0 disables). These make
+  /// the shield-down punish window a real risk/reward decision.
+  int summonOnPhaseBreak = 2;
 
   void copyFrom(WardenBalance o) {
     phaseHp = o.phaseHp;
@@ -627,20 +714,28 @@ class WardenBalance {
     shieldMinBounces = o.shieldMinBounces;
     shieldDownDuration = o.shieldDownDuration;
     hpScalePerAppearance = o.hpScalePerAppearance;
+    attackInterval = o.attackInterval;
+    attackTelegraph = o.attackTelegraph;
+    burstCount = o.burstCount;
+    projectileSpeed = o.projectileSpeed;
+    summonOnPhaseBreak = o.summonOnPhaseBreak;
   }
 }
 
 class PowderkegBalance {
   int hp = 2;
-  double speed = 38; // slow, like a Drifter
+  double speed = 60; // slower than a Drifter — the drop is the threat
   double radius = 24;
 
-  /// Radius of the death detonation zone.
-  double blastRadius = 78;
+  /// Radius of the death detonation zone. Phase 2: widened 78→96 so the
+  /// "don't kill it point-blank" decision actually bites (the fuse alone was
+  /// trivially escaped).
+  double blastRadius = 96;
 
   /// Telegraph window between death and the damaging blast — must be long
   /// enough to dash clear of (it's a positioning hazard, not a gotcha).
-  double fuseDuration = 0.6;
+  /// Phase 2: tightened 0.6→0.5 (still a full dash window, just less generous).
+  double fuseDuration = 0.5;
 
   void copyFrom(PowderkegBalance o) {
     hp = o.hp;
@@ -653,7 +748,7 @@ class PowderkegBalance {
 
 class SawbonesBalance {
   int hp = 3;
-  double speed = 34;
+  double speed = 56;
   double radius = 26;
 
   /// Seconds between heal pulses.
@@ -675,7 +770,7 @@ class SawbonesBalance {
 
 class IronhideBalance {
   int hp = 6;
-  double speed = 30;
+  double speed = 46;
   double radius = 34;
 
   /// Frontal shield arc (degrees) facing the player — bullets striking
@@ -692,7 +787,7 @@ class IronhideBalance {
 
 class MirrorBalance {
   int hp = 2;
-  double speed = 32;
+  double speed = 52;
   double radius = 20;
 
   /// Length of the reflecting face (the wall segment) it carries.
@@ -706,6 +801,63 @@ class MirrorBalance {
   }
 }
 
+class SkitterBalance {
+  /// Fast, fragile speed-threat: 1 HP dies to any armed bounce, but it closes
+  /// distance fast on a readable rhythmic weave (threat is speed, not tankiness).
+  int hp = 1;
+  double speed = 150; // vs Drifter 95 — noticeably faster
+  double radius = 15; // small
+  double weaveAmplitude = 100; // sharp lateral juke
+  double weaveFrequency = 3.0; // fast, but a steady rhythm (readable, fair)
+
+  void copyFrom(SkitterBalance o) {
+    hp = o.hp;
+    speed = o.speed;
+    radius = o.radius;
+    weaveAmplitude = o.weaveAmplitude;
+    weaveFrequency = o.weaveFrequency;
+  }
+}
+
+class LancerBalance {
+  /// Standoff striker: hangs back at range, telegraphs, then strafes in a
+  /// straight line across the arena — a fast MOVING ricochet target (and a
+  /// dodgeable threat). 3 HP rewards a multi-bounce lead shot.
+  int hp = 3;
+  double roamSpeed = 42; // slow repositioning while at range
+  double strafeSpeed = 260; // fast straight strafe across the arena
+  double telegraphDuration = 0.8; // long, obvious wind-up = dodge window
+  double standoffRange = 420; // keeps roughly this far from the player
+  double radius = 22;
+
+  void copyFrom(LancerBalance o) {
+    hp = o.hp;
+    roamSpeed = o.roamSpeed;
+    strafeSpeed = o.strafeSpeed;
+    telegraphDuration = o.telegraphDuration;
+    standoffRange = o.standoffRange;
+    radius = o.radius;
+  }
+}
+
+class EnemiesBalance {
+  /// Separation steering shared by every seeking enemy — groups spread into
+  /// arcs instead of stacking into a single blob (which read as one enemy
+  /// and killed the multi-kill/chain fantasy).
+  ///
+  /// Extra breathing room (px) beyond the two bodies' combined radii before
+  /// the push-apart force engages.
+  double separationPadding = 14;
+
+  /// Weight of the push-apart force relative to the (unit) seek direction.
+  double separationStrength = 0.7;
+
+  void copyFrom(EnemiesBalance o) {
+    separationPadding = o.separationPadding;
+    separationStrength = o.separationStrength;
+  }
+}
+
 class WaveBalance {
   double spawnTelegraph = 0.6;
   double interWaveDelay = 1.2;
@@ -716,18 +868,31 @@ class WaveBalance {
   /// crafts the gentle on-ramp; beyond it these formulas compose endless waves.
   ///
   /// Past authored waves, hp/speed grow as `growth * past^exponent` — exponent
-  /// > 1 keeps the curve shallow early and steepens it later. Speed is capped.
-  double extraCountPerWave = 0.8;
-  double hpGrowthPerWave = 0.08;
-  double hpCurveExponent = 1.3;
-  double speedGrowthPerWave = 0.015;
-  double speedCurveExponent = 1.3;
-  double speedGrowthCap = 0.6;
+  /// > 1 keeps the curve shallow early and steepens it later.
+  ///
+  /// **Phase 2 "tension, not sponge" retune:** HP growth was softened (0.08→0.055,
+  /// exponent 1.3→1.2) so late enemies stop turning into damage-immune bricks,
+  /// while the speed cap was lifted (0.6→1.2) and count pressure raised
+  /// (0.8→1.1/wave) so difficulty comes from fast, numerous threats you must
+  /// out-think — not from HP you can't chew through.
+  double extraCountPerWave = 1.1;
+  double hpGrowthPerWave = 0.055;
+  double hpCurveExponent = 1.2;
+  double speedGrowthPerWave = 0.02;
+  double speedCurveExponent = 1.25;
+  double speedGrowthCap = 1.2;
 
   /// The first Warden appears on this wave (kept late so the early game stays
   /// kind); after it, one shows every [wardenEvery] waves (15, 20, …).
   int firstWardenWave = 10;
   int wardenEvery = 5;
+
+  /// Upgrade-draft cadence (Phase 2 flow fix): the engine hard-pauses for a
+  /// pick after every wave, chopping the rhythm. Draft after every wave up to
+  /// [draftEveryWaveUntil], then only every [draftCadence] waves. Score/coins
+  /// are still awarded on every clear — only the interrupting picker is gated.
+  int draftEveryWaveUntil = 5;
+  int draftCadence = 2;
 
   void copyFrom(WaveBalance o) {
     spawnTelegraph = o.spawnTelegraph;
@@ -741,10 +906,15 @@ class WaveBalance {
     speedGrowthCap = o.speedGrowthCap;
     firstWardenWave = o.firstWardenWave;
     wardenEvery = o.wardenEvery;
+    draftEveryWaveUntil = o.draftEveryWaveUntil;
+    draftCadence = o.draftCadence;
   }
 }
 
 class JuiceBalance {
+  /// Every kill freezes the frame — the single most common event in the game
+  /// must have punch. Multi-kills and Warden hits freeze longer.
+  double hitStopKill = 0.03;
   double hitStopMultiKill = 0.045;
   double hitStopWardenHit = 0.060;
   double shakeTraumaKill = 0.18;
@@ -755,6 +925,7 @@ class JuiceBalance {
   int particleBudget = 600;
 
   void copyFrom(JuiceBalance o) {
+    hitStopKill = o.hitStopKill;
     hitStopMultiKill = o.hitStopMultiKill;
     hitStopWardenHit = o.hitStopWardenHit;
     shakeTraumaKill = o.shakeTraumaKill;
@@ -806,6 +977,15 @@ class EconomyBalance {
   int waveClearBonus = 15;
   int chainBonusPerKill = 4; // per kill beyond the first in a chain
 
+  // ---- Phase 4 permanent coin sinks (normal runs only) ----
+  /// Cost of the first draft reroll in a run; each further reroll costs
+  /// [draftRerollCostStep] more (escalates so it can't be spammed).
+  int draftRerollBaseCost = 30;
+  int draftRerollCostStep = 30;
+
+  /// Cost to buy back from death, once per run (expensive by design).
+  int continueRunCost = 500;
+
   /// 7-day login reward calendar (day 7 is the big haul). Indexed by the
   /// 1-based calendar day; the cycle repeats. Lives here so earn rates are
   /// panel-tunable. NOTE: achievement/challenge reward amounts are NOT here —
@@ -818,6 +998,9 @@ class EconomyBalance {
     dropValue = o.dropValue;
     waveClearBonus = o.waveClearBonus;
     chainBonusPerKill = o.chainBonusPerKill;
+    draftRerollBaseCost = o.draftRerollBaseCost;
+    draftRerollCostStep = o.draftRerollCostStep;
+    continueRunCost = o.continueRunCost;
     loginRewardsByDay = List<int>.of(o.loginRewardsByDay);
   }
 }

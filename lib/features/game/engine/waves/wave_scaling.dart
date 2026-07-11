@@ -9,6 +9,16 @@ import 'wave_table.dart';
 /// are endless. Pure (given the rng fork), so daily-challenge runs get
 /// identical waves worldwide.
 abstract final class WaveScaling {
+  /// Whether clearing [wave] should offer an upgrade draft: every wave up to
+  /// [everyWaveUntil], then every [cadence] waves. Pure (no config read) so
+  /// it's unit-testable; the game passes the live [WaveBalance] tunables.
+  static bool shouldDraft(int wave,
+      {required int everyWaveUntil, required int cadence}) {
+    if (wave <= everyWaveUntil) return true;
+    final c = cadence < 1 ? 1 : cadence;
+    return (wave - everyWaveUntil) % c == 0;
+  }
+
   static WaveDefinition forWave(int wave, GameRng rng) {
     final t = GameBalance.I.waves;
     if (wave <= t.authoredWaves) {
@@ -52,13 +62,28 @@ abstract final class WaveScaling {
     budget -= sawbones;
     final mirrors = rng.nextInt(2); // 0-1
     budget -= mirrors;
+    final skitters = math.min(budget ~/ 5, 1 + rng.nextInt(3)); // fast pressure
+    budget -= skitters;
+    final lancers = rng.nextInt(2); // 0-1 moving ricochet target
+    budget -= lancers;
     final turrets = math.min(2, 1 + rng.nextInt(2));
     final drifters = math.max(2, budget);
 
     groups.addAll([
-      SpawnGroup(type: EnemyType.drifter, count: drifters, stagger: 0.4),
+      // Fodder spawns as threadable shapes so chains stay a plannable strategy
+      // in the endless waves, not just the authored ones.
+      SpawnGroup(
+          type: EnemyType.drifter,
+          count: drifters,
+          stagger: 0.3,
+          formation: SpawnFormation.wedge),
       SpawnGroup(type: EnemyType.charger, count: chargers, delay: 2, stagger: 0.9),
-      SpawnGroup(type: EnemyType.splitter, count: splitters, delay: 3, stagger: 1),
+      SpawnGroup(
+          type: EnemyType.splitter,
+          count: splitters,
+          delay: 3,
+          stagger: 0.8,
+          formation: SpawnFormation.line),
       SpawnGroup(type: EnemyType.turret, count: turrets, delay: 1, stagger: 2),
       if (powderkegs > 0)
         SpawnGroup(
@@ -69,6 +94,10 @@ abstract final class WaveScaling {
         SpawnGroup(type: EnemyType.sawbones, count: sawbones, delay: 4),
       if (mirrors > 0)
         SpawnGroup(type: EnemyType.mirror, count: mirrors, delay: 1.5),
+      if (skitters > 0)
+        SpawnGroup(type: EnemyType.skitter, count: skitters, delay: 2, stagger: 0.5),
+      if (lancers > 0)
+        SpawnGroup(type: EnemyType.lancer, count: lancers, delay: 2.5),
     ]);
 
     return WaveDefinition(

@@ -87,12 +87,17 @@ class ChargerEnemy extends EnemyComponent {
   void renderShape(Canvas canvas) {
     // Telegraph: pulsing white-hot flash.
     final telegraphing = _phase == _ChargerPhase.telegraph;
+    // Recover: the vulnerability window — render it as a dizzy stagger so
+    // players learn to punish it (its recover is the whole risk/reward story).
+    final recovering = _phase == _ChargerPhase.recover;
     final pulse = telegraphing
         ? 0.5 + 0.5 * math.sin(_phaseTime * 28)
         : 0.0;
 
     canvas.save();
-    canvas.rotate(_facing + math.pi / 2);
+    var tilt = _facing + math.pi / 2;
+    if (recovering) tilt += math.sin(_phaseTime * 11) * 0.28; // groggy sway
+    canvas.rotate(tilt);
 
     final r = bodyRadius * (telegraphing ? 1.0 + pulse * 0.15 : 1.0);
     final path = Path()
@@ -101,7 +106,11 @@ class ChargerEnemy extends EnemyComponent {
       ..lineTo(-r, r)
       ..close();
 
-    canvas.drawPath(path, Paint()..color = color);
+    // Dim the body while staggered so it reads as "open — hit me now".
+    final body = recovering
+        ? Color.lerp(color, const Color(0xFF5E2410), 0.45)!
+        : color;
+    canvas.drawPath(path, Paint()..color = body);
     if (pulse > 0) {
       canvas.drawPath(
         path,
@@ -109,5 +118,19 @@ class ChargerEnemy extends EnemyComponent {
       );
     }
     canvas.restore();
+
+    // Orbiting "dizzy" sparks above the head during the stagger.
+    if (recovering) {
+      final star = Paint()..color = const Color(0xFFFFE29A);
+      for (var i = 0; i < 3; i++) {
+        final a = _phaseTime * 7 + i * 2.094;
+        canvas.drawCircle(
+          Offset(math.cos(a) * bodyRadius * 0.7,
+              -bodyRadius * 1.25 + math.sin(a) * bodyRadius * 0.22),
+          3,
+          star,
+        );
+      }
+    }
   }
 }

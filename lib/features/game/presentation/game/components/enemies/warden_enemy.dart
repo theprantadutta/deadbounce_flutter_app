@@ -1,12 +1,14 @@
 import 'dart:math' as math;
 import 'dart:ui';
 
+import 'package:flame/components.dart';
 
 import '../../../../../../core/theme/app_colors.dart';
 import '../../../../engine/combat/bullet_state.dart';
 import 'package:deadbounce_flutter_app/core/config/game_balance.dart';
 import '../../systems/sound_manager.dart';
 import '../bullet_component.dart';
+import '../enemy_projectile_component.dart';
 import '../popup_text_component.dart';
 import 'enemy_component.dart';
 
@@ -39,6 +41,11 @@ class WardenEnemy extends EnemyComponent {
   double _shieldDownTimer = 0;
   double _rotation = 0;
   double _speedBoost = 1;
+
+  // Offense: a periodic telegraphed radial burst.
+  double _attackTimer = 0;
+  double _charge = 0; // seconds of wind-up remaining (>0 = telegraphing)
+  bool get _charging => _charge > 0;
 
   bool get shieldUp => _shieldDownTimer <= 0;
   int get phasesTotal => GameBalance.I.warden.phases;
@@ -103,20 +110,64 @@ class WardenEnemy extends EnemyComponent {
       _shieldDownTimer = GameBalance.I.warden.shieldDownDuration;
       _speedBoost += 0.35;
       game.juice.wardenFeedback(position.clone());
+      _summonMinions();
     }
     return false;
   }
 
   @override
   void updateBehavior(double dt) {
-    _rotation += GameBalance.I.warden.rotationSpeed * _speedBoost * dt;
+    final w = GameBalance.I.warden;
+    _rotation += w.rotationSpeed * _speedBoost * dt;
     if (_shieldDownTimer > 0) _shieldDownTimer -= dt;
 
-    seekPlayer(dt, GameBalance.I.warden.speed * _speedBoost);
+    // Attack cycle: idle count-up → telegraphed charge → radial burst.
+    if (w.burstCount > 0) {
+      if (_charging) {
+        _charge -= dt;
+        if (_charge <= 0) {
+          _fireBurst(w);
+          _attackTimer = 0;
+        }
+      } else {
+        _attackTimer += dt;
+        if (_attackTimer >= w.attackInterval) _charge = w.attackTelegraph;
+      }
+    }
+
+    // Hold still while winding up so the charge reads as a clear tell.
+    if (!_charging) seekPlayer(dt, w.speed * _speedBoost);
     clampToArena();
     if (overlapsPlayer()) game.player.takeContactDamage(this);
 
     _pushBossHud();
+  }
+
+  /// Fires [WardenBalance.burstCount] interceptable projectiles evenly around
+  /// the circle — dodge the gaps or shoot them down (any bounce count).
+  void _fireBurst(WardenBalance w) {
+    for (var i = 0; i < w.burstCount; i++) {
+      final angle = _rotation + i * (2 * math.pi / w.burstCount);
+      final dir = Vector2(math.cos(angle), math.sin(angle));
+      game.world.add(EnemyProjectileComponent(
+        position: position + dir * (bodyRadius + 10),
+        velocity: dir * w.projectileSpeed,
+        cause: 'warden',
+        color: AppColors.amber400,
+        radiusOverride: GameBalance.I.turret.projectileRadius + 1,
+      ));
+    }
+    game.juice.addTrauma(0.3);
+    game.juice.sound.play(Sfx.wardenClang);
+  }
+
+  /// Spawns small-Drifter reinforcements on a phase break — turning the
+  /// shield-down punish window into a real risk/reward decision.
+  void _summonMinions() {
+    final count = GameBalance.I.warden.summonOnPhaseBreak;
+    if (count <= 0) return;
+    game.spawner.spawnMinions(position.clone(), count,
+        speedMult: speedMult, hpMult: 1);
   }
 
   @override
@@ -154,6 +205,36 @@ class WardenEnemy extends EnemyComponent {
       }
     }
     canvas.restore();
+
+    // Burst telegraph: a warning ring that swells toward the body as the
+    // charge burns down — reads the imminent radial spray.
+    if (_charging) {
+      final t = 1 - (_charge / GameBalance.I.warden.attackTelegraph)
+          .clamp(0.0, 1.0);
+      canvas.drawCircle(
+        Offset.zero,
+        bodyRadius * (2.2 - t),
+        Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 3 + t * 4
+          ..color = AppColors.error.withValues(alpha: 0.25 + t * 0.55),
+      );
+      // Faint spoke hints in the directions the burst will travel.
+      final hint = Paint()
+        ..strokeWidth = 2
+        ..color = AppColors.amber300.withValues(alpha: 0.2 + t * 0.4);
+      final n = GameBalance.I.warden.burstCount;
+      for (var i = 0; i < n; i++) {
+        final a = _rotation + i * (2 * math.pi / n);
+        final d = Offset(math.cos(a), math.sin(a));
+        canvas.drawLine(
+          Offset(d.dx * bodyRadius, d.dy * bodyRadius),
+          Offset(d.dx * bodyRadius * (1.4 + t * 0.6),
+              d.dy * bodyRadius * (1.4 + t * 0.6)),
+          hint,
+        );
+      }
+    }
 
     // Phase HP bar above the boss (drawn unrotated).
     const barWidth = 110.0;

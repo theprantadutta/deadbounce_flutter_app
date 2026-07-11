@@ -6,17 +6,31 @@ import '../../../../../core/theme/app_colors.dart';
 import 'package:deadbounce_flutter_app/core/config/game_balance.dart';
 import 'deadbounce_game.dart';
 
-/// A Turret's slow shot: dodge it or shoot it down — player bullets
-/// destroy it at ANY bounce count (interception is always rewarded).
+/// A slow enemy shot (Turret, Warden burst): dodge it or shoot it down —
+/// player bullets destroy it at ANY bounce count (interception is always
+/// rewarded). [cause]/[color]/[radiusOverride] let other enemies reuse it with
+/// the right death-beat attribution and look.
 class EnemyProjectileComponent extends PositionComponent
     with HasGameReference<DeadbounceGame> {
   EnemyProjectileComponent({
     required super.position,
     required this.velocity,
-  }) : super(anchor: Anchor.center, priority: 35);
+    this.cause = 'turret',
+    Color? color,
+    this.radiusOverride,
+  })  : color = color ?? AppColors.blue400,
+        super(anchor: Anchor.center, priority: 35);
 
   final Vector2 velocity;
-  double get radius => GameBalance.I.turret.projectileRadius;
+
+  /// Enemy id blamed for the hit on the death beat.
+  final String cause;
+  final Color color;
+
+  /// Optional radius; falls back to the turret's projectile radius.
+  final double? radiusOverride;
+
+  double get radius => radiusOverride ?? GameBalance.I.turret.projectileRadius;
 
   double _pulse = 0;
 
@@ -58,9 +72,8 @@ class EnemyProjectileComponent extends PositionComponent
   void render(Canvas canvas) {
     final pulse = 0.7 + 0.3 * (_pulse * 6).remainder(1.0);
     canvas.drawCircle(Offset.zero, radius * 1.8,
-        Paint()..color = AppColors.blue400.withValues(alpha: 0.2 * pulse));
-    canvas.drawCircle(
-        Offset.zero, radius, Paint()..color = AppColors.blue400);
+        Paint()..color = color.withValues(alpha: 0.2 * pulse));
+    canvas.drawCircle(Offset.zero, radius, Paint()..color = color);
     canvas.drawCircle(Offset.zero, radius * 0.45,
         Paint()..color = const Color(0xFFFFFFFF));
   }

@@ -50,10 +50,17 @@ class WaveRunner extends Component with HasGameReference<DeadbounceGame> {
       final type = (forced != null && group.type != EnemyType.warden)
           ? forced
           : group.type;
+      // Formation groups share one anchor and spawn as a threadable shape;
+      // scattered groups leave the position null so the director picks per
+      // spawn (unchanged behavior).
+      final positions = group.formation == SpawnFormation.scattered
+          ? null
+          : _spawner.planFormation(group.formation, group.count);
       for (var i = 0; i < group.count; i++) {
         _schedule.add(_PendingGroupSpawn(
           at: group.delay + i * group.stagger,
           type: type,
+          position: positions?[i],
         ));
       }
     }
@@ -81,6 +88,7 @@ class WaveRunner extends Component with HasGameReference<DeadbounceGame> {
         next.type,
         hpMult: _definition!.hpMult,
         speedMult: _definition!.speedMult,
+        position: next.position,
       );
     }
     if (_schedule.isEmpty) _spawningDone = true;
@@ -101,7 +109,10 @@ class WaveRunner extends Component with HasGameReference<DeadbounceGame> {
 }
 
 class _PendingGroupSpawn {
-  _PendingGroupSpawn({required this.at, required this.type});
+  _PendingGroupSpawn({required this.at, required this.type, this.position});
   final double at;
   final EnemyType type;
+
+  /// Pre-planned formation slot, or null for a scattered spawn (director picks).
+  final Vector2? position;
 }
