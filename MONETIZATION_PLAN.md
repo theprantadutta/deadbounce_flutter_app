@@ -339,18 +339,40 @@ Permanent sink **7,800 → ~24,000**. Analyze clean, 207/207 tests pass.
       (levels are clamped, so a client raised alone loses the paid level on sync).
 - [x] Prices verified against the backend's coin sanity ceilings by test.
 
-### ⬜ 3B — pre-run consumables (next, and the load-bearing piece)
+### ✅ 3B — pre-run consumables (SHIPPED 2026-08-04)
 
 Everything above is still ONE-TIME spending. A player who owns it all has
 nothing to buy again, so coin packs still don't have durable demand.
 
-- [ ] **Pre-run consumables** chosen on the pre-run screen (extra heart, starting
-      rare card, coin doubler, extra reroll charge), consumed on use. New Drift
-      table, pre-run picker UI, `MetaLoadout` integration, backend catalog +
-      sync. Normal runs ONLY — never daily challenges or tournaments.
+- [x] **Four consumables** — Field Dressing (+1 heart), Loaded Deck (free rare),
+      Prospector's Charm (×2 coins), Second Opinion (free reroll). 200–400 coins
+      each, deliberately cheap: a small frequent decision, not a milestone.
+- [x] **Spent at RUN START, not run end** — tying it to the end would let a
+      player quit out after a bad opening and keep the item.
+- [x] **The sheet is skipped when stock is empty**, so the one-tap path from
+      Home to playing is untouched for anyone who hasn't bought in.
+- [x] **Max 2 per run.** Taking everything every time isn't a decision, and a
+      run starting with every advantage stops resembling the run everyone
+      else's leaderboard score came from.
+- [x] Drift schema v8 + `consumableState` sync (last-writer-wins). The server
+      processor is explicitly written to allow the aggregate going DOWN —
+      unlike perks and cosmetics, stock is spent, so a smaller value is not
+      evidence of tampering.
+- [x] Backend: `PlayerConsumable`, `ConsumableDefinitions`,
+      `ConsumableStateProcessor`, snapshot restore, migration applied.
+- [x] **Normal runs only** — daily challenges and tournaments stay identical
+      worldwide, enforced at the single construction site.
+- [x] Verified against a running backend: valid stock applies and reaches the
+      snapshot, unknown ids sanitize away with a server warning, stale replays
+      are no-ops, zero counts round-trip as "not held".
+**Still open in Phase 3:**
+
 - [ ] Re-tune `GameBalance.I.economy` earn rates against the deeper sink
-      (panel-tune first, then promote the felt numbers).
+      (panel-tune first, then promote the felt numbers). **Needs a play-test** —
+      these are feel numbers, not spreadsheet numbers.
 - [ ] A high-stakes tournament bracket with a larger entry fee and pool.
+- [ ] Play-test the loadout sheet: is one extra tap before a run acceptable
+      once you own items? If it drags, move it to a Home affordance instead.
 
 ### Original scope (reference)</
 
