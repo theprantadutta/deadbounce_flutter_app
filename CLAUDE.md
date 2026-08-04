@@ -527,6 +527,45 @@ so a committed player runs out of things to buy; consumables are spent every use
   "disabled" (challenges/tournaments). `SessionUpgradePicking.rerollEnabled`
   disambiguates; don't reintroduce a `cost > 0` availability check.
 
+## Ads (`core/ads/`) — SHIPPED 2026-08-04
+
+Phase 4. Posture: **rewarded carries the revenue, one restricted banner,
+interstitials genuinely rare.**
+
+- **Consent first, always.** `AdConsent` (UMP) runs before any request; in the
+  EEA/UK requesting an ad first is a compliance breach. Fails OPEN on SDK errors
+  so a network blip doesn't leave the app permanently ad-free, but never claims
+  consent it didn't get.
+- **`AdConfig`: debug builds ALWAYS use Google's test units**, whatever `.env`
+  says. Clicking your own live ads is the fastest route to an AdMob suspension.
+  A missing key in release disables that placement rather than crashing.
+- **`InterstitialGate` is pure logic, no SDK** — every pacing rule is
+  unit-tested. ALL must pass: ≥4 runs AND ≥3 min since the last, ≥5 lifetime
+  runs, normal runs only, not session-ending, and suppressed 24h after ANY
+  rewarded watch. Target ≈1 per 15–20 min.
+- **A rewarded ad is only OFFERED when one is loaded.** Promising "watch an ad"
+  and then failing at the death screen is worse than not offering it.
+- **`continueViaAd` is a separate cubit path from `buyContinue`** so the ad
+  route can never take coins and vice versa.
+- **`AdBanner` renders nothing until an ad loads** — no placeholder, no reserved
+  gap. `MetaScaffold.showBanner` is opt-IN; only Leaderboards, Awards,
+  Statistics and the Trick-Shot gallery pass true. Never Home (no-scroll
+  contract), never in-run, never the results screen, **never the shops**.
+- **`no_ads` suppresses banner + interstitial only.** Rewarded stays for
+  everyone — genre norm, and it gives something back. Watched live so a purchase
+  takes effect without a restart; reset on sign-out.
+- **AndroidManifest carries the AdMob app id** (hardcoded — the SDK reads it at
+  process start and the app crashes without it; `.env` loads far too late).
+- **Settings → Ad privacy** reopens the consent form, shown only where Google
+  provides one. `privacy.md` names it, so it must keep working.
+
+> **NOT DONE: rewarded ads that grant COINS.** Double-coins and daily-bonus are
+> built as placements but not wired, because `CoinTxnProcessor` rejects
+> `adReward` from the client (Phase 2 trust boundary). Granting them
+> client-side would either break that boundary or silently diverge the balance.
+> They need **AdMob server-side verification (SSV)** — a backend callback that
+> credits server-side, like IAP. See `MONETIZATION_PLAN.md`.
+
 ## Real-money purchases (`features/store/`) — SHIPPED 2026-08-04
 
 Phase 2 of `MONETIZATION_PLAN.md`. **Nothing is on sale yet** (Phase 5 turns products
@@ -575,11 +614,13 @@ GoRouter redirect; the read-only three-tab viewer is linked from Settings → Ab
 `lib/core/legal/legal_documents.dart` holds `LegalDocuments.version` — the
 single **shared** source of truth for all three docs. **Bump it (and the matching
 `**Version N**` line in ALL THREE markdown files) and every user is re-prompted to
-accept on next launch.** (Currently **version 3** — v2 added refund.md and the
+accept on next launch.** (Currently **version 4** — v2 added refund.md and the
 forward-looking purchase/subscription clauses, so the docs already describe Google
 Play Billing / auto-renewal / the Google Play refund flow even though no real-money
 IAP ships yet; **v3** added the "Usage and diagnostic data" section and listed Google
-Analytics for Firebase + Crashlytics in §4 when Phase 0 telemetry shipped.)
+Analytics for Firebase + Crashlytics in §4 when Phase 0 telemetry shipped;
+**v4** deleted the "we do not show ads" promise and added the Advertising
+section when Phase 4 shipped.)
 
 > **RULE — when you ship or change a feature, check whether the Privacy Policy /
 > Terms / Refund need updating.** If a feature changes what data is collected,
@@ -598,9 +639,10 @@ Analytics for Firebase + Crashlytics in §4 when Phase 0 telemetry shipped.)
   matters — one tap, no password to forget).
 - Final art (the logo is a styled Material icon, default launcher icon), PvP.
 - **Real-money monetization** — see `MONETIZATION_PLAN.md` (the living roadmap).
-  Phases 0–3 shipped 2026-08-04 (analytics, account linking, server-authoritative
-  purchases, coin-sink depth + consumables). Next: Phase 4 ads (`ADMOB_SETUP.md`
-  holds the console checklist), Phase 5 products (`PLAY_CONSOLE_PRODUCTS.md`).
+  Phases 0–4 shipped 2026-08-04 (analytics, account linking, server-authoritative
+  purchases, coin-sink depth + consumables, ads). Next: **Phase 5 products** —
+  create the SKUs per `PLAY_CONSOLE_PRODUCTS.md`, plus the rewarded-ad SSV
+  endpoint that Phase 4 deliberately left out.
 
 ## Account linking (guest → Google) — SHIPPED 2026-08-04
 
