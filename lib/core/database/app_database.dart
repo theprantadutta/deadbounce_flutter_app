@@ -3,6 +3,7 @@ import 'package:drift/drift.dart';
 import 'daos/achievements_dao.dart';
 import 'daos/challenge_dao.dart';
 import 'daos/coin_ledger_dao.dart';
+import 'daos/consumables_dao.dart';
 import 'daos/cosmetics_dao.dart';
 import 'daos/leaderboard_cache_dao.dart';
 import 'daos/meta_upgrades_dao.dart';
@@ -19,6 +20,7 @@ import 'tables/achievement_states_table.dart';
 import 'tables/challenge_attempts_table.dart';
 import 'tables/coin_balance_table.dart';
 import 'tables/coin_ledger_table.dart';
+import 'tables/consumable_stock_table.dart';
 import 'tables/cosmetics_table.dart';
 import 'tables/daily_login_claims_table.dart';
 import 'tables/leaderboard_cache_table.dart';
@@ -62,6 +64,7 @@ part 'app_database.g.dart';
     TrickShotProgress,
     Entitlements,
     ProcessedPurchases,
+    ConsumableStock,
   ],
   daos: [
     ProfileDao,
@@ -79,13 +82,14 @@ part 'app_database.g.dart';
     CosmeticsDao,
     TrickShotDao,
     PurchasesDao,
+    ConsumablesDao,
   ],
 )
 class AppDatabase extends _$AppDatabase {
   AppDatabase(super.e);
 
   @override
-  int get schemaVersion => 7;
+  int get schemaVersion => 8;
 
   /// Wipes all gameplay/account data on this device in one transaction,
   /// **preserving the settings table** (device preferences). Clearing the
@@ -112,6 +116,7 @@ class AppDatabase extends _$AppDatabase {
         await delete(trickShotProgress).go();
         await delete(entitlements).go();
         await delete(processedPurchases).go();
+        await delete(consumableStock).go();
       });
 
   @override
@@ -146,6 +151,9 @@ class AppDatabase extends _$AppDatabase {
           if (from < 7) {
             await m.createTable(entitlements);
             await m.createTable(processedPurchases);
+          }
+          if (from < 8) {
+            await m.createTable(consumableStock);
           }
           // Indexes are added with IF NOT EXISTS, so this is safe on every
           // upgrade path — and crucially repairs installs created before the

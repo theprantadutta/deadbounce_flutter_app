@@ -220,6 +220,15 @@ class SnapshotRestorer {
         }
         await _db.purchasesDao.replaceEntitlements(entitlementRows);
 
+        // Pre-run consumable stock. Bought with coins, so it has to come back
+        // — otherwise the spend restored and the goods didn't.
+        final consumables =
+            (snapshot['consumables'] as Map<String, dynamic>?) ?? const {};
+        final stock = (consumables['stock'] as Map<String, dynamic>?) ?? const {};
+        for (final entry in stock.entries) {
+          await _db.consumablesDao.setCount(entry.key, _asInt(entry.value), nowMs);
+        }
+
         await _db.profileDao.setInitialSyncCompleted();
       });
 

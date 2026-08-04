@@ -4,6 +4,8 @@ import '../../features/achievements/data/repositories/achievements_repository_im
 import '../../features/achievements/domain/repositories/achievements_repository.dart';
 import '../../features/challenges/data/repositories/daily_challenge_repository_impl.dart';
 import '../../features/challenges/domain/repositories/daily_challenge_repository.dart';
+import '../../features/consumables/data/repositories/consumables_repository_impl.dart';
+import '../../features/consumables/domain/repositories/consumables_repository.dart';
 import '../../features/cosmetics/data/repositories/cosmetics_repository_impl.dart';
 import '../../features/cosmetics/domain/repositories/cosmetics_repository.dart';
 import '../../features/game/presentation/trickshot/trickshot_progress_repository.dart';
@@ -67,6 +69,7 @@ class SessionDependencies {
     required this.cosmeticsRepository,
     required this.trickShotProgressRepository,
     required this.storeRepository,
+    required this.consumablesRepository,
   });
 
   factory SessionDependencies.create({
@@ -130,6 +133,10 @@ class SessionDependencies {
         outboxWriter: outboxWriter,
       ),
       trickShotProgressRepository: TrickShotProgressRepository(db),
+      consumablesRepository: ConsumablesRepositoryImpl(
+        db: db,
+        outboxWriter: outboxWriter,
+      ),
       storeRepository: StoreRepositoryImpl(
         db: db,
         api: PurchaseApi(apiClient),
@@ -159,6 +166,7 @@ class SessionDependencies {
   final CosmeticsRepository cosmeticsRepository;
   final TrickShotProgressRepository trickShotProgressRepository;
   final StoreRepository storeRepository;
+  final ConsumablesRepository consumablesRepository;
 
   bool _started = false;
   bool _disposed = false;

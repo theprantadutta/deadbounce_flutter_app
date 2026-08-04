@@ -27,4 +27,13 @@ enum SyncEntityType {
   /// the coin SPEND syncs as a coinTxn, this carries the perk OWNERSHIP so a
   /// paid perk survives reinstall.
   metaState,
+
+  /// The player's pre-run consumable STOCK (item id -> held count),
+  /// last-writer-wins. Bought with coins, so the stock has to survive a
+  /// reinstall — otherwise the spend synced and the goods did not.
+  ///
+  /// Unlike [metaState] and [cosmeticState] this aggregate legitimately goes
+  /// DOWN (stock is spent at run start), which the server's processor is
+  /// explicitly written to allow.
+  consumableState,
 }
