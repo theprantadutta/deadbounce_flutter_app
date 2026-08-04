@@ -365,14 +365,35 @@ nothing to buy again, so coin packs still don't have durable demand.
 - [x] Verified against a running backend: valid stock applies and reaches the
       snapshot, unknown ids sanitize away with a server warning, stale replays
       are no-ops, zero counts round-trip as "not held".
-**Still open in Phase 3:**
+### ✅ 3C — earn-rate retune + high-stakes bracket (SHIPPED 2026-08-04)
 
-- [ ] Re-tune `GameBalance.I.economy` earn rates against the deeper sink
-      (panel-tune first, then promote the felt numbers). **Needs a play-test** —
-      these are feel numbers, not spreadsheet numbers.
-- [ ] A high-stakes tournament bracket with a larger entry fee and pool.
-- [ ] Play-test the loadout sheet: is one extra tap before a run acceptable
-      once you own items? If it drags, move it to a Home affordance instead.
+- [x] **Earn rates raised to match the sink.** 3A/3B tripled the permanent sink
+      and added a repeatable one but left income alone: a wave-10 run earned
+      ~486, so buying one consumable per run netted ~186 and "own everything"
+      sat at ~129 runs — making the consumable a punishment rather than a
+      choice. Now `coinPerKill` 3→4, `dropValue` 4→5, `waveClearBonus` 15→22:
+      ~670 a run, ~370 net after a consumable, ~64 runs to own everything
+      (36 if ignoring them). `chainBonusPerKill` 4→6 rises proportionally MORE,
+      so income leans toward playing WELL rather than merely long.
+      **Derived from sink arithmetic, not play-tested for feel** — all four are
+      panel-tunable; promote whatever actually feels right.
+- [x] **High-stakes tournament bracket.** Every cadence now generates BOTH a
+      Standard and a HighStakes tournament per window (~10× fee and pool), so a
+      player picks their level rather than being handed one fee. Both share the
+      window seed and therefore the same RULESET — a bigger buy-in buys risk and
+      reward, never an easier draw. The fee and pool use the SAME multiplier:
+      raising the fee faster would make it a tax, raising the pool faster would
+      make skipping the standard board strictly correct. Values stay under the
+      `CoinTxnProcessor` ceilings (entry 50k, reward 1M).
+
+**Still open — needs a human, not me:**
+
+- [ ] **Play-test the loadout sheet.** Once you own items, is the extra tap
+      before a run acceptable? It's already skipped entirely when stock is
+      empty, so this only affects engaged players. If it drags, move it to a
+      Home affordance instead of gating the launch button.
+- [ ] **Play-test the retuned earn rates.** The arithmetic says ~64 runs; only
+      playing says whether that *feels* like progress or a grind.
 
 ### Original scope (reference)</
 
