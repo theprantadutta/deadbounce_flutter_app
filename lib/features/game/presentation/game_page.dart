@@ -83,6 +83,9 @@ class _GameViewState extends State<_GameView> with WidgetsBindingObserver {
   /// and two ads for one run would be indefensible.
   bool _interstitialOffered = false;
 
+  /// One double-coins offer per run.
+  bool _doubleCoinsTaken = false;
+
   @override
   void initState() {
     super.initState();
@@ -220,6 +223,16 @@ class _GameViewState extends State<_GameView> with WidgetsBindingObserver {
                     isNewBestScore: state.isNewBestScore,
                     unlockedAchievements: state.unlockedAchievements,
                     onRetry: () => _restart(context),
+                    // Offered once, only with an ad in hand and coins to
+                    // double. The payout is credited SERVER-side by AdMob's
+                    // SSV callback, then pulled back down — the client never
+                    // mints it.
+                    onDoubleCoins: (!_doubleCoinsTaken &&
+                            state.result.coinsEarned > 0 &&
+                            adService.isRewardedReady(
+                                RewardedPlacement.doubleCoins))
+                        ? () => _watchAdToDoubleCoins(context)
+                        : null,
                     onHome: () => context.go(Routes.home),
                   ),
                 ),
@@ -237,6 +250,38 @@ class _GameViewState extends State<_GameView> with WidgetsBindingObserver {
       backgroundColor: Colors.transparent,
       builder: (_) => TuningPanel(game: game, hud: hud),
     );
+  }
+
+  /// Watches a rewarded ad to double the run's coins.
+  ///
+  /// Nothing is credited here: AdMob's server-side verification pays the
+  /// server, and [AdRewardsRepository.sync] pulls the payout down for display.
+  /// The client never decides the amount.
+  Future<void> _watchAdToDoubleCoins(BuildContext context) async {
+    final ads = context.read<AdService>();
+    final session = context.sessionDependencies;
+    final messenger = ScaffoldMessenger.of(context);
+
+    final earned = await ads.showRewarded(RewardedPlacement.doubleCoins);
+    if (!earned) return;
+    if (mounted) setState(() => _doubleCoinsTaken = true);
+
+    // The callback is server-to-server and may land after the ad closes, so a
+    // first pull can legitimately come back empty; one retry covers the gap
+    // without making the player wait on a spinner.
+    var credited = await session.adRewardsRepository.sync();
+    if (credited == 0) {
+      await Future<void>.delayed(const Duration(seconds: 2));
+      credited = await session.adRewardsRepository.sync();
+    }
+
+    messenger
+      ..clearSnackBars()
+      ..showSnackBar(SnackBar(
+        content: Text(credited > 0
+            ? 'Nice — $credited bonus coins added.'
+            : 'Your bonus is on its way; it will appear shortly.'),
+      ));
   }
 
   /// Offers the between-runs interstitial once the results are up.

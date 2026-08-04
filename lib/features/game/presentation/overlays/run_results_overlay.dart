@@ -16,12 +16,17 @@ class RunResultsOverlay extends StatelessWidget {
     required this.isNewBestScore,
     required this.onRetry,
     required this.onHome,
+    this.onDoubleCoins,
     this.unlockedAchievements = const [],
   });
 
   final RunResult result;
   final bool isNewBestScore;
   final VoidCallback onRetry;
+
+  /// Null when no rewarded ad is loaded, the run earned nothing, or the offer
+  /// was already taken. Shown only when it can actually be honoured.
+  final VoidCallback? onDoubleCoins;
   final VoidCallback onHome;
   final List<String> unlockedAchievements;
 
@@ -130,6 +135,14 @@ class RunResultsOverlay extends StatelessWidget {
                     ),
                     const SizedBox(height: AppSpacing.md),
                     _CoinCountUp(coins: result.coinsEarned),
+                    if (onDoubleCoins != null) ...[
+                      const SizedBox(height: AppSpacing.sm),
+                      DbSecondaryButton(
+                        label: 'WATCH AD · DOUBLE COINS',
+                        icon: Icons.play_circle_outline,
+                        onPressed: onDoubleCoins,
+                      ),
+                    ],
                     if (unlockedAchievements.isNotEmpty) ...[
                       const SizedBox(height: AppSpacing.sm),
                       _UnlockedAchievements(names: unlockedAchievements),
