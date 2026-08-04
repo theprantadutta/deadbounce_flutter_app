@@ -34,7 +34,9 @@ dependencies:
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
-  firebase_core: ^4.10.0
+  firebase_core: ^4.13.0 # floor raised by firebase_analytics/crashlytics below
+  firebase_analytics: ^12.4.6 # Phase 0 monetization: retention/funnel telemetry
+  firebase_crashlytics: ^5.2.7 # release-only crash reporting (debug uses Talker)
   flame: ^1.37.0
   flutter_bloc: ^9.1.1
   equatable: ^2.0.8
@@ -58,6 +60,7 @@ dependencies:
   flutter_animate: ^4.5.2
   in_app_update: ^4.2.5
   in_app_review: ^2.0.12 # Play in-app review prompt + "Rate" store-listing button
+  in_app_purchase: ^3.3.0 # Play Billing; every receipt is verified server-side
 
 dev_dependencies:
   flutter_test:
