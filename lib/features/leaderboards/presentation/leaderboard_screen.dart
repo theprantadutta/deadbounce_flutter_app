@@ -30,6 +30,7 @@ class _LeaderboardView extends StatelessWidget {
     return DefaultTabController(
       length: LeaderboardTab.values.length,
       child: MetaScaffold(
+        showBanner: true,
         title: 'LEADERBOARDS',
         bottom: TabBar(
           isScrollable: true,

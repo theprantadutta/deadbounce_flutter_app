@@ -30,6 +30,7 @@ class _AwardsView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MetaScaffold(
+      showBanner: true,
       title: 'AWARDS',
       child: BlocBuilder<AchievementsCubit, AchievementsState>(
         builder: (context, state) {

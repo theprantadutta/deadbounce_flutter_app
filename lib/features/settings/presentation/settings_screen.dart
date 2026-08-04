@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
 import '../../../app.dart';
+import '../../../core/ads/ad_service.dart';
 import '../../../core/di/session_dependencies.dart';
 import '../../../core/review/app_review_service.dart';
 import '../../../core/router/routes.dart';
@@ -117,6 +118,30 @@ class _SettingsView extends StatelessWidget {
               // ---- DATA & SYNC ----
               const _SectionHeader('DATA & SYNC'),
               _SyncSection(session: context.sessionDependencies),
+
+              // ---- PRIVACY ----
+              // Only rendered where Google's consent platform actually offers
+              // a form (EEA/UK/Switzerland) — elsewhere it would be a row that
+              // does nothing. The Privacy Policy points players here by name,
+              // so this must keep working.
+              FutureBuilder<bool>(
+                future: context.read<AdService>().isPrivacyOptionsRequired(),
+                builder: (context, snapshot) {
+                  if (snapshot.data != true) return const SizedBox.shrink();
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const _SectionHeader('PRIVACY'),
+                      _ActionTile(
+                        icon: Icons.privacy_tip_outlined,
+                        label: 'Ad privacy',
+                        onTap: () =>
+                            context.read<AdService>().showPrivacyOptions(),
+                      ),
+                    ],
+                  );
+                },
+              ),
 
               // ---- STORE ----
               const _SectionHeader('STORE'),

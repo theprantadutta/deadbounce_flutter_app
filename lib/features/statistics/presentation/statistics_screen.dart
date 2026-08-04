@@ -35,6 +35,7 @@ class _StatisticsView extends StatelessWidget {
     final textTheme = Theme.of(context).textTheme;
 
     return MetaScaffold(
+      showBanner: true,
       title: 'STATISTICS',
       child: BlocBuilder<StatisticsCubit, StatisticsState>(
         builder: (context, state) {
