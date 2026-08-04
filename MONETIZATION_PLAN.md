@@ -420,7 +420,67 @@ pack would not sell. Target: **~40,000 lifetime sink plus a genuinely repeatable
 
 ---
 
-## Phase 4 — Ads (~1 week)
+## ✅ Phase 4 — Ads (SHIPPED 2026-08-04)
+
+Analyze clean, 242 tests pass (10 new on the pacing gate), debug APK builds.
+
+- [x] `google_mobile_ads` 9.0.0, AdMob app id in the manifest (hardcoded — the
+      SDK reads it at process start and the app crashes without it).
+- [x] **UMP consent gate.** Nothing loads until it reports back. Fails open on
+      SDK errors, never claims consent it didn't get.
+- [x] **`AdConfig`: debug builds always use Google's test units**, whatever
+      `.env` says.
+- [x] **`InterstitialGate`** — pure logic, no SDK, all rules unit-tested. ≥4
+      runs AND ≥3 min, ≥5 lifetime runs, normal runs only, not session-ending,
+      suppressed 24h after any rewarded watch. ≈1 per 15–20 min.
+- [x] **Rewarded continue-on-death** — WATCH AD above PAY COINS (free first;
+      burying it reads as pushing the paid option), offered only when an ad is
+      genuinely loaded, on a cubit path that can never touch coins.
+- [x] **Interstitial** on the results screen only — never mid-run, never on the
+      death beat, guarded against a re-emitted state showing two for one run.
+- [x] **Banner** on Leaderboards / Awards / Statistics / Trick-Shot only.
+      Opt-in per screen, so it can't land on the Gunsmith, Outfitter or store —
+      asking someone to look at an ad where they're about to spend money.
+      Renders nothing until an ad loads.
+- [x] **`no_ads` gate**, watched live so a purchase takes effect without a
+      restart; reset on sign-out. Rewarded ads stay for everyone.
+- [x] **Settings → Ad privacy** reopens the consent form (EEA/UK/CH only).
+- [x] **Legal v4** — the "we do not show ads" promise deleted, Advertising
+      section added naming the advertising identifier and the three real player
+      choices. Hosted copies re-synced.
+
+### ⬜ Deliberately NOT shipped: coin-granting rewarded ads
+
+`db_reward` placements for **double-coins** and **daily-bonus** are built but
+NOT wired, and this is a considered omission rather than an oversight.
+
+`CoinTxnProcessor` rejects `adReward` from the client — that trust boundary went
+in during Phase 2 precisely so purchased and ad-granted currency can't be
+minted. Granting these client-side would either reopen that hole or credit
+coins that never reach the server, silently diverging the balance and vanishing
+on reinstall.
+
+They need **AdMob server-side verification**: a backend endpoint Google calls
+directly, verifying the signed callback against Google's public keys, then
+crediting server-side exactly like a verified purchase. That's a real piece of
+backend work and belongs with Phase 5, alongside the SSV callback URLs in
+`ADMOB_SETUP.md` §5.
+
+**The two shipped placements (continue, reroll) grant no coins**, so they work
+correctly today.
+
+### Console work still required
+
+- [ ] AdMob → Privacy & messaging: publish the GDPR and US-states messages.
+      **Until the GDPR message exists, EEA/UK users see no ads at all** —
+      the consent gate correctly refuses to request them.
+- [ ] AdMob → App content: "not directed to children" (must match `privacy.md` §5).
+- [ ] Play Console → Data safety: declare advertising data + the ads declaration.
+- [ ] `app-ads.txt` on pranta.dev.
+
+---
+
+## Phase 4 — original scope (reference)
 
 Posture, as decided: **rewarded ads carry the load, one minimal banner, interstitials
 genuinely rare.**
