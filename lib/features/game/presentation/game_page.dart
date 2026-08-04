@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flame/game.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -5,6 +7,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app.dart';
+import '../../../core/ads/ad_service.dart';
 import '../../../core/review/app_review_service.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/theme/app_colors.dart';
@@ -76,6 +79,10 @@ class _GameViewState extends State<_GameView> with WidgetsBindingObserver {
   /// One review prompt per game screen at most (guards rebuilds/re-emits).
   bool _reviewPromptRequested = false;
 
+  /// Same guard for the interstitial — SessionRunOver can re-emit on rebuild,
+  /// and two ads for one run would be indefensible.
+  bool _interstitialOffered = false;
+
   @override
   void initState() {
     super.initState();
@@ -117,11 +124,15 @@ class _GameViewState extends State<_GameView> with WidgetsBindingObserver {
   @override
   Widget build(BuildContext context) {
     final cubit = context.read<GameSessionCubit>();
+    final adService = context.read<AdService>();
 
     return Scaffold(
       body: BlocConsumer<GameSessionCubit, GameSessionState>(
         listener: (context, state) {
-          if (state is SessionRunOver) _maybePromptReview();
+          if (state is SessionRunOver) {
+            _maybePromptReview();
+            _maybeShowInterstitial(context, cubit);
+          }
         },
         builder: (context, state) {
           final game = cubit.game;
@@ -185,6 +196,12 @@ class _GameViewState extends State<_GameView> with WidgetsBindingObserver {
                     cost: state.cost,
                     onBuy: cubit.buyContinue,
                     onDecline: cubit.declineContinue,
+                    // Only offered when an ad is genuinely loaded — see the
+                    // overlay's onWatchAd doc.
+                    onWatchAd: adService
+                            .isRewardedReady(RewardedPlacement.continueRun)
+                        ? () => _watchAdToContinue(context)
+                        : null,
                   ),
                 ),
               if (state is SessionRunEnding)
@@ -220,6 +237,39 @@ class _GameViewState extends State<_GameView> with WidgetsBindingObserver {
       backgroundColor: Colors.transparent,
       builder: (_) => TuningPanel(game: game, hud: hud),
     );
+  }
+
+  /// Offers the between-runs interstitial once the results are up.
+  ///
+  /// Fired on the RESULTS screen, never mid-run and never on the death beat —
+  /// the player has finished, and this is the only moment where a full-screen
+  /// ad isn't interrupting something. Every pacing rule still has to pass; see
+  /// [InterstitialGate].
+  void _maybeShowInterstitial(BuildContext context, GameSessionCubit cubit) {
+    if (_interstitialOffered) return;
+    _interstitialOffered = true;
+
+    final ads = context.read<AdService>();
+    ads.recordRunFinished();
+    unawaited(ads.maybeShowInterstitial(
+      // Tournament and daily-challenge runs are competitive; the gate refuses
+      // them, but pass it explicitly rather than relying on that.
+      isNormalRun: !cubit.dailyChallenge && cubit.tournamentContext == null,
+      sessionEnding: false,
+    ));
+  }
+
+  /// Shows the rewarded ad and, only if the reward is actually earned,
+  /// revives for free. A dismissed or failed ad leaves the overlay exactly as
+  /// it was, so the player can still pay coins or let the run end.
+  Future<void> _watchAdToContinue(BuildContext context) async {
+    final cubit = context.read<GameSessionCubit>();
+    final ads = context.read<AdService>();
+
+    final earned = await ads.showRewarded(RewardedPlacement.continueRun);
+    if (!earned) return;
+
+    cubit.continueViaAd();
   }
 
   void _restart(BuildContext context) {

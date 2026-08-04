@@ -363,6 +363,19 @@ class GameSessionCubit extends Cubit<GameSessionState>
     emit(SessionAwaitingContinue(wave: wave, cost: cost, canAfford: true));
   }
 
+  /// Revives WITHOUT spending coins — the reward for watching an ad.
+  ///
+  /// Deliberately separate from [buyContinue] so the ad path can never
+  /// accidentally take coins, and the coin path can never be triggered by an
+  /// ad callback.
+  void continueViaAd() {
+    final s = state;
+    if (s is! SessionAwaitingContinue) return;
+    Analytics.continueBought(wave: s.wave, cost: 0);
+    game?.reviveForContinue();
+    emit(const SessionPlaying());
+  }
+
   /// Buys the one-per-run continue: spend coins, revive, resume.
   Future<void> buyContinue() async {
     final s = state;

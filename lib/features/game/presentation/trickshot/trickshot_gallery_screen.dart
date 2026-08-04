@@ -20,6 +20,7 @@ class TrickShotGalleryScreen extends StatelessWidget {
     final textTheme = Theme.of(context).textTheme;
     final repo = context.sessionDependencies.trickShotProgressRepository;
     return MetaScaffold(
+      showBanner: true,
       title: 'TRICK-SHOT GALLERY',
       child: StreamBuilder<Map<String, TrickShotProgress>>(
         stream: repo.watchProgress(),

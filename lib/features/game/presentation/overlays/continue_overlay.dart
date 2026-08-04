@@ -15,12 +15,18 @@ class ContinueOverlay extends StatelessWidget {
     required this.cost,
     required this.onBuy,
     required this.onDecline,
+    this.onWatchAd,
   });
 
   final int wave;
   final int cost;
   final VoidCallback onBuy;
   final VoidCallback onDecline;
+
+  /// Null when no rewarded ad is loaded. The button is only rendered when one
+  /// is genuinely ready — offering "watch an ad" and then failing at the most
+  /// emotionally loaded moment in the game is worse than not offering it.
+  final VoidCallback? onWatchAd;
 
   @override
   Widget build(BuildContext context) {
@@ -55,6 +61,24 @@ class ContinueOverlay extends StatelessWidget {
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: AppSpacing.xl),
+                // Watch-an-ad first: it costs nothing, so burying it under the
+                // coin price would read as pushing the paid option.
+                if (onWatchAd != null) ...[
+                  FilledButton.icon(
+                    onPressed: onWatchAd,
+                    icon: const Icon(Icons.play_circle_outline),
+                    label: const Text('WATCH AD  ·  FREE'),
+                    style: FilledButton.styleFrom(
+                      backgroundColor: AppColors.blue400,
+                      foregroundColor: AppColors.ink950,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppSpacing.xl,
+                        vertical: AppSpacing.md,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
+                ],
                 // Buy button.
                 FilledButton.icon(
                   onPressed: onBuy,
