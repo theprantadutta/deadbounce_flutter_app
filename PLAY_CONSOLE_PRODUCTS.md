@@ -17,17 +17,37 @@
 
 Neither is optional — the store cannot work without them.
 
-### a) Grant the service account financial access
+### a) Enable the Play Developer API *(done 2026-08-04)*
 
-**Play Console → Users and permissions → your service account →
-Account permissions → tick "View financial data, orders, and cancellation survey
-responses".**
+Google Cloud Console → APIs & Services → enable **Google Play Android Developer
+API** for project `deadbounce-421b4`. ✅ Confirmed working.
 
-Without it every purchase verification 401s at Google and no purchase is ever
-granted. This is the single most common reason a correctly-coded IAP integration
-fails on first test.
+### b) Invite the service account to the Play Console *(STILL OUTSTANDING)*
 
-### b) Upload a build containing the Billing library
+This is a **separate system** from Google Cloud, and that trips almost everyone:
+enabling the API lets the service account *call* Google, but it still has no
+access to *your developer account*. Verification currently fails with
+`401 permissionDenied` for exactly this reason.
+
+**Play Console → Users and permissions → Invite new users**, and add:
+
+```
+deadbounce-play-verify@deadbounce-421b4.iam.gserviceaccount.com
+```
+
+Then grant it:
+- **Account permissions → "View financial data, orders, and cancellation survey
+  responses"**
+- **App permissions → Deadbounce** (at minimum view access)
+
+Changes usually apply within minutes, but Google allows itself up to 24 hours.
+
+> The server logs a loud, explicit `MISCONFIGURED` error naming these exact
+> steps whenever Google answers 401/403, so this failure never has to be
+> guessed at again. Purchases are **not** lost while it is broken — they stay
+> uncompleted and Play redelivers them once verification works.
+
+### c) Upload a build containing the Billing library
 
 Play only shows products to an app whose **uploaded build** contains Play Billing.
 Upload the current build to **internal testing** at least once before testing
@@ -177,8 +197,9 @@ receipt. The client never says how many coins it should get.
 
 ## 6. Before you flip products to "Active"
 
-- [ ] Service account has **View financial data** (§0a)
-- [ ] A build with Play Billing is uploaded to internal testing (§0b)
+- [x] Play Developer API enabled (§0a)
+- [ ] **Service account invited in Play Console + granted financial access (§0b)**
+- [ ] A build with Play Billing is uploaded to internal testing (§0c)
 - [ ] All six in-app products created with **exact** IDs
 - [ ] Subscription created *(skip until the Bounty Pass is built)*
 - [ ] Prices set
