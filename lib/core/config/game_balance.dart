@@ -971,11 +971,30 @@ class TrajectoryBalance {
 class EconomyBalance {
   // In-run earn rates. Tuned so even the easy early waves give satisfying coin
   // feedback (numbers going up) without a runaway curve.
-  int coinPerKill = 3;
+  //
+  // ---- Phase 3 retune (2026-08-04), do not quietly revert ----
+  // Phase 3 tripled the permanent sink (7,800 -> ~24,000) AND added a
+  // repeatable one (consumables at 200-400 a run). At the old rates a wave-10
+  // run earned ~486, so a player who bought one consumable per run netted ~186
+  // and would have needed ~129 runs to own everything permanent. That makes
+  // the consumable read as a punishment rather than a choice — the exact
+  // opposite of a sink you want players to engage with.
+  //
+  // At these rates a wave-10 run earns ~670. Buying a consumable most runs
+  // still nets ~370, putting "own everything" around 64 runs — a long tail for
+  // a meta game, not a wall. Ignoring consumables gets there in ~36.
+  //
+  // NOTE: derived arithmetically from sink depth, NOT play-tested for feel.
+  // Tune them live in the debug panel and promote what actually feels right.
+  int coinPerKill = 4;
   double dropChance = 0.4; // chance a kill also drops a pickup coin
-  int dropValue = 4;
-  int waveClearBonus = 15;
-  int chainBonusPerKill = 4; // per kill beyond the first in a chain
+  int dropValue = 5;
+  int waveClearBonus = 22;
+
+  /// Per kill beyond the first in a chain. Raised proportionally MORE than the
+  /// flat rates (4 -> 6): chains are the game's signature, so the retune leans
+  /// income toward playing well rather than merely playing long.
+  int chainBonusPerKill = 6;
 
   // ---- Phase 4 permanent coin sinks (normal runs only) ----
   /// Cost of the first draft reroll in a run; each further reroll costs
