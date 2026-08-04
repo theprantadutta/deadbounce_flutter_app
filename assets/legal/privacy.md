@@ -1,6 +1,6 @@
 # Privacy Policy
 
-**Version 3**
+**Version 4**
 
 **Last updated: 4 August 2026**
 
@@ -54,7 +54,7 @@ To understand how the game is played and to find problems, we collect:
 - **Usage analytics** — anonymous, aggregated events describing how you interact with the game: when a run starts and ends, the wave and score you reached, which upgrade cards you chose, which screens you visit, and when you use in-game features such as the shops, daily rewards, and tournaments. These events are linked to your pseudonymous account identifier, never to your email or name.
 - **Crash and error reports** — when the App crashes or hits an unexpected error, we collect the error message, a stack trace, and basic device and app-version information so we can fix it.
 
-This data is used to improve the game. It is **not** used to build advertising profiles, and it is **not** shared with advertisers.
+This usage and diagnostic data is used to improve the game. It is **not** shared with advertisers and is **not** used to build advertising profiles. Advertising is handled separately by Google AdMob, described under Section 4.
 
 We do **not** collect your precise location, contacts, photos, or microphone data, and we do **not** sell your personal information to anyone.
 
@@ -88,6 +88,7 @@ We use the information above to:
 The App relies on the following third-party services, which process limited data on our behalf:
 
 - **Google Firebase Authentication** — to create and manage sign-in (email, Google, and guest accounts).
+- **Google AdMob** — to show advertising in the App, including rewarded ads you choose to watch, a banner on some menu screens, and occasional full-screen ads between runs. AdMob may use an advertising identifier to select and measure ads.
 - **Google Analytics for Firebase** — to collect the anonymous usage events described in Section 1 so we can understand how the game is played and improve it.
 - **Firebase Crashlytics** — to collect crash and error reports so we can diagnose and fix problems.
 - **Google Play Services** — for app distribution and platform features, including the optional in-app rating prompt (the rating is submitted to Google Play; we do not receive your review).
@@ -95,7 +96,23 @@ The App relies on the following third-party services, which process limited data
 
 These providers process your data under their own privacy policies, including Google at https://policies.google.com/privacy.
 
-We do not integrate third-party advertising networks, and the App does not show ads.
+### Advertising
+
+The App shows ads supplied by **Google AdMob**:
+
+- **Rewarded ads** are always optional. You choose to watch one in exchange for an in-game benefit, and nothing is taken away if you don't.
+- A small **banner** appears on some menu screens.
+- An occasional **full-screen ad** may appear between runs. These are deliberately infrequent and never interrupt a run in progress.
+
+To select and measure ads, AdMob may use your device's **advertising identifier** and information such as your approximate (non-precise) location derived from your IP address, device type, and interactions with ads.
+
+**Your choices:**
+
+- If you are in the European Economic Area, the United Kingdom, or Switzerland, we ask for your consent before showing personalised ads, using Google's consent management platform. You can change your choice at any time from **Settings → Ad privacy**.
+- You can reset or delete your advertising identifier in your device settings (Android: Settings → Google → Ads).
+- You can remove banner and full-screen ads permanently by purchasing **Remove Ads** or the **Supporter Pack**. Rewarded ads remain available, because they are optional and give you something in return.
+
+Google's use of advertising data is governed by its own privacy policy at https://policies.google.com/privacy and https://policies.google.com/technologies/partner-sites.
 
 ---
 

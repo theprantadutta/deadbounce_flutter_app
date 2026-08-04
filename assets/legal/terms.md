@@ -1,6 +1,6 @@
 # Terms and Conditions
 
-**Version 3**
+**Version 4**
 
 **Last updated: 4 August 2026**
 

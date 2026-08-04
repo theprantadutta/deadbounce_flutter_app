@@ -8,7 +8,7 @@
 abstract final class LegalDocuments {
   /// Current legal version. Privacy Policy, Terms, and Refund Policy always
   /// share one version — bumping it re-prompts consent for all three together.
-  static const int version = 3;
+  static const int version = 4;
 
   static const String privacyAsset = 'assets/legal/privacy.md';
   static const String termsAsset = 'assets/legal/terms.md';
