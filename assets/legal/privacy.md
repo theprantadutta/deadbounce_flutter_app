@@ -1,8 +1,8 @@
 # Privacy Policy
 
-**Version 2**
+**Version 3**
 
-**Last updated: 4 July 2026**
+**Last updated: 4 August 2026**
 
 This Privacy Policy explains how **Deadbounce** ("the App", "we", "us", or "our") collects, uses, and protects your information when you play the game.
 
@@ -47,6 +47,15 @@ grant, restore, and manage your purchase.
 - Authentication tokens used to keep you signed in.
 - A device identifier and basic diagnostic information provided by the services we use (see Section 4) to keep your account secure.
 
+### Usage and diagnostic data
+
+To understand how the game is played and to find problems, we collect:
+
+- **Usage analytics** — anonymous, aggregated events describing how you interact with the game: when a run starts and ends, the wave and score you reached, which upgrade cards you chose, which screens you visit, and when you use in-game features such as the shops, daily rewards, and tournaments. These events are linked to your pseudonymous account identifier, never to your email or name.
+- **Crash and error reports** — when the App crashes or hits an unexpected error, we collect the error message, a stack trace, and basic device and app-version information so we can fix it.
+
+This data is used to improve the game. It is **not** used to build advertising profiles, and it is **not** shared with advertisers.
+
 We do **not** collect your precise location, contacts, photos, or microphone data, and we do **not** sell your personal information to anyone.
 
 ---
@@ -61,6 +70,7 @@ We use the information above to:
 - Operate the in-game economy: coins, the Gunsmith perks, and the Outfitter cosmetics.
 - Grant, restore, and manage any paid products or subscriptions you buy.
 - Detect and prevent cheating, fraud, and abuse.
+- Understand, in aggregate, how the game is played — which waves players reach, which upgrades they choose, where they stop — so we can balance and improve it.
 - Diagnose crashes and improve the game.
 
 ---
@@ -78,6 +88,8 @@ We use the information above to:
 The App relies on the following third-party services, which process limited data on our behalf:
 
 - **Google Firebase Authentication** — to create and manage sign-in (email, Google, and guest accounts).
+- **Google Analytics for Firebase** — to collect the anonymous usage events described in Section 1 so we can understand how the game is played and improve it.
+- **Firebase Crashlytics** — to collect crash and error reports so we can diagnose and fix problems.
 - **Google Play Services** — for app distribution and platform features, including the optional in-app rating prompt (the rating is submitted to Google Play; we do not receive your review).
 - **Google Play Billing** — to process any optional in-app purchases or subscriptions. Google Play handles the payment; we do not receive or store your card details.
 

@@ -1,8 +1,8 @@
 # Terms and Conditions
 
-**Version 2**
+**Version 3**
 
-**Last updated: 4 July 2026**
+**Last updated: 4 August 2026**
 
 These Terms and Conditions ("Terms") govern your use of **Deadbounce** ("the App", "the game", "we", "us", or "our"). Please read them carefully.
 

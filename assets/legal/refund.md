@@ -1,8 +1,8 @@
 # Refund Policy
 
-**Version 2**
+**Version 3**
 
-**Last updated: 4 July 2026**
+**Last updated: 4 August 2026**
 
 This Refund Policy explains how purchases and refunds work in **Deadbounce** ("the App", "we", "us", or "our"). It forms part of, and should be read together with, our Terms and Conditions and Privacy Policy.
 
