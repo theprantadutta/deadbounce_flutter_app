@@ -61,6 +61,7 @@ dependencies:
   in_app_update: ^4.2.5
   in_app_review: ^2.0.12 # Play in-app review prompt + "Rate" store-listing button
   in_app_purchase: ^3.3.0 # Play Billing; every receipt is verified server-side
+  google_mobile_ads: ^9.0.0 # Phase 4; debug builds always use Google test units
 
 dev_dependencies:
   flutter_test:

@@ -36,6 +36,21 @@
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
+
+        <!-- AdMob application id. The SDK reads this at process start and the
+             app CRASHES ON LAUNCH without it once google_mobile_ads is on the
+             classpath — so it is hardcoded here rather than read from .env,
+             which is loaded far too late in main() to help.
+             Note the TILDE: an app id uses ~, ad unit ids use /. -->
+        <meta-data
+            android:name="com.google.android.gms.ads.APPLICATION_ID"
+            android:value="ca-app-pub-9242904787767394~7497802908" />
+
+        <!-- Ads are only ever requested after UMP consent resolves, so the SDK
+             must not fire requests during initialization. -->
+        <meta-data
+            android:name="com.google.android.gms.ads.DELAY_APP_MEASUREMENT_INIT"
+            android:value="true" />
     </application>
     <!-- Required to query activities that can process text, see:
          https://developer.android.com/training/package-visibility and
