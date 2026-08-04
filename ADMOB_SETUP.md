@@ -136,17 +136,31 @@ Also set:
 
 ---
 
-## 5. Rewarded SSV (do this one WITH me, not before)
+## 5. Rewarded SSV *(endpoint is BUILT — set these once the API is deployed)*
 
-**Ad units → [rewarded unit] → Server-side verification.** Each of the four
-rewarded units needs a callback URL pointing at the Deadbounce backend.
-
-Leave this blank for now — the endpoint doesn't exist yet. It arrives with Phase
-2/4, and the URL will look like:
+**Ad units → [rewarded unit] → Server-side verification → Callback URL.** Set
+the SAME url on all four rewarded units:
 
 ```
 https://<your-api-host>/api/v1/ads/ssv
 ```
+
+Do **not** append any query string — AdMob adds its own, and the signature is
+computed over exactly what it sends.
+
+Then set each unit's **reward item** to the matching string, because the server
+looks up the payout by it (an unknown item pays nothing):
+
+| Ad unit | Reward item | Server pays |
+|---|---|---|
+| `DB Rewarded — Continue` | `continue` | a revive (no coins) |
+| `DB Rewarded — Reroll` | `reroll` | a free reroll (no coins) |
+| `DB Rewarded — Double Coins` | `double_coins` | **600 coins** |
+| `DB Rewarded — Daily Bonus` | `daily_bonus` | **250 coins** |
+
+The **reward amount** you type in the console is ignored on purpose — it would
+otherwise let a console edit decide how much currency to mint. Amounts live in
+`AdRewardDefinitions.cs`.
 
 **Why it matters:** without SSV, a modified client can claim "I watched the ad,
 give me the coins" without watching anything. With it, Google calls the backend

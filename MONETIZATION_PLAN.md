@@ -449,6 +449,21 @@ Analyze clean, 242 tests pass (10 new on the pacing gate), debug APK builds.
       section added naming the advertising identifier and the three real player
       choices. Hosted copies re-synced.
 
+### ✅ Server-side verification (SHIPPED 2026-08-04)
+
+The gap below is now closed. `GET /api/v1/ads/ssv` verifies Google's ECDSA
+signature over the raw query string (DER-encoded, not raw r||s — the easy thing
+to get silently wrong), dedupes on AdMob's `transaction_id` as the primary key,
+and credits from `AdRewardDefinitions` rather than the callback's own
+`reward_amount`. The client attaches its backend user id to each rewarded ad and
+pulls credited payouts via `/ads/rewards/pending` + `/acknowledge`, mirroring
+them locally exactly like IAP coins.
+
+**Remaining: set the callback URL and reward items on the four rewarded ad
+units** — see `ADMOB_SETUP.md` §5 — and deploy the backend.
+
+<details><summary>Original note on why it was deferred</summary>
+
 ### ⬜ Deliberately NOT shipped: coin-granting rewarded ads
 
 `db_reward` placements for **double-coins** and **daily-bonus** are built but
@@ -468,6 +483,8 @@ backend work and belongs with Phase 5, alongside the SSV callback URLs in
 
 **The two shipped placements (continue, reroll) grant no coins**, so they work
 correctly today.
+
+</details>
 
 ### Console work still required
 

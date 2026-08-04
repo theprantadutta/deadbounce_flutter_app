@@ -559,12 +559,16 @@ interstitials genuinely rare.**
 - **Settings → Ad privacy** reopens the consent form, shown only where Google
   provides one. `privacy.md` names it, so it must keep working.
 
-> **NOT DONE: rewarded ads that grant COINS.** Double-coins and daily-bonus are
-> built as placements but not wired, because `CoinTxnProcessor` rejects
-> `adReward` from the client (Phase 2 trust boundary). Granting them
-> client-side would either break that boundary or silently diverge the balance.
-> They need **AdMob server-side verification (SSV)** — a backend callback that
-> credits server-side, like IAP. See `MONETIZATION_PLAN.md`.
+- **Rewarded coins go through SSV, never the client.** `GET /ads/ssv` verifies
+  Google's ECDSA signature over the RAW query string (re-serialising parsed
+  params breaks it) using DER format (`Rfc3279DerSequence`, not raw r||s), and
+  credits from `AdRewardDefinitions` — the callback's own `reward_amount` is
+  ignored so a console edit can't decide how much to mint. Dedupe is AdMob's
+  `transaction_id` as the PK.
+  The client stamps its backend user id via `setRewardUserId` (immediately
+  before `show()`, so a preloaded ad can't carry a stale account) and mirrors
+  credited payouts through `/ads/rewards/pending` + `/acknowledge`. Ledger ids
+  are namespaced `ad:` vs `iap:` so two external identifiers can't collide.
 
 ## Real-money purchases (`features/store/`) — SHIPPED 2026-08-04
 
