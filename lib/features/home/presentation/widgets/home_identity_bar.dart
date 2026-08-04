@@ -179,14 +179,22 @@ class _AvatarBadge extends StatelessWidget {
   }
 }
 
-/// Glowing amber bounty/coins readout.
+/// Glowing amber bounty/coins readout — and the way into the store.
+///
+/// Deliberately NOT a sixth nav tile: Home is contractually no-scroll /
+/// no-overflow and the row already carries five. Hanging the shop off the coin
+/// chip adds no tap target and no layout, and it sits exactly where a player is
+/// already thinking about coins.
 class _CoinReadout extends StatelessWidget {
   const _CoinReadout();
 
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
-    return Container(
+    return InkWell(
+      onTap: () => context.push(Routes.store),
+      borderRadius: AppRadii.pillAll,
+      child: Container(
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: 6),
       decoration: BoxDecoration(
         color: AppColors.amber500.withValues(alpha: 0.12),
@@ -219,7 +227,13 @@ class _CoinReadout extends StatelessWidget {
               ),
             ),
           ),
+          const SizedBox(width: 4),
+          // Small affordance so the chip reads as tappable rather than as a
+          // static readout.
+          const Icon(Icons.add_circle_outline,
+              color: AppColors.amber400, size: 14),
         ],
+      ),
       ),
     );
   }
