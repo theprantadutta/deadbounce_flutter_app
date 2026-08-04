@@ -74,6 +74,38 @@ class AdConsent {
     }
   }
 
+  /// Whether a privacy-options entry point should be shown.
+  ///
+  /// True only in regions where Google's consent platform provides one (the
+  /// EEA, UK and Switzerland), so the Settings row doesn't appear as a dead
+  /// control everywhere else.
+  Future<bool> isPrivacyOptionsRequired() async {
+    try {
+      return await _consent.getPrivacyOptionsRequirementStatus() ==
+          PrivacyOptionsRequirementStatus.required;
+    } catch (e, st) {
+      AppLogger.talker.handle(e, st, '[ads] privacy options check failed');
+      return false;
+    }
+  }
+
+  /// Reopens the consent form so a player can change their choice.
+  ///
+  /// Backs **Settings → Ad privacy**, which the Privacy Policy explicitly
+  /// promises — so this has to keep working, not just exist.
+  Future<void> showPrivacyOptions() async {
+    try {
+      await ConsentForm.showPrivacyOptionsForm((error) {
+        if (error != null) {
+          AppLogger.talker
+              .warning('[ads] privacy options form error: ${error.message}');
+        }
+      });
+    } catch (e, st) {
+      AppLogger.talker.handle(e, st, '[ads] privacy options form failed');
+    }
+  }
+
   /// Clears stored consent. Debug-only helper for re-testing the form —
   /// calling it in production would re-prompt everyone.
   Future<void> reset() async => _consent.reset();

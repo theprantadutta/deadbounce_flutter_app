@@ -253,6 +253,25 @@ class Analytics {
   }) =>
       _send('purchase_result', {'product_id': productId, 'result': result});
 
+  // ---- Ads ----
+  //
+  // started/result as a pair, same shape as the purchase funnel: the drop-off
+  // between offering a rewarded ad and the reward landing is the number that
+  // says whether a placement is worth keeping.
+
+  static Future<void> adRewardStarted({required String placement}) =>
+      _send('ad_reward_started', {'placement': placement});
+
+  /// [result] is `earned` / `abandoned` / `unavailable`. A high `unavailable`
+  /// rate means no fill, not player behaviour — very different problems.
+  static Future<void> adRewardResult({
+    required String placement,
+    required String result,
+  }) =>
+      _send('ad_reward_result', {'placement': placement, 'result': result});
+
+  static Future<void> adInterstitialShown() => _send('ad_interstitial_shown');
+
   static Future<void> trickshotClear({
     required String levelId,
     required int shots,

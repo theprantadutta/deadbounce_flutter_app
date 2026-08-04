@@ -53,7 +53,24 @@ abstract interface class AdService {
 
   /// Shows the between-runs interstitial IF every pacing rule allows it.
   /// Returns true when one was actually shown.
-  Future<bool> maybeShowInterstitial();
+  ///
+  /// [sessionEnding] must be true when the player is leaving (quitting to
+  /// Home) — an ad on the way out is pure annoyance with no session left to
+  /// interrupt.
+  Future<bool> maybeShowInterstitial({
+    bool isNormalRun,
+    bool sessionEnding,
+  });
+
+  /// Call at the end of every run so the pacing gate can count.
+  void recordRunFinished();
+
+  /// Whether to offer an "Ad privacy" entry point (EEA/UK/Switzerland only).
+  Future<bool> isPrivacyOptionsRequired();
+
+  /// Reopens the consent form so the player can change their choice. The
+  /// Privacy Policy promises this exists — it has to keep working.
+  Future<void> showPrivacyOptions();
 
   /// The banner unit id for the meta screens, or null when banners are
   /// suppressed (entitlement, consent, or no configured unit).
@@ -85,7 +102,20 @@ class NoopAdService implements AdService {
   Future<bool> showRewarded(RewardedPlacement placement) async => false;
 
   @override
-  Future<bool> maybeShowInterstitial() async => false;
+  Future<bool> maybeShowInterstitial({
+    bool isNormalRun = true,
+    bool sessionEnding = false,
+  }) async =>
+      false;
+
+  @override
+  void recordRunFinished() {}
+
+  @override
+  Future<bool> isPrivacyOptionsRequired() async => false;
+
+  @override
+  Future<void> showPrivacyOptions() async {}
 
   @override
   String? get bannerUnitId => null;

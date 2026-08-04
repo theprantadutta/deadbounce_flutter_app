@@ -1,8 +1,13 @@
+import 'dart:async';
+
 import 'package:firebase_auth/firebase_auth.dart' show FirebaseAuth;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import 'core/ads/ad_service.dart';
+import 'core/ads/google_ad_service.dart';
 import 'core/analytics/analytics.dart';
+import 'core/logging/app_logger.dart';
 import 'core/audio/music_manager.dart';
 import 'core/di/session_dependencies.dart';
 import 'core/legal/legal_consent_store.dart';
@@ -64,6 +69,10 @@ class _DeadbounceAppState extends State<DeadbounceApp>
   late final AppReviewService _reviewService =
       InAppReviewService(widget.reviewPromptStore);
 
+  /// App-wide, not per-account: the SDK and the consent state belong to the
+  /// device, and tearing it down on sign-out would re-prompt for consent.
+  late final AdService _adService = GoogleAdService();
+
   // Owned here (not in a BlocProvider's create:) so the router can observe it
   // for its auth redirect; closed in dispose().
   late final AuthCubit _authCubit = AuthCubit(
@@ -102,11 +111,15 @@ class _DeadbounceAppState extends State<DeadbounceApp>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    // Initializes the SDK and resolves UMP consent. Fire-and-forget: nothing
+    // in the boot path may wait on an ad network.
+    unawaited(_adService.start());
   }
 
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    unawaited(_adService.dispose());
     _authCubit.close();
     super.dispose();
   }
@@ -135,16 +148,20 @@ class _DeadbounceAppState extends State<DeadbounceApp>
         value: _apiClient,
         child: RepositoryProvider<AppReviewService>.value(
           value: _reviewService,
+          child: RepositoryProvider<AdService>.value(
+            value: _adService,
           child: BlocProvider.value(
             value: _authCubit,
             child: _SessionScope(
               apiClient: _apiClient,
+              adService: _adService,
               child: MaterialApp.router(
                 title: 'Deadbounce',
                 debugShowCheckedModeBanner: false,
                 theme: AppTheme.dark,
                 routerConfig: _router,
               ),
+            ),
             ),
           ),
         ),
@@ -157,9 +174,14 @@ class _DeadbounceAppState extends State<DeadbounceApp>
 /// and provides it (nullable) to the subtree. Pages behind the auth wall
 /// read it with `context.sessionDependencies`.
 class _SessionScope extends StatefulWidget {
-  const _SessionScope({required this.apiClient, required this.child});
+  const _SessionScope({
+    required this.apiClient,
+    required this.adService,
+    required this.child,
+  });
 
   final ApiClient apiClient;
+  final AdService adService;
   final Widget child;
 
   @override
@@ -169,6 +191,19 @@ class _SessionScope extends StatefulWidget {
 class _SessionScopeState extends State<_SessionScope> {
   SessionDependencies? _session;
   String? _sessionUid;
+  StreamSubscription<Set<String>>? _entitlementSub;
+
+  /// Keeps the ad gate in step with what the player owns, so a just-completed
+  /// Remove Ads purchase silences banners and interstitials immediately rather
+  /// than after a restart.
+  void _watchEntitlements(SessionDependencies session) {
+    _entitlementSub?.cancel();
+    _entitlementSub = session.storeRepository.watchEntitlements().listen(
+      (owned) => widget.adService.setAdsRemoved(owned.contains('no_ads')),
+      onError: (Object e, StackTrace st) =>
+          AppLogger.talker.handle(e, st, '[ads] entitlement watch failed'),
+    );
+  }
 
   void _sync(AuthState state) {
     final firebaseUid = FirebaseAuth.instance.currentUser?.uid;
@@ -196,9 +231,15 @@ class _SessionScopeState extends State<_SessionScope> {
         _sessionUid = firebaseUid;
       });
       old?.dispose();
+      _watchEntitlements(fresh);
       // Restore-if-needed + sync engine spin-up, off the build path.
       fresh.start();
     } else if (state is AuthUnauthenticated && _session != null) {
+      _entitlementSub?.cancel();
+      _entitlementSub = null;
+      // Signed out: assume ads are ON again until the next account says
+      // otherwise, so one player's purchase can't silence ads for another.
+      widget.adService.setAdsRemoved(false);
       final old = _session;
       setState(() {
         _session = null;
@@ -210,6 +251,7 @@ class _SessionScopeState extends State<_SessionScope> {
 
   @override
   void dispose() {
+    _entitlementSub?.cancel();
     _session?.dispose();
     super.dispose();
   }

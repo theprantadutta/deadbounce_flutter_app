@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+
+import '../ads/ad_banner.dart';
+import '../ads/ad_service.dart';
 
 import '../theme/app_dimens.dart';
 import 'animated_arena_background.dart';
@@ -15,12 +19,20 @@ class MetaScaffold extends StatelessWidget {
     required this.child,
     this.actions,
     this.bottom,
+    this.showBanner = false,
   });
 
   final String title;
   final Widget child;
   final List<Widget>? actions;
   final PreferredSizeWidget? bottom;
+
+  /// Opt IN to the meta-screen banner. Off by default on purpose: a banner
+  /// that appeared on every MetaScaffold would land on the Gunsmith, the
+  /// Outfitter and the store — asking a player to look at an ad on the screen
+  /// where they're about to spend money. Only the four read-only screens
+  /// (Leaderboards, Awards, Statistics, Trick-Shot gallery) pass true.
+  final bool showBanner;
 
   @override
   Widget build(BuildContext context) {
@@ -53,6 +65,14 @@ class MetaScaffold extends StatelessWidget {
                   ),
                 ),
               ),
+              // Anchored at the bottom, below the safe area, and renders
+              // nothing at all until an ad actually loads — so a screen with
+              // no fill looks exactly as it did before ads existed.
+              if (showBanner)
+                SafeArea(
+                  top: false,
+                  child: AdBanner(adService: context.read<AdService>()),
+                ),
             ],
           ),
         ),
