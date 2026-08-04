@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:deadbounce_flutter_app/core/analytics/analytics.dart';
 import 'package:deadbounce_flutter_app/core/audio/music_manager.dart';
 import 'package:deadbounce_flutter_app/core/logging/app_logger.dart';
 import 'package:equatable/equatable.dart';
@@ -74,6 +75,11 @@ class GameSessionCubit extends Cubit<GameSessionState>
   final Uuid _uuid;
 
   bool get _isTournament => tournamentContext != null;
+
+  /// Analytics slice. Normal runs are the only ones carrying perks, unlocks
+  /// and coin sinks, so nearly every funnel needs splitting on this.
+  String get _analyticsMode =>
+      _isTournament ? 'tournament' : (dailyChallenge ? 'daily' : 'normal');
 
   final HudModel hud = HudModel();
   DeadbounceGame? game;
@@ -190,6 +196,7 @@ class GameSessionCubit extends Cubit<GameSessionState>
       Future<void>.delayed(const Duration(milliseconds: 350)),
     ]);
     if (isClosed) return;
+    Analytics.runStart(mode: _analyticsMode, arenaId: arena.id);
     emit(const SessionPlaying());
   }
 
@@ -230,7 +237,13 @@ class GameSessionCubit extends Cubit<GameSessionState>
   }
 
   void selectUpgrade(UpgradeCard card) {
-    if (state is! SessionUpgradePicking) return;
+    final s = state;
+    if (s is! SessionUpgradePicking) return;
+    Analytics.upgradePicked(
+      cardId: card.id,
+      rarity: card.rarity.name,
+      wave: s.waveCleared,
+    );
     game?.applyUpgrade(card);
     emit(const SessionPlaying());
   }
@@ -239,6 +252,7 @@ class GameSessionCubit extends Cubit<GameSessionState>
 
   @override
   void onWaveCleared(int wave, List<UpgradeCard> choices) {
+    Analytics.waveCleared(mode: _analyticsMode, wave: wave);
     // Fire-and-forget: the engine is already paused, so the brief balance
     // fetch before the picker shows is invisible.
     _emitPicking(wave, choices);
@@ -265,6 +279,11 @@ class GameSessionCubit extends Cubit<GameSessionState>
       amount: -s.rerollCost,
       reason: CoinReason.draftReroll,
     );
+    Analytics.draftReroll(
+      cost: s.rerollCost,
+      rerollIndex: _rerollsThisRun,
+      wave: s.waveCleared,
+    );
     _rerollsThisRun++;
     final fresh = game?.rerollChoices() ?? s.choices;
     await _emitPicking(s.waveCleared, fresh);
@@ -281,6 +300,13 @@ class GameSessionCubit extends Cubit<GameSessionState>
     final cost = GameBalance.I.economy.continueRunCost;
     final balance = await _walletRepository.getBalance();
     if (isClosed) return;
+    // Logged even when they can't afford it: "offered but unaffordable" is
+    // exactly the population a rewarded-ad continue would convert in Phase 4.
+    Analytics.continueOffered(
+      wave: wave,
+      cost: cost,
+      canAfford: balance >= cost,
+    );
     if (balance < cost) {
       game?.endRun();
       return;
@@ -296,6 +322,7 @@ class GameSessionCubit extends Cubit<GameSessionState>
       amount: -s.cost,
       reason: CoinReason.continueRun,
     );
+    Analytics.continueBought(wave: s.wave, cost: s.cost);
     if (isClosed) return;
     game?.reviveForContinue();
     emit(const SessionPlaying());
@@ -303,7 +330,9 @@ class GameSessionCubit extends Cubit<GameSessionState>
 
   /// Declines the continue — the run ends normally (the death beat follows).
   void declineContinue() {
-    if (state is! SessionAwaitingContinue) return;
+    final s = state;
+    if (s is! SessionAwaitingContinue) return;
+    Analytics.continueDeclined(wave: s.wave);
     game?.endRun();
   }
 
@@ -347,6 +376,16 @@ class GameSessionCubit extends Cubit<GameSessionState>
       'cause=${stats.causeOfDeath ?? 'unknown'}',
     );
 
+    Analytics.runEnd(
+      mode: _analyticsMode,
+      wave: stats.waveReached,
+      score: stats.score,
+      kills: stats.kills,
+      durationSeconds: stats.durationSeconds.round(),
+      coinsEarned: stats.coinsEarned,
+      causeOfDeath: stats.causeOfDeath,
+    );
+
     // 1) The death beat: tell the player what happened, hold for a moment.
     final death = _describeDeath(stats);
     _skipBeat = Completer<void>();
@@ -377,6 +416,13 @@ class GameSessionCubit extends Cubit<GameSessionState>
       );
       AppLogger.talker.info('[game] achievements unlocked: ${unlocked.length}');
       unlockedNames = unlocked.map((a) => a.name).toList();
+      // Refresh the cohorting dimensions now that this run is folded in.
+      // Runs inside the beat window, so it costs no visible time.
+      final lifetime = await _statisticsRepository.getStatistics();
+      Analytics.setPlayerProperties(
+        bestWave: lifetime.bestWave,
+        runsPlayed: lifetime.runsPlayed,
+      );
       _syncWorker.requestSync();
     }();
 

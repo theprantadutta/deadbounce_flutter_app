@@ -1,10 +1,12 @@
 import 'dart:async';
 
+import 'package:deadbounce_flutter_app/core/analytics/analytics.dart';
 import 'package:deadbounce_flutter_app/core/logging/app_logger.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/sync/sync_worker.dart';
+import '../../domain/achievement_catalog.dart';
 import '../../domain/entities/achievement_view.dart';
 import '../../domain/repositories/achievements_repository.dart';
 
@@ -34,6 +36,10 @@ class AchievementsCubit extends Cubit<AchievementsState> {
 
   Future<void> claim(String achievementId) async {
     await _repository.claim(achievementId);
+    Analytics.achievementClaim(
+      achievementId: achievementId,
+      reward: AchievementCatalog.byId(achievementId).coinReward,
+    );
     _syncWorker.requestSync();
     // The watchAll stream pushes the refreshed list automatically.
   }

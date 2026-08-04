@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart' show FirebaseAuth;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import 'core/analytics/analytics.dart';
 import 'core/audio/music_manager.dart';
 import 'core/di/session_dependencies.dart';
 import 'core/legal/legal_consent_store.dart';
@@ -169,6 +170,17 @@ class _SessionScopeState extends State<_SessionScope> {
 
   void _sync(AuthState state) {
     final firebaseUid = FirebaseAuth.instance.currentUser?.uid;
+
+    // Identity for analytics: the BACKEND user id (already pseudonymous),
+    // never the Firebase uid or an email. Guests are flagged so their
+    // retention can be compared against linked accounts — the number that
+    // justifies Phase 1.
+    if (state is AuthAuthenticated) {
+      Analytics.identify(state.user.id);
+      Analytics.setPlayerProperties(isGuest: state.user.isAnonymous);
+    } else if (state is AuthUnauthenticated) {
+      Analytics.identify(null);
+    }
 
     if (state is AuthAuthenticated && firebaseUid != null) {
       if (_sessionUid == firebaseUid) return;

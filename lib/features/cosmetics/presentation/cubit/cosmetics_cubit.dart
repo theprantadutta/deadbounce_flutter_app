@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../../core/analytics/analytics.dart';
 import '../../../../core/logging/app_logger.dart';
 import '../../../economy/domain/repositories/wallet_repository.dart';
 import '../../domain/cosmetic_catalog.dart';
@@ -31,6 +32,7 @@ class CosmeticsCubit extends Cubit<CosmeticsState> {
   bool _hasEquipped = false;
 
   void load() {
+    Analytics.shopView('outfitter');
     _balanceSub = _wallet.watchBalance().listen((b) {
       _balance = b;
       _hasBalance = true;
@@ -67,6 +69,11 @@ class CosmeticsCubit extends Cubit<CosmeticsState> {
   Future<String?> buy(Cosmetic cosmetic) async {
     try {
       await _cosmetics.purchase(cosmetic);
+      Analytics.shopPurchase(
+        shop: 'outfitter',
+        itemId: cosmetic.id,
+        cost: cosmetic.cost,
+      );
       return null;
     } on CosmeticPurchaseException catch (e) {
       return e.message;

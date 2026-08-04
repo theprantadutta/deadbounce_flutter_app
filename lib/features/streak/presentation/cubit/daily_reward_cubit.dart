@@ -1,3 +1,4 @@
+import 'package:deadbounce_flutter_app/core/analytics/analytics.dart';
 import 'package:deadbounce_flutter_app/core/logging/app_logger.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -31,6 +32,11 @@ class DailyRewardCubit extends Cubit<DailyRewardState> {
     emit(DailyRewardClaiming(current.streak));
     try {
       final result = await _repository.claimToday();
+      Analytics.dailyClaim(
+        day: result.calendarDay,
+        streak: result.newStreak,
+        reward: result.coinsAwarded,
+      );
       final refreshed = await _repository.getState();
       if (isClosed) return;
       emit(DailyRewardClaimed(refreshed, result));

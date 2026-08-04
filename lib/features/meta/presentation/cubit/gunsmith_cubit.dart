@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../../core/analytics/analytics.dart';
 import '../../../../core/logging/app_logger.dart';
 import '../../../economy/domain/repositories/wallet_repository.dart';
 import '../../domain/meta_catalog.dart';
@@ -29,6 +30,7 @@ class GunsmithCubit extends Cubit<GunsmithState> {
   bool _hasOwned = false;
 
   void load() {
+    Analytics.shopView('gunsmith');
     _balanceSub = _wallet.watchBalance().listen((b) {
       _balance = b;
       _hasBalance = true;
@@ -50,8 +52,16 @@ class GunsmithCubit extends Cubit<GunsmithState> {
   /// Buys the next level of [perk]. Returns null on success, or a message to
   /// show the player on failure (maxed / not enough coins).
   Future<String?> buy(MetaPerk perk) async {
+    // Captured before the purchase — _owned advances once the watch fires.
+    final levelBefore = _owned[perk.id] ?? 0;
     try {
       await _meta.purchase(perk);
+      Analytics.shopPurchase(
+        shop: 'gunsmith',
+        itemId: perk.id,
+        cost: perk.costForLevel(levelBefore),
+        level: levelBefore + 1,
+      );
       return null;
     } on MetaPurchaseException catch (e) {
       return e.message;

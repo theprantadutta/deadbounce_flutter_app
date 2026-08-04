@@ -13,6 +13,11 @@ CustomTransitionPage<T> dbPage<T>({
 }) {
   return CustomTransitionPage<T>(
     key: state.pageKey,
+    // Flows into RouteSettings.name, which is what AnalyticsRouteObserver
+    // reports as the screen name. Prefer the route PATTERN (`/tournament/:id`)
+    // over the resolved path so every tournament detail groups into one screen
+    // instead of one screen per id.
+    name: state.fullPath ?? state.matchedLocation,
     transitionDuration: const Duration(milliseconds: 360),
     reverseTransitionDuration: const Duration(milliseconds: 300),
     transitionsBuilder: _buildTransition,

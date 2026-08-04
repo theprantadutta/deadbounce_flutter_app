@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../app.dart';
+import '../../../../core/analytics/analytics.dart';
 import '../../../../core/logging/app_logger.dart';
 import '../../../../core/router/routes.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -104,6 +105,11 @@ class _TrickShotPageState extends State<TrickShotPage>
         if (!mounted) return;
         // Persist the clear locally (offline-first), keeping the best shots.
         unawaited(progressRepo.recordClear(_level.id, _shotsUsed));
+        Analytics.trickshotClear(
+          levelId: _level.id,
+          shots: _shotsUsed,
+          par: _level.par,
+        );
         setState(() => _complete = true);
       },
     );

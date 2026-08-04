@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:go_router/go_router.dart';
 import 'package:talker_flutter/talker_flutter.dart';
 
+import '../analytics/analytics_route_observer.dart';
 import '../legal/legal_consent_store.dart';
 import '../logging/app_logger.dart';
 import '../../features/auth/presentation/cubit/auth_cubit.dart';
@@ -47,6 +48,9 @@ GoRouter buildRouter({
 }) {
   return GoRouter(
     initialLocation: Routes.splash,
+    // Screen views come from the navigator, not from each page — one wiring
+    // point, and a new route is instrumented for free.
+    observers: [AnalyticsRouteObserver()],
     // Re-evaluate the redirect whenever auth state changes (e.g. sign-out),
     // legal consent is granted, or the walkthrough is completed/skipped — each
     // lets the user past a first-launch gate.

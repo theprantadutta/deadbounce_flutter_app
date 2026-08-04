@@ -7,7 +7,12 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:talker_bloc_logger/talker_bloc_logger.dart';
 
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
+
 import 'app.dart';
+import 'core/analytics/analytics.dart';
+import 'core/analytics/firebase_analytics_service.dart';
+import 'core/analytics/logging_analytics_service.dart';
 import 'core/config/game_balance_store.dart';
 import 'core/legal/legal_consent_store.dart';
 import 'core/logging/app_logger.dart';
@@ -39,6 +44,20 @@ Future<void> main() async {
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
+  // Telemetry. Debug builds log events locally and upload nothing — dev
+  // sessions would visibly skew retention/funnel numbers at indie volume.
+  Analytics.configure(
+    kDebugMode
+        ? const LoggingAnalyticsService()
+        : FirebaseAnalyticsService(),
+  );
+
+  // Crash reporting, release-only for the same reason: a crash on a dev
+  // machine must never count against production crash-free users.
+  await FirebaseCrashlytics.instance.setCrashlyticsCollectionEnabled(
+    !kDebugMode,
+  );
+
   // Portrait-first arena game.
   await SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
@@ -66,6 +85,15 @@ Future<void> main() async {
       return false;
     };
     await GameBalanceStore.load();
+  } else {
+    // Release: the same two hooks, routed to Crashlytics instead. Previously
+    // unset in release, so uncaught framework/platform errors were simply
+    // lost.
+    FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterFatalError;
+    WidgetsBinding.instance.platformDispatcher.onError = (error, stack) {
+      FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
+      return true;
+    };
   }
 
   // Device-level prefs, loaded once and shared. Both stores are per-install

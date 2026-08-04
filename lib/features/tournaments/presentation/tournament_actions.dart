@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/analytics/analytics.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/sync/sync_worker.dart';
 import '../../../core/theme/app_colors.dart';
@@ -43,6 +44,11 @@ Future<void> confirmAndJoinTournament(
   String? error;
   try {
     await repo.join(t.id);
+    Analytics.tournamentJoin(
+      tournamentId: t.id,
+      cadence: t.cadence.name,
+      entryFee: t.entryFeeCoins,
+    );
     syncWorker.requestSync();
   } on TournamentException catch (e) {
     error = e.message;
