@@ -118,6 +118,22 @@ class _SettingsView extends StatelessWidget {
               const _SectionHeader('DATA & SYNC'),
               _SyncSection(session: context.sessionDependencies),
 
+              // ---- STORE ----
+              const _SectionHeader('STORE'),
+              _NavTile(
+                icon: Icons.storefront_outlined,
+                label: 'Supply run',
+                onTap: () => context.push(Routes.store),
+              ),
+              const SizedBox(height: AppSpacing.xs),
+              // Google Play REQUIRES a working restore path for non-consumable
+              // purchases, and it has to be reachable without opening the shop.
+              _ActionTile(
+                icon: Icons.restore,
+                label: 'Restore purchases',
+                onTap: () => _restorePurchases(context),
+              ),
+
               // ---- ACCOUNT ----
               const _SectionHeader('ACCOUNT'),
               _NavTile(
@@ -217,6 +233,33 @@ class _SettingsView extends StatelessWidget {
         },
       ),
     );
+  }
+
+  /// Re-pulls entitlements from the server and replays anything Play still
+  /// considers unfinished. Safe to run any number of times — the server is
+  /// idempotent per purchase token.
+  Future<void> _restorePurchases(BuildContext context) async {
+    final messenger = ScaffoldMessenger.of(context);
+    final store = context.sessionDependencies.storeRepository;
+
+    messenger
+      ..clearSnackBars()
+      ..showSnackBar(const SnackBar(content: Text('Checking for purchases…')));
+
+    String message;
+    try {
+      await store.restore();
+      final owned = await store.currentEntitlements();
+      message = owned.isEmpty
+          ? 'No purchases found for this account.'
+          : 'Restored ${owned.length} purchase(s).';
+    } catch (_) {
+      message = 'Could not reach the store. Check your connection.';
+    }
+
+    messenger
+      ..clearSnackBars()
+      ..showSnackBar(SnackBar(content: Text(message)));
   }
 
   Future<void> _confirmSignOut(BuildContext context) async {

@@ -44,6 +44,7 @@ class Cosmetic {
     required this.cost,
     required this.primary,
     required this.secondary,
+    this.grantOnly = false,
   });
 
   final String id;
@@ -54,7 +55,17 @@ class Cosmetic {
   final Color primary;
   final Color secondary;
 
-  bool get isFree => cost == 0;
+  /// Cannot be bought with coins — it only arrives as a grant from a verified
+  /// real-money purchase (the Supporter Pack).
+  ///
+  /// Needed because `cost: 0` means "free stock, everybody owns it". An
+  /// exclusive is also priced at 0 in coin terms, so without this flag it
+  /// would be handed to every player on install — the opposite of exclusive.
+  final bool grantOnly;
+
+  /// Free stock looks, implicitly owned by everyone. Grant-only items are
+  /// deliberately excluded even though they cost no coins.
+  bool get isFree => cost == 0 && !grantOnly;
 }
 
 /// The cosmetics store. Pure Dart definitions; ownership/equip live in Drift.
@@ -99,6 +110,18 @@ abstract final class CosmeticCatalog {
       cost: 350,
       primary: AppColors.error,
       secondary: Color(0xFFFFB3BB),
+    ),
+    // Granted by the Supporter Pack only — never on sale for coins. Still
+    // strictly visual, so it stays fair in every mode.
+    Cosmetic(
+      id: 'trail_supporter',
+      name: "Gunsmith's Gratitude",
+      blurb: 'A molten gold-and-white streak. Supporters only.',
+      slot: CosmeticSlot.bulletTrail,
+      cost: 0,
+      grantOnly: true,
+      primary: Color(0xFFFFE9A8),
+      secondary: Color(0xFFFFFFFF),
     ),
 
     // Gunslingers (primary = core, secondary = trim).

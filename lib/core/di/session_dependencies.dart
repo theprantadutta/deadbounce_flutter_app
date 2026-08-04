@@ -27,6 +27,9 @@ import '../../features/runs/data/repositories/runs_repository_impl.dart';
 import '../../features/runs/domain/repositories/runs_repository.dart';
 import '../../features/streak/data/repositories/login_streak_repository_impl.dart';
 import '../../features/streak/domain/repositories/login_streak_repository.dart';
+import '../../features/store/data/datasources/purchase_api.dart';
+import '../../features/store/data/repositories/store_repository_impl.dart';
+import '../../features/store/domain/repositories/store_repository.dart';
 import '../database/app_database.dart';
 import '../database/connection/database_factory.dart';
 import '../network/api_client.dart';
@@ -63,6 +66,7 @@ class SessionDependencies {
     required this.tournamentRepository,
     required this.cosmeticsRepository,
     required this.trickShotProgressRepository,
+    required this.storeRepository,
   });
 
   factory SessionDependencies.create({
@@ -84,6 +88,12 @@ class SessionDependencies {
       db: db,
       outboxWriter: outboxWriter,
     );
+    // Hoisted: the store mirrors server-granted coins through the same wallet,
+    // so both must be the SAME instance.
+    final walletRepository = WalletRepositoryImpl(
+      db: db,
+      outboxWriter: outboxWriter,
+    );
 
     return SessionDependencies._(
       db: db,
@@ -94,10 +104,7 @@ class SessionDependencies {
       syncWorker: syncWorker,
       snapshotRestorer: SnapshotRestorer(db: db, api: syncApi),
       runsRepository: RunsRepositoryImpl(db: db, outboxWriter: outboxWriter),
-      walletRepository: WalletRepositoryImpl(
-        db: db,
-        outboxWriter: outboxWriter,
-      ),
+      walletRepository: walletRepository,
       loginStreakRepository: loginStreakRepository,
       dailyChallengeRepository: DailyChallengeRepositoryImpl(db: db),
       achievementsRepository: AchievementsRepositoryImpl(
@@ -109,7 +116,7 @@ class SessionDependencies {
         db: db,
         api: LeaderboardApi(apiClient),
       ),
-      profileRepository: ProfileRepositoryImpl(db),
+      profileRepository: ProfileRepositoryImpl(db, outboxWriter),
       settingsRepository: SettingsRepositoryImpl(db),
       statisticsRepository: StatisticsRepositoryImpl(db),
       metaRepository: MetaRepositoryImpl(db: db, outboxWriter: outboxWriter),
@@ -123,6 +130,11 @@ class SessionDependencies {
         outboxWriter: outboxWriter,
       ),
       trickShotProgressRepository: TrickShotProgressRepository(db),
+      storeRepository: StoreRepositoryImpl(
+        db: db,
+        api: PurchaseApi(apiClient),
+        wallet: walletRepository,
+      ),
     );
   }
 
@@ -146,6 +158,7 @@ class SessionDependencies {
   final TournamentRepository tournamentRepository;
   final CosmeticsRepository cosmeticsRepository;
   final TrickShotProgressRepository trickShotProgressRepository;
+  final StoreRepository storeRepository;
 
   bool _started = false;
   bool _disposed = false;
@@ -172,6 +185,9 @@ class SessionDependencies {
       // A sign-out mid-restore may have disposed us; don't spin the engine up
       // against a closing DB.
       if (!_disposed) {
+        // Attaches the Play purchase listener and replays anything left
+        // unfinished — the recovery path for "paid, then the app died".
+        storeRepository.start();
         syncTriggers.start();
         // Don't block readiness on the first drain — fire and forget.
         unawaited(syncWorker.start());
@@ -200,6 +216,7 @@ class SessionDependencies {
     // syncWorker.dispose() awaits its in-flight drain, so by the time we close
     // the DB no batch is still settling against it.
     await syncWorker.dispose();
+    await storeRepository.dispose();
     await syncTriggers.dispose();
     syncStatus.dispose();
     await db.close();

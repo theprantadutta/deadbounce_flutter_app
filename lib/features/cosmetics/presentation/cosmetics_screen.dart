@@ -111,6 +111,10 @@ class _SlotList extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
       children: [
         for (final c in items)
+          // Grant-only looks aren't for sale here, so showing one you don't
+          // own is just a tease with no button that works. Once granted, it
+          // appears and equips like anything else.
+          if (!c.grantOnly || state.owned.contains(c.id))
           Padding(
             padding: const EdgeInsets.only(bottom: AppSpacing.sm),
             child: _CosmeticTile(

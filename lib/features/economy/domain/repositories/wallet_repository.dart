@@ -15,5 +15,21 @@ abstract interface class WalletRepository {
     String? runId,
   });
 
+  /// Mirrors coins the SERVER has already credited (a verified purchase, later
+  /// a rewarded-ad payout) into the local ledger — **without** an outbox event.
+  ///
+  /// The missing sync is the entire point. These reasons are server-authoritative
+  /// and the backend rejects them over the sync channel; writing one locally is
+  /// purely so the balance updates instantly and reads correctly offline.
+  ///
+  /// [id] must be stable for the granting event (e.g. derived from the Play
+  /// purchase token) so a replay collides on the ledger primary key instead of
+  /// crediting twice.
+  Future<void> creditServerGranted({
+    required String id,
+    required int amount,
+    required CoinReason reason,
+  });
+
   Future<List<CoinTransaction>> recentTransactions({int limit});
 }

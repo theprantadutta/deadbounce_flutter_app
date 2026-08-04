@@ -30,6 +30,9 @@ abstract final class Routes {
   static const String credits = '/credits';
   static const String gunsmith = '/gunsmith';
   static const String cosmetics = '/outfitter';
+
+  /// The real-money store (Phase 2 monetization).
+  static const String store = '/store';
   static const String trickShot = '/trick-shot';
 
   /// Trick-shot run — append the level id, e.g. `/trick-shot/run/<id>`.

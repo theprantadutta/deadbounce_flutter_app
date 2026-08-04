@@ -202,6 +202,24 @@ class SnapshotRestorer {
           );
         }
 
+        // Paid entitlements (remove-ads, supporter, an active pass). Purely
+        // server-owned — this is the half of "purchases survive a reinstall"
+        // that happens without the player having to ask; the explicit
+        // Settings → Restore purchases is the other half.
+        final entitlementRows = <EntitlementsCompanion>[];
+        for (final e in (snapshot['entitlements'] as List? ?? const [])
+            .cast<Map<String, dynamic>>()) {
+          final key = e['key'] as String?;
+          if (key == null || key.isEmpty) continue;
+          entitlementRows.add(EntitlementsCompanion(
+            entitlementKey: Value(key),
+            productId: Value(e['product_id'] as String? ?? ''),
+            grantedAt: Value(_parseUtcMs(e['granted_at']) ?? nowMs),
+            expiresAt: Value(_parseUtcMs(e['expires_at'])),
+          ));
+        }
+        await _db.purchasesDao.replaceEntitlements(entitlementRows);
+
         await _db.profileDao.setInitialSyncCompleted();
       });
 
@@ -218,6 +236,13 @@ class SnapshotRestorer {
     num n => n.toInt(),
     _ => 0,
   };
+
+  /// Parses an ISO-8601 timestamp into unix ms, or null. Tolerant by design:
+  /// a malformed date must not abort a whole account restore.
+  static int? _parseUtcMs(dynamic v) {
+    if (v is! String || v.isEmpty) return null;
+    return DateTime.tryParse(v)?.toUtc().millisecondsSinceEpoch;
+  }
 
   /// Maps an equipped-slot key in either casing (bullet_trail / bulletTrail)
   /// to the canonical [CosmeticSlot] name, or null if unrecognized.

@@ -7,6 +7,7 @@ import 'daos/cosmetics_dao.dart';
 import 'daos/leaderboard_cache_dao.dart';
 import 'daos/meta_upgrades_dao.dart';
 import 'daos/profile_dao.dart';
+import 'daos/purchases_dao.dart';
 import 'daos/runs_dao.dart';
 import 'daos/settings_dao.dart';
 import 'daos/stats_dao.dart';
@@ -24,6 +25,7 @@ import 'tables/leaderboard_cache_table.dart';
 import 'tables/meta_upgrades_table.dart';
 import 'tables/player_profile_table.dart';
 import 'tables/player_stats_table.dart';
+import 'tables/purchase_tables.dart';
 import 'tables/runs_table.dart';
 import 'tables/settings_table.dart';
 import 'tables/stat_counters_table.dart';
@@ -58,6 +60,8 @@ part 'app_database.g.dart';
     CosmeticOwned,
     CosmeticEquipped,
     TrickShotProgress,
+    Entitlements,
+    ProcessedPurchases,
   ],
   daos: [
     ProfileDao,
@@ -74,13 +78,14 @@ part 'app_database.g.dart';
     TournamentDao,
     CosmeticsDao,
     TrickShotDao,
+    PurchasesDao,
   ],
 )
 class AppDatabase extends _$AppDatabase {
   AppDatabase(super.e);
 
   @override
-  int get schemaVersion => 6;
+  int get schemaVersion => 7;
 
   /// Wipes all gameplay/account data on this device in one transaction,
   /// **preserving the settings table** (device preferences). Clearing the
@@ -105,6 +110,8 @@ class AppDatabase extends _$AppDatabase {
         await delete(cosmeticOwned).go();
         await delete(cosmeticEquipped).go();
         await delete(trickShotProgress).go();
+        await delete(entitlements).go();
+        await delete(processedPurchases).go();
       });
 
   @override
@@ -135,6 +142,10 @@ class AppDatabase extends _$AppDatabase {
           }
           if (from < 6) {
             await m.createTable(trickShotProgress);
+          }
+          if (from < 7) {
+            await m.createTable(entitlements);
+            await m.createTable(processedPurchases);
           }
           // Indexes are added with IF NOT EXISTS, so this is safe on every
           // upgrade path — and crucially repairs installs created before the

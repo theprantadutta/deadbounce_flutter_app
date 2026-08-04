@@ -28,6 +28,7 @@ import '../../features/meta/presentation/gunsmith_screen.dart';
 import '../../features/profile/presentation/profile_screen.dart';
 import '../../features/settings/presentation/settings_screen.dart';
 import '../../features/splash/presentation/splash_page.dart';
+import '../../features/store/presentation/store_screen.dart';
 import '../../features/statistics/presentation/statistics_screen.dart';
 import '../../features/tournaments/presentation/tournament_detail_screen.dart';
 import '../../features/tournaments/presentation/tournament_run_page.dart';
@@ -204,6 +205,13 @@ GoRouter buildRouter({
         path: Routes.cosmetics,
         pageBuilder: (context, state) =>
             dbPage(state: state, child: const CosmeticsScreen()),
+      ),
+      GoRoute(
+        path: Routes.store,
+        pageBuilder: (context, state) => dbPage(
+          state: state,
+          child: const StoreScreen(),
+        ),
       ),
       GoRoute(
         path: Routes.trickShot,

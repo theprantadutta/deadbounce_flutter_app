@@ -53,6 +53,26 @@ class WalletRepositoryImpl implements WalletRepository {
   }
 
   @override
+  Future<void> creditServerGranted({
+    required String id,
+    required int amount,
+    required CoinReason reason,
+  }) async {
+    final txn = CoinTransaction(
+      id: id,
+      amount: amount,
+      reason: reason,
+      createdAt: DateTime.now().toUtc(),
+    );
+
+    // NO outbox enqueue — deliberate. See WalletRepository.creditServerGranted.
+    await _db.coinLedgerDao.insertTransaction(_toRow(txn));
+
+    AppLogger.talker
+        .info('[economy] server-granted $amount coins (${reason.name})');
+  }
+
+  @override
   Future<List<CoinTransaction>> recentTransactions({int limit = 50}) async {
     final rows = await _db.coinLedgerDao.recentTransactions(limit: limit);
     return rows.map(_fromRow).toList();

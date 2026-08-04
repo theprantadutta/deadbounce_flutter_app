@@ -55,6 +55,13 @@ class CosmeticsRepositoryImpl implements CosmeticsRepository {
   @override
   Future<void> purchase(Cosmetic cosmetic) async {
     if (cosmetic.isFree) return; // nothing to buy
+    // Grant-only items arrive from a verified real-money purchase, never the
+    // coin shop — its cost is 0, so without this guard it would be free.
+    if (cosmetic.grantOnly) {
+      throw const CosmeticPurchaseException(
+        'That one comes with the Supporter Pack.',
+      );
+    }
     final nowMs = DateTime.now().toUtc().millisecondsSinceEpoch;
 
     await _db.transaction(() async {
