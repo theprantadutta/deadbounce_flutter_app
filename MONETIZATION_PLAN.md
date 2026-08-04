@@ -388,10 +388,12 @@ nothing to buy again, so coin packs still don't have durable demand.
 
 **Still open — needs a human, not me:**
 
-- [ ] **Play-test the loadout sheet.** Once you own items, is the extra tap
-      before a run acceptable? It's already skipped entirely when stock is
-      empty, so this only affects engaged players. If it drags, move it to a
-      Home affordance instead of gating the launch button.
+- [x] ~~Play-test the loadout sheet~~ — pre-empted instead. The selection is
+      remembered (per-account, filtered to what's still in stock) so the sheet
+      opens pre-ticked, and **RIDE AGAIN carries the same kit**, so a retry
+      never returns to Home. Combined with the skip-when-empty rule, an engaged
+      player's loop is: tap orb → tap RIDE OUT. Still worth a look on device,
+      but the tax it was meant to catch is gone.
 - [ ] **Play-test the retuned earn rates.** The arithmetic says ~64 runs; only
       playing says whether that *feels* like progress or a grind.
 

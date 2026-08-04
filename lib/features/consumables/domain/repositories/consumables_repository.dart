@@ -31,4 +31,16 @@ abstract interface class ConsumablesRepository {
   /// Ids the player doesn't actually hold are skipped rather than throwing, so
   /// a stale picker selection can never block a run from starting.
   Future<ConsumableLoadout> consume(Iterable<String> itemIds);
+
+  /// The loadout the player last rode out with.
+  ///
+  /// Exists so the picker opens pre-ticked and a retry keeps the same kit —
+  /// re-choosing an identical loadout before every run is the tax that makes a
+  /// pre-run screen feel like a door rather than a decision.
+  ///
+  /// Filtered to what is still in stock, so an item that ran out silently drops
+  /// off instead of being offered and then skipped.
+  Future<List<String>> lastSelection();
+
+  Future<void> saveSelection(List<String> itemIds);
 }

@@ -232,8 +232,12 @@ class _GameViewState extends State<_GameView> with WidgetsBindingObserver {
       );
       return;
     }
+    // Carry the same loadout into the retry so the "one more run" loop stays
+    // one tap. consume() skips anything no longer in stock, so a kit that ran
+    // out simply doesn't apply rather than blocking the restart.
     context.pushReplacement(
       cubit.dailyChallenge ? Routes.dailyChallengeRun : Routes.game,
+      extra: cubit.dailyChallenge ? null : cubit.lastRequestedConsumables,
     );
   }
 }

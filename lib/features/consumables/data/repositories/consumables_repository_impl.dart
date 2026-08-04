@@ -109,6 +109,33 @@ class ConsumablesRepositoryImpl implements ConsumablesRepository {
     return ConsumableLoadout.fromIds(spent);
   }
 
+  /// Stored in the per-account key-value settings table rather than a column
+  /// of its own — it is a UI preference, not game state, and does not sync.
+  /// A loadout remembered from another device would be wrong anyway: the stock
+  /// it refers to may already be spent here.
+  static const _selectionKey = 'consumables.last_selection';
+
+  @override
+  Future<List<String>> lastSelection() async {
+    final raw = await _db.settingsDao.get(_selectionKey);
+    if (raw == null || raw.isEmpty) return const [];
+
+    final stock = await this.stock();
+    return raw
+        .split(',')
+        .where((id) => id.isNotEmpty)
+        .where(ConsumableCatalog.isKnown)
+        // Drop anything no longer held: offering it and then skipping it at
+        // run start would look like the item was eaten.
+        .where((id) => (stock[id] ?? 0) > 0)
+        .take(ConsumableCatalog.maxEquipped)
+        .toList();
+  }
+
+  @override
+  Future<void> saveSelection(List<String> itemIds) =>
+      _db.settingsDao.set(_selectionKey, itemIds.join(','));
+
   /// Enqueues the full stock aggregate (last-writer-wins server-side),
   /// mirroring MetaRepositoryImpl / CosmeticsRepositoryImpl. The coin spend
   /// rides its own coinTxn; this carries the STOCK so paid items survive a

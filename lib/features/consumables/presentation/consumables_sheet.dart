@@ -18,13 +18,17 @@ import '../domain/repositories/consumables_repository.dart';
 /// one tap for everyone who hasn't bought in — a shop everybody must walk
 /// through before every run would tax the "one more run" loop, which is the
 /// loop the whole game depends on.
-Future<List<String>?> showConsumablesSheet(BuildContext context) {
+Future<List<String>?> showConsumablesSheet(
+  BuildContext context, {
+  List<String> initialSelection = const [],
+}) {
   return showModalBottomSheet<List<String>>(
     context: context,
     backgroundColor: Colors.transparent,
     isScrollControlled: true,
     builder: (_) => _ConsumablesSheet(
       repository: context.sessionDependencies.consumablesRepository,
+      initialSelection: initialSelection,
     ),
   );
 }
@@ -44,21 +48,39 @@ Future<List<String>?> maybePickConsumables(BuildContext context) async {
   // empty shop to someone who just wants to play.
   if (!holdsSomething) return const <String>[];
 
-  return showConsumablesSheet(context);
+  // Pre-ticked with last run's kit, so the common case is a single tap on
+  // RIDE OUT rather than re-picking the same items every time.
+  final remembered = await repository.lastSelection();
+  if (!context.mounted) return null;
+
+  return showConsumablesSheet(context, initialSelection: remembered);
 }
 
 class _ConsumablesSheet extends StatefulWidget {
-  const _ConsumablesSheet({required this.repository});
+  const _ConsumablesSheet({
+    required this.repository,
+    required this.initialSelection,
+  });
 
   final ConsumablesRepository repository;
+  final List<String> initialSelection;
 
   @override
   State<_ConsumablesSheet> createState() => _ConsumablesSheetState();
 }
 
 class _ConsumablesSheetState extends State<_ConsumablesSheet> {
-  final Set<String> _selected = {};
+  late final Set<String> _selected = {...widget.initialSelection};
   String? _busyId;
+
+  Future<void> _rideOut() async {
+    final selection = _selected.toList();
+    // Remembered for the next run AND for RIDE AGAIN. Saved before popping so
+    // it survives even if the run is abandoned immediately.
+    await widget.repository.saveSelection(selection);
+    if (!mounted) return;
+    Navigator.pop(context, selection);
+  }
 
   Future<void> _buy(Consumable item) async {
     if (_busyId != null) return;
@@ -149,8 +171,7 @@ class _ConsumablesSheetState extends State<_ConsumablesSheet> {
                   label: _selected.isEmpty
                       ? 'RIDE OUT EMPTY-HANDED'
                       : 'RIDE OUT (${_selected.length})',
-                  onPressed: () =>
-                      Navigator.pop(context, _selected.toList()),
+                  onPressed: _rideOut,
                 ),
               ],
             ),

@@ -183,4 +183,56 @@ void main() {
       expect(ConsumableCatalog.maxEquipped, lessThan(ConsumableCatalog.all.length));
     });
   });
+
+  group('remembered loadout', () {
+    test('is empty before anything is saved', () async {
+      expect(await repo.lastSelection(), isEmpty);
+    });
+
+    test('round-trips a saved selection', () async {
+      await giveCoins(5000);
+      await repo.buy(heart);
+      await repo.saveSelection([heart.id]);
+
+      expect(await repo.lastSelection(), [heart.id]);
+    });
+
+    test('drops items no longer in stock', () async {
+      // Offering an item that would then be skipped at run start looks
+      // exactly like the item being eaten.
+      await giveCoins(5000);
+      await repo.buy(heart);
+      await repo.saveSelection([heart.id]);
+      await repo.consume([heart.id]);
+
+      expect(await repo.lastSelection(), isEmpty);
+    });
+
+    test('drops ids that left the catalog', () async {
+      await repo.saveSelection(['a_removed_item']);
+      expect(await repo.lastSelection(), isEmpty);
+    });
+
+    test('never returns more than a run can carry', () async {
+      await giveCoins(20000);
+      for (final item in ConsumableCatalog.all) {
+        await repo.buy(item);
+      }
+      await repo.saveSelection(ConsumableCatalog.all.map((c) => c.id).toList());
+
+      expect(
+        (await repo.lastSelection()).length,
+        lessThanOrEqualTo(ConsumableCatalog.maxEquipped),
+      );
+    });
+
+    test('an empty save clears it', () async {
+      await giveCoins(5000);
+      await repo.buy(heart);
+      await repo.saveSelection([heart.id]);
+      await repo.saveSelection([]);
+
+      expect(await repo.lastSelection(), isEmpty);
+    });
+  });
 }

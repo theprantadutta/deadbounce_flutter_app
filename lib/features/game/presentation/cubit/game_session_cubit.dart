@@ -100,8 +100,13 @@ class GameSessionCubit extends Cubit<GameSessionState>
   int _freeRerollsLeft = 0;
 
   /// The one-run items selected for the NEXT run. Set by the pre-run picker;
-  /// cleared as soon as they're spent so a retry can't reuse them.
+  /// cleared as soon as they're spent so the same start can't spend twice.
   List<String> pendingConsumables = const [];
+
+  /// What the player asked to ride out with, kept after [pendingConsumables]
+  /// is cleared so RIDE AGAIN can carry the same kit without a trip back to
+  /// Home. Only what is still in stock actually gets spent.
+  List<String> lastRequestedConsumables = const [];
 
   /// Reroll is a normal-run coin sink; seeded modes keep their draws pure.
   bool get _rerollEnabled => !dailyChallenge && !_isTournament;
@@ -185,8 +190,9 @@ class GameSessionCubit extends Cubit<GameSessionState>
       consumableLoadout =
           await _consumablesRepository.consume(pendingConsumables);
     }
-    // Cleared unconditionally: a selection must never survive into a retry,
-    // whether or not it was actually spendable.
+    // Remembered for RIDE AGAIN, then cleared so this same start can never
+    // spend twice.
+    lastRequestedConsumables = pendingConsumables;
     pendingConsumables = const [];
     _freeRerollsLeft = consumableLoadout.freeRerolls;
 
