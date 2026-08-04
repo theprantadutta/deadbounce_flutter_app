@@ -14,6 +14,15 @@ class ProfileCubit extends Cubit<ProfileState> {
 
   Future<void> load() async {
     emit(const ProfileLoading());
+    await _fetch();
+  }
+
+  /// Reloads WITHOUT flashing the loading spinner — for in-place updates like
+  /// the guest→linked flip, where the screen is already populated and blanking
+  /// it would read as a glitch.
+  Future<void> refresh() => _fetch();
+
+  Future<void> _fetch() async {
     try {
       final profile = await _repository.getProfile();
       if (isClosed) return;

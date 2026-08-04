@@ -1,13 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../app.dart';
+import '../../../core/analytics/analytics.dart';
+import '../../../core/router/routes.dart';
 import '../../../core/sync/sync_status.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_dimens.dart';
 import '../../../core/widgets/db_button.dart';
 import '../../../core/widgets/meta_scaffold.dart';
 import '../../../core/widgets/player_avatar.dart';
+import '../../auth/domain/entities/account_link_result.dart';
 import '../../auth/presentation/cubit/auth_cubit.dart';
 import '../domain/entities/profile_data.dart';
 import 'cubit/profile_cubit.dart';
@@ -125,21 +129,7 @@ class _ProfileView extends StatelessWidget {
                 ),
                 if (data.isGuest) ...[
                   const SizedBox(height: AppSpacing.sm),
-                  DbSecondaryButton(
-                    label: 'LINK AN ACCOUNT',
-                    icon: Icons.link,
-                    onPressed: () {
-                      ScaffoldMessenger.of(context)
-                        ..hideCurrentSnackBar()
-                        ..showSnackBar(
-                          const SnackBar(
-                            content: Text(
-                              'Account linking is coming soon, partner.',
-                            ),
-                          ),
-                        );
-                    },
-                  ),
+                  const _LinkAccountButton(),
                 ],
                 const SizedBox(height: AppSpacing.lg),
                 Text('LIFETIME', style: textTheme.labelMedium),
@@ -150,6 +140,132 @@ class _ProfileView extends StatelessWidget {
           };
         },
       ),
+    );
+  }
+}
+
+/// The guest→permanent upgrade CTA.
+///
+/// Stateful because the whole flow — picker, Firebase link, token re-exchange,
+/// local write — is one user-visible action that must show a single spinner and
+/// must not be double-tappable.
+class _LinkAccountButton extends StatefulWidget {
+  const _LinkAccountButton();
+
+  @override
+  State<_LinkAccountButton> createState() => _LinkAccountButtonState();
+}
+
+class _LinkAccountButtonState extends State<_LinkAccountButton> {
+  bool _busy = false;
+
+  Future<void> _link() async {
+    if (_busy) return;
+    setState(() => _busy = true);
+
+    // Captured before the first await — the session can be torn down and
+    // rebuilt underneath us if the user ends up switching accounts.
+    final messenger = ScaffoldMessenger.of(context);
+    final session = context.sessionDependencies;
+    final profileCubit = context.read<ProfileCubit>();
+    final authCubit = context.read<AuthCubit>();
+
+    final result = await authCubit.linkWithGoogle();
+    if (!mounted) return;
+    setState(() => _busy = false);
+
+    switch (result) {
+      case AccountLinkSuccess(:final user):
+        Analytics.accountLink(provider: 'google', result: 'success');
+        // Local truth + the outbox event, atomically. Only after Firebase and
+        // the backend have both accepted the link.
+        await session.profileRepository.markAccountLinked(
+          provider: 'google',
+          displayName: user.displayName,
+          photoUrl: user.photoUrl,
+        );
+        session.syncWorker.requestSync();
+        await profileCubit.refresh();
+        if (!mounted) return;
+        messenger
+          ..hideCurrentSnackBar()
+          ..showSnackBar(
+            const SnackBar(
+              content: Text(
+                'Account linked. Your progress is safe now, partner.',
+              ),
+            ),
+          );
+
+      case AccountLinkCancelled():
+        // Backed out of the picker — say nothing.
+        Analytics.accountLink(provider: 'google', result: 'cancelled');
+
+      case AccountLinkCredentialInUse(:final email):
+        Analytics.accountLink(provider: 'google', result: 'credential_in_use');
+        await _showConflictDialog(email);
+
+      case AccountLinkFailed(:final message):
+        Analytics.accountLink(provider: 'google', result: 'failed');
+        messenger
+          ..hideCurrentSnackBar()
+          ..showSnackBar(SnackBar(content: Text(message)));
+    }
+  }
+
+  /// The one case we cannot resolve for them: that Google account already has
+  /// its own Deadbounce progress, and we cannot merge two histories. Spell out
+  /// exactly what is lost before offering the switch.
+  Future<void> _showConflictDialog(String? email) async {
+    final who = (email == null || email.isEmpty) ? 'That Google account' : email;
+    final textTheme = Theme.of(context).textTheme;
+
+    final switchAccounts = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppColors.ink800,
+        title: const Text('ALREADY CLAIMED'),
+        content: Text(
+          '$who already has its own Deadbounce progress.\n\n'
+          'We can\'t merge two sets of progress. You can keep playing as a '
+          'guest on this device, or sign in to that account instead — but this '
+          "device's guest progress would be left behind.",
+          style: textTheme.bodyMedium,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('KEEP GUEST PROGRESS'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: TextButton.styleFrom(foregroundColor: AppColors.error),
+            child: const Text('SIGN IN INSTEAD'),
+          ),
+        ],
+      ),
+    );
+
+    if (switchAccounts != true || !mounted) return;
+
+    final authCubit = context.read<AuthCubit>();
+    setState(() => _busy = true);
+    // Signing in with the existing Google identity swaps the Firebase UID, so
+    // _SessionScope tears this session down and builds the other account's.
+    // Leave the screen first — it belongs to the session being disposed.
+    await authCubit.signInWithGoogle();
+    if (!mounted) return;
+    setState(() => _busy = false);
+    context.go(Routes.home);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return DbSecondaryButton(
+      label: 'LINK AN ACCOUNT',
+      icon: Icons.link,
+      loading: _busy,
+      onPressed: _link,
     );
   }
 }

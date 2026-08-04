@@ -18,6 +18,7 @@ import 'features/auth/data/datasources/auth_local_datasource.dart';
 import 'features/auth/data/datasources/auth_remote_datasource.dart';
 import 'features/auth/data/repositories/auth_repository_impl.dart';
 import 'features/auth/domain/repositories/auth_repository.dart';
+import 'features/auth/domain/usecases/link_with_google.dart';
 import 'features/auth/domain/usecases/restore_session.dart';
 import 'features/auth/domain/usecases/sign_in_as_guest.dart';
 import 'features/auth/domain/usecases/sign_in_with_email.dart';
@@ -70,6 +71,7 @@ class _DeadbounceAppState extends State<DeadbounceApp>
     signUpWithEmail: SignUpWithEmail(_authRepository),
     signInWithGoogle: SignInWithGoogle(_authRepository),
     signInAsGuest: SignInAsGuest(_authRepository),
+    linkWithGoogle: LinkWithGoogle(_authRepository),
     restoreSession: RestoreSession(_authRepository),
     refreshSession: RefreshSession(_authRepository),
     signOut: SignOut(_authRepository),

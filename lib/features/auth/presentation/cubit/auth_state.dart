@@ -2,7 +2,7 @@ part of 'auth_cubit.dart';
 
 /// Which interactive flow is in flight — lets each button render its own
 /// spinner instead of one global overlay.
-enum AuthAction { email, google, guest, signUp, restore, signOut }
+enum AuthAction { email, google, guest, signUp, restore, signOut, link }
 
 sealed class AuthState extends Equatable {
   const AuthState();

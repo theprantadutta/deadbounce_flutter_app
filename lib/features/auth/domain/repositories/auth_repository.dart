@@ -16,6 +16,25 @@ class AuthCancelled implements Exception {
   const AuthCancelled();
 }
 
+/// Thrown when linking a guest to a credential that ALREADY belongs to another
+/// Deadbounce account.
+///
+/// Deliberately its own type rather than an [AuthFailure] message: it is the
+/// one link outcome the app cannot resolve on the user's behalf. Two sets of
+/// progress exist (this device's guest run history, and whatever that Google
+/// account already has), and merging them is not something we can do — so the
+/// UI has to ask which one to keep.
+class AccountLinkConflict implements Exception {
+  const AccountLinkConflict({this.email});
+
+  /// The conflicting account's email, when Firebase tells us. Shown in the
+  /// dialog so the user recognises which account they picked.
+  final String? email;
+
+  @override
+  String toString() => 'AccountLinkConflict(email: $email)';
+}
+
 /// Result of a silent session-token refresh.
 enum SessionRefreshOutcome {
   /// A fresh JWT was minted and stored.
@@ -46,6 +65,14 @@ abstract interface class AuthRepository {
   Future<AuthUser> signInWithGoogle();
 
   Future<AuthUser> signInAsGuest();
+
+  /// Upgrades the signed-in GUEST into a permanent Google account, keeping the
+  /// Firebase UID — and therefore the whole local database — intact.
+  ///
+  /// Throws [AccountLinkConflict] when that Google account already belongs to
+  /// another Deadbounce account, [AuthCancelled] if the picker is dismissed,
+  /// and [AuthFailure] for everything else.
+  Future<AuthUser> linkWithGoogle();
 
   /// Restores a previous session from local storage WITHOUT a network call,
   /// so the app stays logged in offline. Returns null when there is no stored

@@ -71,6 +71,18 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
+  Future<AuthUser> linkWithGoogle() async {
+    // The UID is unchanged by linkWithCredential, so re-exchanging the fresh
+    // ID token returns the SAME backend user — now no longer anonymous. That
+    // also refreshes the cached identity, so the Profile screen stops calling
+    // them a guest without needing a restart.
+    final idToken = await _firebase.linkWithGoogle();
+    final user = await _exchange(idToken, isAnonymous: false);
+    AppLogger.talker.info('[auth] account linked to google');
+    return user;
+  }
+
+  @override
   Future<AuthUser?> restoreSession() async {
     final token = await _tokenStorage.readAccessToken();
     if (token == null || token.isEmpty) return null;

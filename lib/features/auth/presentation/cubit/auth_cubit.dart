@@ -4,8 +4,10 @@ import 'package:deadbounce_flutter_app/core/logging/app_logger.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../domain/entities/account_link_result.dart';
 import '../../domain/entities/auth_user.dart';
 import '../../domain/repositories/auth_repository.dart';
+import '../../domain/usecases/link_with_google.dart';
 import '../../domain/usecases/refresh_session.dart';
 import '../../domain/usecases/restore_session.dart';
 import '../../domain/usecases/sign_in_as_guest.dart';
@@ -22,6 +24,7 @@ class AuthCubit extends Cubit<AuthState> {
     required this._signUpWithEmail,
     required this._signInWithGoogle,
     required this._signInAsGuest,
+    required this._linkWithGoogle,
     required this._restoreSession,
     required this._refreshSession,
     required this._signOut,
@@ -31,6 +34,7 @@ class AuthCubit extends Cubit<AuthState> {
   final SignUpWithEmail _signUpWithEmail;
   final SignInWithGoogle _signInWithGoogle;
   final SignInAsGuest _signInAsGuest;
+  final LinkWithGoogle _linkWithGoogle;
   final RestoreSession _restoreSession;
   final RefreshSession _refreshSession;
   final SignOut _signOut;
@@ -87,6 +91,42 @@ class AuthCubit extends Cubit<AuthState> {
       _run(AuthAction.google, _signInWithGoogle.call);
 
   Future<void> signInAsGuest() => _run(AuthAction.guest, _signInAsGuest.call);
+
+  /// Upgrades the signed-in guest to a permanent Google account.
+  ///
+  /// Deliberately does NOT go through [_run]: that helper emits
+  /// [AuthUnauthenticated] on failure, which for a link would throw the player
+  /// out of a session they never left. Here every failure path restores the
+  /// exact state we started in — the guest keeps their session and their
+  /// progress no matter what goes wrong.
+  Future<AccountLinkResult> linkWithGoogle() async {
+    final previous = state;
+    if (previous is! AuthAuthenticated) {
+      return const AccountLinkFailed('You need to be signed in first.');
+    }
+
+    emit(const AuthLoading(AuthAction.link));
+    try {
+      final user = await _linkWithGoogle();
+      emit(AuthAuthenticated(user));
+      return AccountLinkSuccess(user);
+    } on AuthCancelled {
+      emit(previous);
+      return const AccountLinkCancelled();
+    } on AccountLinkConflict catch (e) {
+      emit(previous);
+      return AccountLinkCredentialInUse(email: e.email);
+    } on AuthFailure catch (e) {
+      emit(previous);
+      return AccountLinkFailed(e.message);
+    } catch (e, st) {
+      AppLogger.talker.handle(e, st, '[auth] account link failed');
+      emit(previous);
+      return const AccountLinkFailed(
+        'Could not link your account. Please try again.',
+      );
+    }
+  }
 
   Future<void> signOut() async {
     emit(const AuthLoading(AuthAction.signOut));
