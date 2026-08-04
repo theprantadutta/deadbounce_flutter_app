@@ -215,8 +215,12 @@ class _SessionScopeState extends State<_SessionScope> {
     if (state is AuthAuthenticated) {
       Analytics.identify(state.user.id);
       Analytics.setPlayerProperties(isGuest: state.user.isAnonymous);
+      // Same id Google's rewarded-ad callback will carry back, so the server
+      // knows which account to credit.
+      widget.adService.setRewardUserId(state.user.id);
     } else if (state is AuthUnauthenticated) {
       Analytics.identify(null);
+      widget.adService.setRewardUserId(null);
     }
 
     if (state is AuthAuthenticated && firebaseUid != null) {

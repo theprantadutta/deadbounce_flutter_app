@@ -3,6 +3,8 @@ import 'dart:async';
 import '../../features/achievements/data/repositories/achievements_repository_impl.dart';
 import '../../features/achievements/domain/repositories/achievements_repository.dart';
 import '../../features/challenges/data/repositories/daily_challenge_repository_impl.dart';
+import '../../features/ads/data/ad_rewards_api.dart';
+import '../../features/ads/domain/ad_rewards_repository.dart';
 import '../../features/challenges/domain/repositories/daily_challenge_repository.dart';
 import '../../features/consumables/data/repositories/consumables_repository_impl.dart';
 import '../../features/consumables/domain/repositories/consumables_repository.dart';
@@ -70,6 +72,7 @@ class SessionDependencies {
     required this.trickShotProgressRepository,
     required this.storeRepository,
     required this.consumablesRepository,
+    required this.adRewardsRepository,
   });
 
   factory SessionDependencies.create({
@@ -137,6 +140,10 @@ class SessionDependencies {
         db: db,
         outboxWriter: outboxWriter,
       ),
+      adRewardsRepository: AdRewardsRepository(
+        api: AdRewardsApi(apiClient),
+        wallet: walletRepository,
+      ),
       storeRepository: StoreRepositoryImpl(
         db: db,
         api: PurchaseApi(apiClient),
@@ -167,6 +174,7 @@ class SessionDependencies {
   final TrickShotProgressRepository trickShotProgressRepository;
   final StoreRepository storeRepository;
   final ConsumablesRepository consumablesRepository;
+  final AdRewardsRepository adRewardsRepository;
 
   bool _started = false;
   bool _disposed = false;
@@ -196,6 +204,9 @@ class SessionDependencies {
         // Attaches the Play purchase listener and replays anything left
         // unfinished — the recovery path for "paid, then the app died".
         storeRepository.start();
+        // Collect anything AdMob's callback credited while the app was closed,
+        // so the balance is right before the player looks at it.
+        unawaited(adRewardsRepository.sync());
         syncTriggers.start();
         // Don't block readiness on the first drain — fire and forget.
         unawaited(syncWorker.start());

@@ -42,6 +42,13 @@ abstract interface class AdService {
   /// Called when entitlements change so the gate can update without a restart.
   void setAdsRemoved(bool removed);
 
+  /// The BACKEND user id to attach to rewarded ads, so Google's server-side
+  /// verification callback can be attributed to an account.
+  ///
+  /// Without it a watched ad arrives at the server with nobody to pay, and the
+  /// reward is silently dropped. Cleared on sign-out.
+  void setRewardUserId(String? userId);
+
   /// Whether a rewarded ad is ready to show for [placement].
   bool isRewardedReady(RewardedPlacement placement);
 
@@ -94,6 +101,9 @@ class NoopAdService implements AdService {
 
   @override
   void setAdsRemoved(bool removed) {}
+
+  @override
+  void setRewardUserId(String? userId) {}
 
   @override
   bool isRewardedReady(RewardedPlacement placement) => false;

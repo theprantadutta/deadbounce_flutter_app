@@ -34,6 +34,15 @@ enum CoinReason {
   /// explicitly REJECTS this reason arriving over the sync channel, because a
   /// client that could mint IAP coins would devalue every pack sold.
   iapCoinPack,
+
+  /// Coins from a rewarded ad, credited by AdMob server-side verification.
+  ///
+  /// **Server-credited**, exactly like [iapCoinPack]. Google calls the backend
+  /// directly after a verified ad view; the client only mirrors the amount for
+  /// display and never syncs it — the backend rejects this reason over the
+  /// sync channel, because a client that could mint ad coins would be paid for
+  /// ads nobody watched.
+  adReward,
 }
 
 /// One ledger entry. Balance is never a mutated integer — it is the sum

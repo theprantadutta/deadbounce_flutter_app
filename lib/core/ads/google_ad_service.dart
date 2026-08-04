@@ -28,6 +28,10 @@ class GoogleAdService implements AdService {
   /// Read at gate time; kept current by the run-end path.
   int lifetimeRuns;
 
+  /// Backend user id stamped onto every rewarded ad so the SSV callback knows
+  /// who to pay. Null before sign-in and after sign-out.
+  String? _rewardUserId;
+
   bool _started = false;
   bool _canRequest = false;
   bool _adsRemoved = false;
@@ -53,6 +57,9 @@ class GoogleAdService implements AdService {
       _preloadInterstitial();
     }
   }
+
+  @override
+  void setRewardUserId(String? userId) => _rewardUserId = userId;
 
   @override
   Future<void> start() async {
@@ -145,6 +152,23 @@ class GoogleAdService implements AdService {
         result: 'unavailable',
       );
       return false;
+    }
+
+    // Attribution for the server-side callback. Set immediately before show
+    // so it always reflects the CURRENT account, even if the ad was preloaded
+    // under a previous one.
+    final userId = _rewardUserId;
+    if (userId != null && userId.isNotEmpty) {
+      try {
+        await ad.setServerSideOptions(
+          ServerSideVerificationOptions(
+            userId: userId,
+            customData: placement.analyticsName,
+          ),
+        );
+      } catch (e, st) {
+        AppLogger.talker.handle(e, st, '[ads] SSV options failed');
+      }
     }
 
     Analytics.adRewardStarted(placement: placement.analyticsName);
