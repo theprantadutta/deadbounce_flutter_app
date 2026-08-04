@@ -182,6 +182,7 @@ class TournamentRepositoryImpl implements TournamentRepository {
   TournamentRow _toRow(TournamentDto d, int nowMs) => TournamentRow(
     id: d.id,
     cadence: d.cadence.toLowerCase(),
+    tier: d.tier,
     state: d.state.toLowerCase(),
     name: d.name,
     tagline: d.tagline,
@@ -202,6 +203,7 @@ class TournamentRepositoryImpl implements TournamentRepository {
   Tournament _toEntity(TournamentRow r) => Tournament(
     id: r.id,
     cadence: TournamentCadence.fromName(r.cadence),
+    tier: TournamentTier.fromName(r.tier),
     state: TournamentState.fromName(r.state),
     name: r.name,
     tagline: r.tagline,

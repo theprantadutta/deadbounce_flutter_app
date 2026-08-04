@@ -6,6 +6,7 @@ class TournamentDto {
   const TournamentDto({
     required this.id,
     required this.cadence,
+    required this.tier,
     required this.state,
     required this.name,
     required this.tagline,
@@ -25,6 +26,7 @@ class TournamentDto {
   factory TournamentDto.fromJson(Map<String, dynamic> j) => TournamentDto(
         id: j['id'] as String,
         cadence: j['cadence'] as String? ?? 'Daily',
+        tier: j['tier'] as String? ?? 'Standard',
         state: j['state'] as String? ?? 'Active',
         name: j['name'] as String? ?? 'Tournament',
         tagline: j['tagline'] as String? ?? '',
@@ -43,6 +45,7 @@ class TournamentDto {
 
   final String id;
   final String cadence;
+  final String tier;
   final String state;
   final String name;
   final String tagline;

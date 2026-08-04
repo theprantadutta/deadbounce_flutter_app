@@ -125,6 +125,7 @@ void main() {
           TournamentRow(
             id: 't1',
             cadence: 'daily',
+            tier: 'standard',
             state: 'active',
             name: 'TEST CUP',
             tagline: 'tag',
@@ -175,6 +176,31 @@ void main() {
       expect(outbox.any((e) => e.entityType == 'coinTxn'), isTrue);
       final row = await db.tournamentDao.getById('t1');
       expect(row!.rewardClaimed, isTrue);
+    });
+  });
+
+  group('TournamentTier', () {
+    test('parses the server PascalCase wire values', () {
+      expect(TournamentTier.fromName('Standard'), TournamentTier.standard);
+      expect(TournamentTier.fromName('HighStakes'), TournamentTier.highStakes);
+    });
+
+    test('tolerates snake_case and casing drift', () {
+      expect(TournamentTier.fromName('high_stakes'), TournamentTier.highStakes);
+      expect(TournamentTier.fromName('HIGHSTAKES'), TournamentTier.highStakes);
+    });
+
+    test('an unknown or absent tier falls back to standard', () {
+      // An older server omits the field entirely. Hiding the tournament, or
+      // defaulting to HIGH STAKES, would both be worse than showing the
+      // ordinary board.
+      expect(TournamentTier.fromName(null), TournamentTier.standard);
+      expect(TournamentTier.fromName('gold'), TournamentTier.standard);
+    });
+
+    test('only the high-stakes bracket flags itself', () {
+      expect(TournamentTier.standard.isHighStakes, isFalse);
+      expect(TournamentTier.highStakes.isHighStakes, isTrue);
     });
   });
 }

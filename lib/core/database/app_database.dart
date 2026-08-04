@@ -89,7 +89,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase(super.e);
 
   @override
-  int get schemaVersion => 8;
+  int get schemaVersion => 9;
 
   /// Wipes all gameplay/account data on this device in one transaction,
   /// **preserving the settings table** (device preferences). Clearing the
@@ -154,6 +154,9 @@ class AppDatabase extends _$AppDatabase {
           }
           if (from < 8) {
             await m.createTable(consumableStock);
+          }
+          if (from < 9) {
+            await m.addColumn(tournaments, tournaments.tier);
           }
           // Indexes are added with IF NOT EXISTS, so this is safe on every
           // upgrade path — and crucially repairs installs created before the

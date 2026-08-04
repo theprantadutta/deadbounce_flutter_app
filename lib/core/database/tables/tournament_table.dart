@@ -8,6 +8,10 @@ import 'package:drift/drift.dart';
 class Tournaments extends Table {
   TextColumn get id => text()();
   TextColumn get cadence => text()(); // daily | weekly | monthly
+  // standard | highStakes. Defaulted so rows cached by an older build (and
+  // any response from an older server) read as the standard bracket.
+  TextColumn get tier =>
+      text().withDefault(const Constant('standard'))();
   TextColumn get state => text()(); // active | ended | upcoming
   TextColumn get name => text()();
   TextColumn get tagline => text().withDefault(const Constant(''))();

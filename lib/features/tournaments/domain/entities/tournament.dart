@@ -5,6 +5,34 @@ import 'package:equatable/equatable.dart';
 import '../../../game/engine/challenge/challenge_config.dart';
 import '../../../game/engine/waves/wave_definition.dart';
 
+/// Stakes bracket. Each cadence runs one of EACH per window, so a player picks
+/// their level instead of being handed a single fee. Both share a ruleset — the
+/// high-stakes board is the same contest for a bigger buy-in, never an easier
+/// draw.
+enum TournamentTier {
+  standard,
+  highStakes;
+
+  /// Wire values are the server's PascalCase enum names (`Standard`,
+  /// `HighStakes`), so match case-insensitively on the de-underscored form.
+  static TournamentTier fromName(String? name) {
+    final normalized = (name ?? '').replaceAll('_', '').toLowerCase();
+    return TournamentTier.values.firstWhere(
+      (t) => t.name.toLowerCase() == normalized,
+      // Unknown/absent tier means an older server — treat it as the standard
+      // board rather than hiding the tournament entirely.
+      orElse: () => TournamentTier.standard,
+    );
+  }
+
+  bool get isHighStakes => this == TournamentTier.highStakes;
+
+  String get label => switch (this) {
+        TournamentTier.standard => 'STANDARD',
+        TournamentTier.highStakes => 'HIGH STAKES',
+      };
+}
+
 enum TournamentCadence {
   daily,
   weekly,
@@ -43,6 +71,7 @@ class Tournament extends Equatable {
   const Tournament({
     required this.id,
     required this.cadence,
+    this.tier = TournamentTier.standard,
     required this.state,
     required this.name,
     required this.tagline,
@@ -61,6 +90,7 @@ class Tournament extends Equatable {
 
   final String id;
   final TournamentCadence cadence;
+  final TournamentTier tier;
   final TournamentState state;
   final String name;
   final String tagline;
@@ -126,6 +156,7 @@ class Tournament extends Equatable {
   List<Object?> get props => [
         id,
         cadence,
+        tier,
         state,
         name,
         tagline,

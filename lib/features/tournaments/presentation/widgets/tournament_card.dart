@@ -37,7 +37,16 @@ class TournamentCard extends StatelessWidget {
           decoration: BoxDecoration(
             color: AppColors.ink800.withValues(alpha: 0.85),
             borderRadius: AppRadii.lgAll,
-            border: Border.all(color: AppColors.amber600),
+            // The high-stakes bracket gets a heavier border so the two boards
+            // are told apart at a glance — they share a name and a ruleset,
+            // and only the buy-in differs, so entering the wrong one by
+            // mistake would cost real coins.
+            border: Border.all(
+              color: tournament.tier.isHighStakes
+                  ? AppColors.amber300
+                  : AppColors.amber600,
+              width: tournament.tier.isHighStakes ? 2 : 1,
+            ),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -49,6 +58,10 @@ class TournamentCard extends StatelessWidget {
                         style: textTheme.titleSmall, maxLines: 1,
                         overflow: TextOverflow.ellipsis),
                   ),
+                  if (tournament.tier.isHighStakes) ...[
+                    _Tag(tournament.tier.label, AppColors.amber300),
+                    const SizedBox(width: 4),
+                  ],
                   if (tournament.joined && tournament.isActive)
                     _Tag('JOINED', AppColors.blue300),
                 ],
