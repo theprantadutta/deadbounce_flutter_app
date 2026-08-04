@@ -25,10 +25,18 @@ class AdBanner extends StatefulWidget {
 class _AdBannerState extends State<AdBanner> {
   BannerAd? _banner;
   bool _loaded = false;
+  bool _requested = false;
 
+  // Loading starts here, NOT in initState: the adaptive size depends on
+  // MediaQuery, and reading an inherited widget before initState completes
+  // throws. didChangeDependencies is the first point where it's legal.
   @override
-  void initState() {
-    super.initState();
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Fires again on every dependency change (rotation, theme); one banner per
+    // widget is enough.
+    if (_requested) return;
+    _requested = true;
     _load();
   }
 
@@ -38,9 +46,13 @@ class _AdBannerState extends State<AdBanner> {
     // configured. All three mean "no banner", silently.
     if (unitId == null) return;
 
+    // Read the width BEFORE awaiting — touching context after an async gap is
+    // the other half of this same class of bug.
+    final width = MediaQuery.sizeOf(context).width.truncate();
+
     final size = await AdSize.getLargeAnchoredAdaptiveBannerAdSizeWithOrientation(
       Orientation.portrait,
-      MediaQuery.sizeOf(context).width.truncate(),
+      width,
     );
     if (size == null || !mounted) return;
 
