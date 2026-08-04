@@ -13,6 +13,7 @@ import '../../../core/theme/app_effects.dart';
 import '../../../core/widgets/animated_arena_background.dart';
 import '../../../core/widgets/db_launch_button.dart';
 import '../../auth/presentation/cubit/auth_cubit.dart';
+import '../../consumables/presentation/consumables_sheet.dart';
 import '../../economy/presentation/cubit/wallet_cubit.dart';
 import '../../streak/presentation/cubit/daily_reward_cubit.dart';
 import '../../streak/presentation/widgets/daily_reward_sheet.dart';
@@ -65,6 +66,19 @@ class _HomeView extends StatefulWidget {
 }
 
 class _HomeViewState extends State<_HomeView> {
+  /// Launch a normal run, offering the pre-run loadout first.
+  ///
+  /// [maybePickConsumables] returns immediately with an empty selection when
+  /// the player holds no stock, so the one-tap path to playing is preserved
+  /// for anyone who hasn't bought in. A null result means they dismissed the
+  /// sheet — no run.
+  Future<void> _launchRun(BuildContext context) async {
+    final picked = await maybePickConsumables(context);
+    if (picked == null || !context.mounted) return;
+    if (!context.mounted) return;
+    context.push(Routes.game, extra: picked);
+  }
+
   bool _rewardPrompted = false;
 
   @override
@@ -206,8 +220,7 @@ class _HomeViewState extends State<_HomeView> {
                                       diameter: orbD,
                                       child: DbLaunchButton(
                                         diameter: orbD,
-                                        onPressed: () =>
-                                            context.push(Routes.game),
+                                        onPressed: () => _launchRun(context),
                                       ),
                                     ),
                                     2,

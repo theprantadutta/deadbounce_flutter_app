@@ -15,6 +15,7 @@ import '../../../engine/physics/ricochet_solver.dart';
 import '../../../engine/physics/wall_segment.dart';
 import 'package:deadbounce_flutter_app/core/config/game_balance.dart';
 import 'package:deadbounce_flutter_app/features/cosmetics/domain/cosmetic_loadout.dart';
+import 'package:deadbounce_flutter_app/features/consumables/domain/consumable_loadout.dart';
 import 'package:deadbounce_flutter_app/features/meta/domain/meta_loadout.dart';
 
 import '../../../engine/trajectory/trajectory_predictor.dart';
@@ -59,6 +60,7 @@ class DeadbounceGame extends FlameGame implements GameWorldOps {
     this.challengeDate,
     this.challenge,
     this.metaLoadout = const MetaLoadout(),
+    this.consumables = ConsumableLoadout.empty,
     this.gameFeel = const GameFeel(),
     this.unlockedCardIds,
     this.trickShotLevel,
@@ -90,6 +92,10 @@ class DeadbounceGame extends FlameGame implements GameWorldOps {
 
   /// Permanent Gunsmith bonuses for this run (empty for daily challenges).
   final MetaLoadout metaLoadout;
+
+  /// One-run items spent to enter this run. Always empty for daily
+  /// challenges and tournaments — enforced where it is built.
+  final ConsumableLoadout consumables;
 
   /// Player-chosen feel/accessibility options (shake, hit-stop, aim guide,
   /// combat text, particle budget). Read by the systems below.
@@ -364,11 +370,16 @@ class DeadbounceGame extends FlameGame implements GameWorldOps {
     addRunCoins(value.toDouble());
   }
 
-  /// All coin grants flow through the modifier pipeline (Coin Magnet).
+  /// All coin grants flow through the modifier pipeline (Coin Magnet), then
+  /// the consumable multiplier (Prospector's Charm).
+  ///
+  /// The multiplier is applied AFTER the pipeline so it scales the final,
+  /// perk-boosted figure — a doubler that silently ignored Lucky Strike would
+  /// read as broken to anyone who owns both.
   void addRunCoins(double amount) {
     final ctx = CoinContext(amount);
     modifiers.coinEarned(ctx);
-    coinsEarned += ctx.amount.round();
+    coinsEarned += (ctx.amount * consumables.coinMultiplier).round();
     hud.coins.value = coinsEarned;
   }
 
@@ -377,7 +388,10 @@ class DeadbounceGame extends FlameGame implements GameWorldOps {
   /// Heart Container still tops out at two, not four.
   int effectiveMaxHearts() =>
       (challenge?.startingHearts ?? GameBalance.I.player.maxHearts) +
-      modifiers.stacksOf('heart_container');
+      modifiers.stacksOf('heart_container') +
+      // Added OUTSIDE the heart_container stack count on purpose: a one-run
+      // item must not eat into the Gunsmith perk's cap, and vice versa.
+      consumables.bonusHearts;
 
   /// Folds the permanent Gunsmith perks into this run: card-shaped perks
   /// become pre-loaded modifier stacks, Iron Resolve adds i-frame seconds,
@@ -399,6 +413,12 @@ class DeadbounceGame extends FlameGame implements GameWorldOps {
       _grantFreeCardOfRarity(UpgradeRarity.common, metaRng);
     }
     if (metaLoadout.grantFreeRareCard) {
+      _grantFreeCardOfRarity(UpgradeRarity.rare, metaRng);
+    }
+    // Loaded Deck. Deliberately a SECOND card when Opening Hand is also owned
+    // — they're two separate purchases, so granting one card for both would
+    // quietly void whichever the player bought last.
+    if (consumables.freeRareCard) {
       _grantFreeCardOfRarity(UpgradeRarity.rare, metaRng);
     }
   }

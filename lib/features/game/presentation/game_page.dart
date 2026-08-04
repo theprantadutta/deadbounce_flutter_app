@@ -30,10 +30,16 @@ class GamePage extends StatelessWidget {
     super.key,
     this.dailyChallenge = false,
     this.tournamentContext,
+    this.consumables = const [],
   });
 
   final bool dailyChallenge;
   final TournamentRunContext? tournamentContext;
+
+  /// One-run items chosen on the pre-run sheet. Ignored for daily challenges
+  /// and tournaments — those stay identical worldwide, and the cubit enforces
+  /// that rather than trusting callers.
+  final List<String> consumables;
 
   @override
   Widget build(BuildContext context) {
@@ -48,9 +54,12 @@ class GamePage extends StatelessWidget {
         cosmeticsRepository: session.cosmeticsRepository,
         walletRepository: session.walletRepository,
         statisticsRepository: session.statisticsRepository,
+        consumablesRepository: session.consumablesRepository,
         dailyChallenge: dailyChallenge,
         tournamentContext: tournamentContext,
-      )..startRun(),
+      )
+        ..pendingConsumables = consumables
+        ..startRun(),
       child: const _GameView(),
     );
   }
@@ -165,6 +174,7 @@ class _GameViewState extends State<_GameView> with WidgetsBindingObserver {
                     onPick: cubit.selectUpgrade,
                     rerollCost: state.rerollCost,
                     canReroll: state.canReroll,
+                    rerollOffered: state.rerollEnabled,
                     onReroll: cubit.rerollDraft,
                   ),
                 ),

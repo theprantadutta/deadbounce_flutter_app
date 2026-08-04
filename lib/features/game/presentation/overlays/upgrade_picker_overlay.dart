@@ -14,6 +14,7 @@ class UpgradePickerOverlay extends StatelessWidget {
     required this.onPick,
     this.rerollCost = 0,
     this.canReroll = false,
+    this.rerollOffered = false,
     this.onReroll,
   });
 
@@ -26,6 +27,10 @@ class UpgradePickerOverlay extends StatelessWidget {
 
   /// Whether the player can afford the reroll right now.
   final bool canReroll;
+
+  /// Whether to show the control at all. Not derived from [rerollCost],
+  /// because 0 means "free" (a Second Opinion charge) as well as "disabled".
+  final bool rerollOffered;
   final VoidCallback? onReroll;
 
   static Color rarityColor(UpgradeRarity rarity) => switch (rarity) {
@@ -90,7 +95,7 @@ class UpgradePickerOverlay extends StatelessWidget {
                       ),
                       const SizedBox(height: AppSpacing.sm),
                     ],
-                    if (rerollCost > 0) ...[
+                    if (rerollOffered) ...[
                       const SizedBox(height: AppSpacing.xs),
                       _RerollButton(
                         cost: rerollCost,
@@ -146,13 +151,21 @@ class _RerollButton extends StatelessWidget {
               Icon(Icons.casino, size: 18, color: color),
               const SizedBox(width: AppSpacing.xs),
               Text(
-                enabled ? 'REROLL' : 'REROLL (need coins)',
+                cost == 0
+                    // A Second Opinion charge. Named rather than shown as
+                    // "0 coins", so the player can see the item they bought
+                    // actually doing something.
+                    ? 'REROLL (FREE)'
+                    : (enabled ? 'REROLL' : 'REROLL (need coins)'),
                 style: textTheme.labelLarge?.copyWith(color: color),
               ),
-              const SizedBox(width: AppSpacing.xs),
-              Icon(Icons.paid, size: 14, color: color),
-              const SizedBox(width: 2),
-              Text('$cost', style: textTheme.labelLarge?.copyWith(color: color)),
+              if (cost > 0) ...[
+                const SizedBox(width: AppSpacing.xs),
+                Icon(Icons.paid, size: 14, color: color),
+                const SizedBox(width: 2),
+                Text('$cost',
+                    style: textTheme.labelLarge?.copyWith(color: color)),
+              ],
             ],
           ),
         ),

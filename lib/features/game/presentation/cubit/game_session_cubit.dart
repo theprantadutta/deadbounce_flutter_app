@@ -11,6 +11,8 @@ import '../../../../core/config/game_balance.dart';
 import '../../../../core/sync/sync_worker.dart';
 import '../../../../core/util/calendar_day.dart';
 import '../../../achievements/domain/repositories/achievements_repository.dart';
+import '../../../consumables/domain/consumable_loadout.dart';
+import '../../../consumables/domain/repositories/consumables_repository.dart';
 import '../../../cosmetics/domain/repositories/cosmetics_repository.dart';
 import '../../../economy/domain/entities/coin_transaction.dart';
 import '../../../economy/domain/repositories/wallet_repository.dart';
@@ -53,6 +55,7 @@ class GameSessionCubit extends Cubit<GameSessionState>
     required this._cosmeticsRepository,
     required this._walletRepository,
     required this._statisticsRepository,
+    required this._consumablesRepository,
     this.dailyChallenge = false,
     this.tournamentContext,
     Uuid? uuid,
@@ -67,6 +70,7 @@ class GameSessionCubit extends Cubit<GameSessionState>
   final CosmeticsRepository _cosmeticsRepository;
   final WalletRepository _walletRepository;
   final StatisticsRepository _statisticsRepository;
+  final ConsumablesRepository _consumablesRepository;
   final bool dailyChallenge;
 
   /// Set when this session is a tournament run (mutually exclusive with
@@ -92,6 +96,13 @@ class GameSessionCubit extends Cubit<GameSessionState>
   /// Draft rerolls used this run — the coin cost escalates with each use.
   int _rerollsThisRun = 0;
 
+  /// Free rerolls still in hand (Second Opinion), consumed before coins are.
+  int _freeRerollsLeft = 0;
+
+  /// The one-run items selected for the NEXT run. Set by the pre-run picker;
+  /// cleared as soon as they're spent so a retry can't reuse them.
+  List<String> pendingConsumables = const [];
+
   /// Reroll is a normal-run coin sink; seeded modes keep their draws pure.
   bool get _rerollEnabled => !dailyChallenge && !_isTournament;
 
@@ -103,6 +114,7 @@ class GameSessionCubit extends Cubit<GameSessionState>
 
   Future<void> startRun() async {
     _rerollsThisRun = 0;
+    _freeRerollsLeft = 0;
     final best = await _runsRepository.bestRun();
     _previousBestScore = best?.score ?? 0;
 
@@ -165,6 +177,19 @@ class GameSessionCubit extends Cubit<GameSessionState>
     // Cosmetics are visual-only, so they're fair in every mode.
     final cosmetics = await _cosmeticsRepository.loadout();
 
+    // One-run items. Spent at run START — tying it to the end would let a
+    // player quit out after a bad opening and keep the item. Normal runs only,
+    // like perks: daily challenges and tournaments stay identical worldwide.
+    var consumableLoadout = ConsumableLoadout.empty;
+    if (!dailyChallenge && !_isTournament && pendingConsumables.isNotEmpty) {
+      consumableLoadout =
+          await _consumablesRepository.consume(pendingConsumables);
+    }
+    // Cleared unconditionally: a selection must never survive into a retry,
+    // whether or not it was actually spendable.
+    pendingConsumables = const [];
+    _freeRerollsLeft = consumableLoadout.freeRerolls;
+
     game = DeadbounceGame(
       gateway: this,
       hud: hud,
@@ -176,6 +201,7 @@ class GameSessionCubit extends Cubit<GameSessionState>
       challengeDate: _challengeDate,
       challenge: challengeConfig,
       metaLoadout: loadout,
+      consumables: consumableLoadout,
       cosmetics: cosmetics,
       unlockedCardIds: unlockedCardIds,
       gameFeel: GameFeel(
@@ -263,10 +289,13 @@ class GameSessionCubit extends Cubit<GameSessionState>
     final balance = cost > 0 ? await _walletRepository.getBalance() : 0;
     if (isClosed) return;
     emit(SessionUpgradePicking(wave, choices,
-        rerollCost: cost, balance: balance));
+        rerollCost: cost, balance: balance, rerollEnabled: _rerollEnabled));
   }
 
   int _rerollCost() {
+    // A Second Opinion charge makes the next reroll free without advancing the
+    // coin ladder — spend the charges first, then start charging.
+    if (_freeRerollsLeft > 0) return 0;
     final e = GameBalance.I.economy;
     return e.draftRerollBaseCost + e.draftRerollCostStep * _rerollsThisRun;
   }
@@ -275,16 +304,22 @@ class GameSessionCubit extends Cubit<GameSessionState>
   Future<void> rerollDraft() async {
     final s = state;
     if (s is! SessionUpgradePicking || !s.canReroll) return;
-    await _walletRepository.addTransaction(
-      amount: -s.rerollCost,
-      reason: CoinReason.draftReroll,
-    );
+    if (s.rerollCost > 0) {
+      await _walletRepository.addTransaction(
+        amount: -s.rerollCost,
+        reason: CoinReason.draftReroll,
+      );
+      // Only a PAID reroll advances the escalating ladder; a free charge is a
+      // gift, not a step up the price curve.
+      _rerollsThisRun++;
+    } else {
+      _freeRerollsLeft--;
+    }
     Analytics.draftReroll(
       cost: s.rerollCost,
       rerollIndex: _rerollsThisRun,
       wave: s.waveCleared,
     );
-    _rerollsThisRun++;
     final fresh = game?.rerollChoices() ?? s.choices;
     await _emitPicking(s.waveCleared, fresh);
   }

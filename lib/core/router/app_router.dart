@@ -148,8 +148,15 @@ GoRouter buildRouter({
       ),
       GoRoute(
         path: Routes.game,
-        pageBuilder: (context, state) =>
-            dbPage(state: state, child: const GamePage()),
+        // `extra` carries the pre-run consumable selection from Home. Absent
+        // on any other entry point (a deep link, a retry), which correctly
+        // means "no items spent".
+        pageBuilder: (context, state) => dbPage(
+          state: state,
+          child: GamePage(
+            consumables: (state.extra as List<String>?) ?? const [],
+          ),
+        ),
       ),
       GoRoute(
         path: Routes.dailyChallengeRun,
