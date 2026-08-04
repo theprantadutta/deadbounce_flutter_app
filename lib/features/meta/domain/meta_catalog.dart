@@ -41,6 +41,19 @@ abstract final class MetaCatalog {
   static const chainMemory = 'chain_memory';
   static const openingHand = 'opening_hand';
 
+  /// **Before raising any `maxLevel`, check the card it maps to.**
+  ///
+  /// Perks that map onto an upgrade card (`_buildLoadout` in
+  /// `game_session_cubit`) are capped by that card's `maxStacks`, and
+  /// `RunModifiers.addPermanent` respects the cap — so a level sold beyond it
+  /// takes the player's coins and does nothing. That's why Reinforced Heart
+  /// (heart_container, 2), Quick Hands (quickdraw, 3) and Lucky Strike
+  /// (coin_magnet, 3) sit exactly at their card's ceiling and were NOT raised
+  /// in the Phase 3 prestige pass.
+  ///
+  /// Only the perks the game applies directly — Iron Resolve (i-frames),
+  /// Keen Eye (preview bounces, card cap 3) and Gunfighter's Memory (chain
+  /// window) — could take a third level honestly.
   static const List<MetaPerk> all = [
     MetaPerk(
       id: reinforcedHeart,
@@ -56,7 +69,7 @@ abstract final class MetaCatalog {
       name: 'Iron Resolve',
       blurb: 'Longer mercy after a hit — wider i-frames.',
       icon: Icons.shield_moon,
-      maxLevel: 2,
+      maxLevel: 3,
       baseCost: 120,
       costStep: 200,
     ),
@@ -74,7 +87,7 @@ abstract final class MetaCatalog {
       name: 'Keen Eye',
       blurb: 'See one more bounce on the aim line.',
       icon: Icons.visibility,
-      maxLevel: 2,
+      maxLevel: 3,
       baseCost: 120,
       costStep: 220,
     ),
@@ -103,7 +116,7 @@ abstract final class MetaCatalog {
       name: "Gunfighter's Memory",
       blurb: '+0.15s chain window per level — more runway for chains.',
       icon: Icons.link,
-      maxLevel: 2,
+      maxLevel: 3,
       baseCost: 200,
       costStep: 300,
     ),

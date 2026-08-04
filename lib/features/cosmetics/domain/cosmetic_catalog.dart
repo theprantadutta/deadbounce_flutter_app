@@ -111,6 +111,43 @@ abstract final class CosmeticCatalog {
       primary: AppColors.error,
       secondary: Color(0xFFFFB3BB),
     ),
+    Cosmetic(
+      id: 'trail_bone',
+      name: 'Bonepicker',
+      blurb: 'A pale, dusty streak of old ivory.',
+      slot: CosmeticSlot.bulletTrail,
+      cost: 450,
+      primary: Color(0xFFE8E0C8),
+      secondary: Color(0xFFB8AE90),
+    ),
+    Cosmetic(
+      id: 'trail_copper',
+      name: 'Copperhead',
+      blurb: 'Warm hammered copper with a dull sheen.',
+      slot: CosmeticSlot.bulletTrail,
+      cost: 600,
+      primary: Color(0xFFC87137),
+      secondary: Color(0xFFE8A264),
+    ),
+    Cosmetic(
+      id: 'trail_ultraviolet',
+      name: 'Ultraviolet',
+      blurb: 'A humming violet arc that hurts to look at.',
+      slot: CosmeticSlot.bulletTrail,
+      cost: 900,
+      primary: Color(0xFF8B3DFF),
+      secondary: Color(0xFFD9B4FF),
+    ),
+    // ---- Legendary trail ----
+    Cosmetic(
+      id: 'trail_eclipse',
+      name: 'Eclipse',
+      blurb: 'A black core ringed in corona white. Nothing else looks like it.',
+      slot: CosmeticSlot.bulletTrail,
+      cost: 2200,
+      primary: Color(0xFF120C1C),
+      secondary: Color(0xFFFFF4D6),
+    ),
     // Granted by the Supporter Pack only — never on sale for coins. Still
     // strictly visual, so it stays fair in every mode.
     Cosmetic(
@@ -161,6 +198,43 @@ abstract final class CosmeticCatalog {
       primary: Color(0xFF9D5CFF),
       secondary: Color(0xFFC9A2FF),
     ),
+    Cosmetic(
+      id: 'skin_ranger',
+      name: 'Sagebrush Ranger',
+      blurb: 'Weathered olive under a brass ring.',
+      slot: CosmeticSlot.gunslinger,
+      cost: 550,
+      primary: Color(0xFF5C6B3F),
+      secondary: Color(0xFFD9A441),
+    ),
+    Cosmetic(
+      id: 'skin_undertaker',
+      name: 'The Undertaker',
+      blurb: 'Funeral black with a bone-white halo.',
+      slot: CosmeticSlot.gunslinger,
+      cost: 700,
+      primary: Color(0xFF14121A),
+      secondary: Color(0xFFE8E0C8),
+    ),
+    Cosmetic(
+      id: 'skin_bounty',
+      name: 'Bounty Hunter',
+      blurb: 'Rust-red plate over a molten seam.',
+      slot: CosmeticSlot.gunslinger,
+      cost: 900,
+      primary: Color(0xFF7A3B2E),
+      secondary: Color(0xFFFF7A3D),
+    ),
+    // ---- Legendary gunslinger ----
+    Cosmetic(
+      id: 'skin_revenant',
+      name: 'Revenant',
+      blurb: 'Cold spectral fire. They say it was already dead.',
+      slot: CosmeticSlot.gunslinger,
+      cost: 2800,
+      primary: Color(0xFF0B2B2B),
+      secondary: Color(0xFF5CFFE1),
+    ),
 
     // Arena themes (primary = grid, secondary = wall accent).
     Cosmetic(
@@ -198,6 +272,43 @@ abstract final class CosmeticCatalog {
       cost: 350,
       primary: Color(0xFF7A2230),
       secondary: AppColors.error,
+    ),
+    Cosmetic(
+      id: 'theme_glacier',
+      name: 'Glacier',
+      blurb: 'Pale blue ice, lit from under the floor.',
+      slot: CosmeticSlot.arenaTheme,
+      cost: 500,
+      primary: Color(0xFF2C5A73),
+      secondary: Color(0xFF9FE8FF),
+    ),
+    Cosmetic(
+      id: 'theme_saloon',
+      name: 'Last Saloon',
+      blurb: 'Warm lamplight on old stained timber.',
+      slot: CosmeticSlot.arenaTheme,
+      cost: 650,
+      primary: Color(0xFF6B4423),
+      secondary: Color(0xFFFFC97A),
+    ),
+    Cosmetic(
+      id: 'theme_voidwalk',
+      name: 'Voidwalk',
+      blurb: 'Deep violet nothing with a magenta horizon.',
+      slot: CosmeticSlot.arenaTheme,
+      cost: 950,
+      primary: Color(0xFF2A1245),
+      secondary: Color(0xFFFF5CE1),
+    ),
+    // ---- Legendary arena ----
+    Cosmetic(
+      id: 'theme_goldrush',
+      name: 'Gold Rush',
+      blurb: 'The whole arena cast in struck gold. Loud on purpose.',
+      slot: CosmeticSlot.arenaTheme,
+      cost: 3200,
+      primary: Color(0xFF7A5A12),
+      secondary: Color(0xFFFFD866),
     ),
   ];
 

@@ -297,7 +297,15 @@ class GameSessionCubit extends Cubit<GameSessionState>
   }
 
   Future<void> _offerContinue(int wave) async {
-    final cost = GameBalance.I.economy.continueRunCost;
+    // Priced by how many buy-backs this run has already had — the engine owns
+    // the count, the balance table owns the ladder.
+    final costs = GameBalance.I.economy.continueRunCosts;
+    final used = game?.continuesUsed ?? 0;
+    if (used >= costs.length) {
+      game?.endRun();
+      return;
+    }
+    final cost = costs[used];
     final balance = await _walletRepository.getBalance();
     if (isClosed) return;
     // Logged even when they can't afford it: "offered but unaffordable" is

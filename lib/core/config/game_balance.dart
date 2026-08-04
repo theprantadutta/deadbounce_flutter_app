@@ -983,8 +983,17 @@ class EconomyBalance {
   int draftRerollBaseCost = 30;
   int draftRerollCostStep = 30;
 
-  /// Cost to buy back from death, once per run (expensive by design).
-  int continueRunCost = 500;
+  /// Cost of each buy-back within a single run, in order.
+  ///
+  /// The LENGTH is the cap — three entries means three continues per run,
+  /// after which the run ends for good. Steeply escalating on purpose: the
+  /// first is a forgiving second chance, the third is a deliberate sacrifice
+  /// of most of a bankroll, so a deep run can't be bought outright and the
+  /// leaderboard keeps meaning something.
+  ///
+  /// A repeatable sink, unlike the one-shot it replaced — that matters because
+  /// coin packs only make sense against demand that recurs.
+  List<int> continueRunCosts = [500, 1200, 2500];
 
   /// 7-day login reward calendar (day 7 is the big haul). Indexed by the
   /// 1-based calendar day; the cycle repeats. Lives here so earn rates are
@@ -1000,7 +1009,7 @@ class EconomyBalance {
     chainBonusPerKill = o.chainBonusPerKill;
     draftRerollBaseCost = o.draftRerollBaseCost;
     draftRerollCostStep = o.draftRerollCostStep;
-    continueRunCost = o.continueRunCost;
+    continueRunCosts = List<int>.of(o.continueRunCosts);
     loginRewardsByDay = List<int>.of(o.loginRewardsByDay);
   }
 }

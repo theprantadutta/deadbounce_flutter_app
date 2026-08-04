@@ -506,12 +506,18 @@ class DeadbounceGame extends FlameGame implements GameWorldOps {
     hud.activeUpgrades.value = list;
   }
 
-  /// True once the run's one buy-back continue has been spent.
-  bool continueUsed = false;
+  /// Buy-backs spent this run. Drives the escalating price — the engine only
+  /// counts them; the cost table lives in [GameBalance].
+  int continuesUsed = 0;
 
   /// A buy-back is offerable on a normal run (challenges/tournaments carry a
-  /// [challenge] config and stay pure) that hasn't used its one continue yet.
-  bool get continueAvailable => challenge == null && !continueUsed;
+  /// [challenge] config and stay pure) while the run still has one left.
+  ///
+  /// Capped rather than unlimited: a run you can always buy back into stops
+  /// being a run, and the leaderboard stops meaning anything.
+  bool get continueAvailable =>
+      challenge == null &&
+      continuesUsed < GameBalance.I.economy.continueRunCosts.length;
 
   /// A fatal hit landed (and Last Stand didn't save it). If a paid continue is
   /// available, freeze and let the cubit offer it; otherwise end the run.
@@ -531,8 +537,8 @@ class DeadbounceGame extends FlameGame implements GameWorldOps {
   /// (mirrors Last Stand's proven restore, so the fatal enemy's overlap can't
   /// immediately re-kill) and resume. One per run.
   void reviveForContinue() {
-    if (runEnded || continueUsed) return;
-    continueUsed = true;
+    if (runEnded || !continueAvailable) return;
+    continuesUsed++;
     player.reviveWithGrace();
     resumeEngine();
   }

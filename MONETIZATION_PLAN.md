@@ -314,7 +314,45 @@ The single most important architectural decision here:
 
 ---
 
-## Phase 3 — Deepen the sink (~1 week; pure client + catalogs)
+## 🔨 Phase 3 — Deepen the sink (3A SHIPPED 2026-08-04, 3B next)
+
+### ✅ 3A — catalog depth (shipped)
+
+Permanent sink **7,800 → ~24,000**. Analyze clean, 207/207 tests pass.
+
+- [x] **Outfitter 13 → 25 items**, each slot gaining three mid-tier looks and a
+      **legendary** (Eclipse 2,200 / Revenant 2,800 / Gold Rush 3,200). Still
+      strictly visual — the `GameBalance`/`BulletStats` guardrail is untouched.
+- [x] **Gunsmith prestige, honestly.** Only Iron Resolve, Keen Eye and
+      Gunfighter's Memory took a third level. **Reinforced Heart, Quick Hands and
+      Lucky Strike were deliberately NOT raised** — they map onto upgrade cards
+      whose `maxStacks` already caps them, so the extra level would have taken
+      coins and done nothing. A test now encodes that invariant so nobody
+      "deepens the sink" by selling no-ops later.
+- [x] **The continue is now a ladder, not a one-shot** — 500 / 1,200 / 2,500,
+      capped at three. The first is a forgiving second chance, the third costs
+      most of a bankroll, so a deep run can't be bought outright and the
+      leaderboard keeps meaning something. This is the first genuinely
+      REPEATABLE sink, which is what coin packs need.
+- [x] Backend catalogs moved in lockstep — `CosmeticDefinitions` (unknown ids are
+      dropped, which would silently un-own a purchase) and `MetaPerkDefinitions`
+      (levels are clamped, so a client raised alone loses the paid level on sync).
+- [x] Prices verified against the backend's coin sanity ceilings by test.
+
+### ⬜ 3B — pre-run consumables (next, and the load-bearing piece)
+
+Everything above is still ONE-TIME spending. A player who owns it all has
+nothing to buy again, so coin packs still don't have durable demand.
+
+- [ ] **Pre-run consumables** chosen on the pre-run screen (extra heart, starting
+      rare card, coin doubler, extra reroll charge), consumed on use. New Drift
+      table, pre-run picker UI, `MetaLoadout` integration, backend catalog +
+      sync. Normal runs ONLY — never daily challenges or tournaments.
+- [ ] Re-tune `GameBalance.I.economy` earn rates against the deeper sink
+      (panel-tune first, then promote the felt numbers).
+- [ ] A high-stakes tournament bracket with a larger entry fee and pool.
+
+### Original scope (reference)</
 
 **Do this before coin packs exist.** Today's 7,800-coin ceiling is the reason a coin
 pack would not sell. Target: **~40,000 lifetime sink plus a genuinely repeatable floor.**
