@@ -467,6 +467,70 @@ End-to-end logging via **Talker**, **debug-only** (zero cost in release):
   this app, so `talker_bloc_logger` is the state-management integration (not
   `talker_riverpod_logger`).
 
+## Analytics & crash reporting (`core/analytics/`)
+
+Phase 0 of `MONETIZATION_PLAN.md`. Firebase Analytics + Crashlytics behind a seam.
+
+- **`Analytics`** (`analytics.dart`) is the ONLY thing call sites touch — a swappable
+  static singleton (same shape as `GameBalance.I` / `MusicManager.instance`) with one
+  **typed method per event**. Never log a raw event-name string: **renaming an event
+  silently resets its history in Firebase**, so the names are append-only. Firebase's
+  limits (25 params, 100-char string values) are enforced in `_clean`, and null params
+  are dropped rather than sent.
+- **Transport seam**: `AnalyticsService` (interface) ← `FirebaseAnalyticsService`
+  (release), `LoggingAnalyticsService` (debug — logs through Talker, **uploads
+  nothing**, so dev sessions can't skew retention/funnels), `NoopAnalyticsService`
+  (default + tests). Every impl swallows failures — telemetry never crashes a run.
+- **Installed once** in `main.dart`: `Analytics.configure(kDebugMode ? Logging… :
+  Firebase…)`; Crashlytics collection is `!kDebugMode`. In release,
+  `FlutterError.onError` / `PlatformDispatcher.onError` route to Crashlytics (in debug
+  they still go to Talker).
+- **Events**: `run_start`, `run_end`, `wave_cleared`, `upgrade_picked`, `draft_reroll`,
+  `continue_offered`/`_bought`/`_declined`, `shop_view`, `shop_purchase`,
+  `tournament_join`, `daily_claim`, `achievement_claim`, `trickshot_clear`. Every run
+  event carries **`mode`** (`normal`/`daily`/`tournament`) — normal runs are the only
+  ones with perks/unlocks/sinks, so most funnels split on it.
+- **Screen views** come from `AnalyticsRouteObserver` on the GoRouter, reading the route
+  PATTERN (`dbPage` sets `name: state.fullPath`) so `/tournament/:id` is one screen, not
+  one per id.
+- **Identity**: `Analytics.identify` sends the **backend user id** — never the Firebase
+  uid, never an email. User properties: `is_guest`, `best_wave`, `runs_played`.
+
+## Real-money purchases (`features/store/`) — SHIPPED 2026-08-04
+
+Phase 2 of `MONETIZATION_PLAN.md`. **Nothing is on sale yet** (Phase 5 turns products
+on) but the whole pipe is live and server-authoritative.
+
+**The one rule:** Play's "purchased" callback grants NOTHING. It's treated as "here is
+a token worth checking" — a patched client can fake it. The client posts the token to
+`POST /purchases/verify`; the server asks Google what it actually is, then grants from
+its OWN catalog (`ProductDefinitions`). No price, coin amount or entitlement name is
+ever accepted from the client.
+
+- **Accepted divergence from offline-first:** IAP coins are credited by the SERVER.
+  The client mirrors the amount into its local ledger via
+  `WalletRepository.creditServerGranted`, which writes **no outbox event** — the
+  backend rejects `iapCoinPack` over the sync channel. Same pattern already used for
+  achievement rewards and tournament payouts.
+- **Credit exactly once**: `processed_purchases` (Play token PK) guards the local coin
+  mirror, and the ledger id is derived from the token so a replay collides on the PK.
+  The server is separately idempotent — its `PurchaseReceipt` PK *is* the token.
+- **Never complete a purchase whose verification failed.** Play redelivers
+  uncompleted purchases, which is what should happen while the server is unreachable:
+  the player paid, and the grant must survive a bad network.
+- **Entitlements are REPLACED wholesale, never merged** (Drift `entitlements`, schema
+  v7) — a refund/chargeback/lapsed subscription has to disappear locally too. Keyed by
+  CAPABILITY (`no_ads`), not SKU, so several products can grant the same thing.
+- **Guests can browse but not buy** — a guest account dies with the install, so the
+  purchase would be unrecoverable. The store points at Profile → link instead.
+- **`StoreCatalog` (Dart) must stay in lockstep with `ProductDefinitions` (C#) AND the
+  Play Console SKU ids.** A mismatch means the player pays and verify rejects it.
+- Prices come from Play at runtime (`ProductDetails.price`, already localised) — never
+  hardcoded. Restore lives in Settings, in the store, and in the snapshot.
+- **`CoinTxnProcessor` now runs on an allowlist** with per-reason bounds. `adjustment`
+  and `snapshotRestore` are both rejected from the sync channel — see its comments
+  before adding a reason, and add BOTH sides together.
+
 ## Legal & consent (privacy / terms / refund) — keep in sync with features
 
 First-launch legal gate: `assets/legal/{privacy,terms,refund}.md` are shown in a
@@ -480,16 +544,17 @@ GoRouter redirect; the read-only three-tab viewer is linked from Settings → Ab
 `lib/core/legal/legal_documents.dart` holds `LegalDocuments.version` — the
 single **shared** source of truth for all three docs. **Bump it (and the matching
 `**Version N**` line in ALL THREE markdown files) and every user is re-prompted to
-accept on next launch.** (Currently **version 2** — refund.md was added and the
-purchase/subscription clauses went in, forward-looking: no real-money IAP ships
-yet, but products + subscriptions are planned, so the docs already describe Google
-Play Billing / auto-renewal / the Google Play refund flow.)
+accept on next launch.** (Currently **version 3** — v2 added refund.md and the
+forward-looking purchase/subscription clauses, so the docs already describe Google
+Play Billing / auto-renewal / the Google Play refund flow even though no real-money
+IAP ships yet; **v3** added the "Usage and diagnostic data" section and listed Google
+Analytics for Firebase + Crashlytics in §4 when Phase 0 telemetry shipped.)
 
 > **RULE — when you ship or change a feature, check whether the Privacy Policy /
 > Terms / Refund need updating.** If a feature changes what data is collected,
 > how it's used, third-party SDKs, virtual-goods/payment behavior, etc., update
 > the relevant `assets/legal/*.md`, **bump `LegalDocuments.version`**, and
-> **re-copy the files to `G:\MyProjects\privacy-project\Projects\deadbounce\`**
+> **re-copy the files to `G:\Personal\MyProjects\privacy-project\Projects\deadbounce\`**
 > (privacy.md, terms.md, refund.md) so the hosted copies stay byte-identical to
 > what users accept in-app, then commit that repo. All three are now **bundled in
 > the app AND hosted**. The big one is monetization — flipping on real-money IAP /
@@ -497,14 +562,34 @@ Play Billing / auto-renewal / the Google Play refund flow.)
 
 ## Intentionally stubbed / next phase
 
-- **Account linking** (guest→Google): the architecture supports it (per-account
-  file survives, `accountLinked` event exists), but the Profile CTA currently shows
-  "coming soon". Real `linkWithCredential` is the next step. **REMINDER (deferred
-  2026-06-27 settings audit):** this is the single remaining placeholder on the
-  Settings→Profile path — everything else there is fully wired. Pick this up when
-  ready: implement `linkWithCredential` (Google first, Apple after), surface
-  success/error UX on the Profile CTA, and emit the existing `accountLinked` sync
-  event.
-- **Apple Sign-In**: button placeholder (Phase 1).
-- Final art (the logo is a styled Material icon, default launcher icon),
-  shop/monetization (the ledger prepares for it), PvP.
+- **Apple Sign-In**: button placeholder — deferred until an iOS build is on the table.
+- **Email/password linking**: not implemented (guest→Google covers the case that
+  matters — one tap, no password to forget).
+- Final art (the logo is a styled Material icon, default launcher icon), PvP.
+- **Real-money monetization** — see `MONETIZATION_PLAN.md` (the living roadmap).
+  Phase 0 (analytics) and Phase 1 (account linking) shipped 2026-08-04. Next: Phase 2
+  server-authoritative purchases, Phase 3 deepening the coin sink, Phase 4 ads
+  (`ADMOB_SETUP.md` holds the console checklist), Phase 5 products.
+
+## Account linking (guest → Google) — SHIPPED 2026-08-04
+
+`linkWithCredential` **preserves the Firebase UID**, which is the whole reason this is
+safe: the per-account file is `deadbounce_<uid>.sqlite`, so every run, coin and unlock
+survives the upgrade with **no migration**. Invariants worth not breaking:
+
+- **A failed link must never emit `AuthUnauthenticated`** — that would sign the guest
+  out of a session they never left. This is exactly why `AuthCubit.linkWithGoogle`
+  does NOT reuse `_run`; every failure path restores the prior state.
+- **Sealed `AccountLinkResult`** (success/cancelled/credentialInUse/failed) is
+  *returned*, not thrown, so the Profile CTA's switch is exhaustive — a missing branch
+  is a compile error, not a silent no-op on a screen that just took someone's account.
+- **The conflict case is a user decision, never automatic.** If that Google account
+  already backs another Deadbounce account, two sets of progress exist and we cannot
+  merge them; the dialog names the account and confirms before switching.
+- **`ProfileRepository.markAccountLinked` writes the `isGuest` flip and the
+  `accountLinked` outbox row in ONE transaction** (the offline-first invariant), and
+  only overwrites display name/photo when Google actually supplies one.
+- The ID token is **force-refreshed** after linking — the cached one predates the link
+  and its claims still say anonymous.
+- Backend needed no changes: `AccountLinkedProcessor` + the `KnownEntityTypes`
+  allowlist entry already existed; the client simply never emitted the event.
