@@ -496,6 +496,37 @@ Phase 0 of `MONETIZATION_PLAN.md`. Firebase Analytics + Crashlytics behind a sea
 - **Identity**: `Analytics.identify` sends the **backend user id** — never the Firebase
   uid, never an email. User properties: `is_guest`, `best_wave`, `runs_played`.
 
+## Pre-run consumables (`features/consumables/`) — SHIPPED 2026-08-04
+
+Phase 3B. **The only REPEATABLE coin sink** — perks and cosmetics are bought once,
+so a committed player runs out of things to buy; consumables are spent every use.
+
+- Four items (Field Dressing +1 heart, Loaded Deck free rare, Prospector's Charm
+  ×2 coins, Second Opinion free reroll), **max 2 per run**, bought and picked on
+  the pre-run sheet.
+- **The sheet is skipped when stock is empty** (`maybePickConsumables`) — the
+  one-tap Home→play path must stay untaxed for anyone who hasn't bought in.
+- **Spent at RUN START.** Tying it to run end would let a player quit out after a
+  bad opening and keep the item. Ids not held are skipped, never thrown, so a
+  stale selection can't block a run.
+- `ConsumableLoadout` owns the id→effect mapping (sibling of `MetaLoadout` /
+  `CosmeticLoadout` / `GameFeel`). Bonus hearts add OUTSIDE the
+  `heart_container` stack count so a one-run item can't eat the perk's cap; the
+  coin multiplier applies AFTER the modifier pipeline so it scales the
+  perk-boosted figure.
+- **Normal runs only** — enforced at the single construction site in
+  `GameSessionCubit.startRun`.
+- Syncs as a `consumableState` aggregate (Drift schema v8, LWW). Unlike
+  `metaState`/`cosmeticState` this aggregate legitimately goes **DOWN**; the
+  server processor says so explicitly. Zero counts ARE sent — omitting them
+  would be indistinguishable from "unchanged", so stock could never drop.
+- `ConsumableCatalog` (Dart) and `ConsumableDefinitions` (C#) must move
+  together: an id missing server-side is dropped, silently taking away stock
+  the player paid coins for.
+- **`rerollCost == 0` is ambiguous** — it means "free" (Second Opinion) AND
+  "disabled" (challenges/tournaments). `SessionUpgradePicking.rerollEnabled`
+  disambiguates; don't reintroduce a `cost > 0` availability check.
+
 ## Real-money purchases (`features/store/`) — SHIPPED 2026-08-04
 
 Phase 2 of `MONETIZATION_PLAN.md`. **Nothing is on sale yet** (Phase 5 turns products
@@ -567,9 +598,9 @@ Analytics for Firebase + Crashlytics in §4 when Phase 0 telemetry shipped.)
   matters — one tap, no password to forget).
 - Final art (the logo is a styled Material icon, default launcher icon), PvP.
 - **Real-money monetization** — see `MONETIZATION_PLAN.md` (the living roadmap).
-  Phase 0 (analytics) and Phase 1 (account linking) shipped 2026-08-04. Next: Phase 2
-  server-authoritative purchases, Phase 3 deepening the coin sink, Phase 4 ads
-  (`ADMOB_SETUP.md` holds the console checklist), Phase 5 products.
+  Phases 0–3 shipped 2026-08-04 (analytics, account linking, server-authoritative
+  purchases, coin-sink depth + consumables). Next: Phase 4 ads (`ADMOB_SETUP.md`
+  holds the console checklist), Phase 5 products (`PLAY_CONSOLE_PRODUCTS.md`).
 
 ## Account linking (guest → Google) — SHIPPED 2026-08-04
 
