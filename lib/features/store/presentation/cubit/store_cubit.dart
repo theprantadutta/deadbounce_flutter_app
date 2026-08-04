@@ -35,6 +35,19 @@ class StoreCubit extends Cubit<StoreState> {
     final offers = await _repository.offers();
     if (isClosed) return;
 
+    // Play knows none of our SKUs. That is the normal state until the app has
+    // shipped to production and the products are created — and a shelf of
+    // "Unavailable" rows reads as a broken shop rather than one that isn't
+    // open yet. Say so plainly instead.
+    if (offers.every((o) => !o.available)) {
+      emit(const StoreUnavailable(
+        'The shop is not open yet, partner.\n\n'
+        'Everything in Deadbounce can be earned by playing — nothing here is '
+        'ever required.',
+      ));
+      return;
+    }
+
     // Owned state drives the whole shelf, so track it live: a purchase
     // completed on another screen (or recovered at start-up) flips the button
     // to OWNED without anyone having to reload.
