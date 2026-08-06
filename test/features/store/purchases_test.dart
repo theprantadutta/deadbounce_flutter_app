@@ -177,5 +177,65 @@ void main() {
         expect(coins[i], greaterThan(coins[i - 1]));
       }
     });
+
+    // The drift canary. These ids are the join key between the Play Console,
+    // ProductDefinitions.cs and this catalog. If someone adds a SKU to one side
+    // only, a player pays and verification rejects it as an unknown product —
+    // so make editing this list a deliberate act.
+    test('the SKU set matches the server catalog (ProductDefinitions.cs)', () {
+      expect(
+        StoreCatalog.productIds,
+        {
+          'db_remove_ads',
+          'db_supporter_pack',
+          'db_bounty_pass',
+          'db_coins_small',
+          'db_coins_medium',
+          'db_coins_large',
+          'db_coins_huge',
+        },
+        reason: 'Update ProductDefinitions.cs and the Play Console together.',
+      );
+    });
+  });
+
+  group('subscriptions', () {
+    test('the bounty pass is a subscription with an entitlement', () {
+      expect(StoreCatalog.bountyPass.kind, StoreProductKind.subscription);
+      expect(StoreCatalog.bountyPass.entitlementKey, Entitlements.bountyPass);
+      // A subscription must never be consumable — Play would let it be
+      // re-bought while already active.
+      expect(StoreCatalog.bountyPass.kind, isNot(StoreProductKind.consumable));
+    });
+
+    test('the manage URL carries both the SKU and the package', () {
+      final url = StoreCatalog.manageUrlFor(StoreCatalog.bountyPass);
+
+      // Play policy requires an unobstructed cancel route; a malformed deep
+      // link lands the player on a generic page instead of this subscription.
+      expect(url, contains('play.google.com/store/account/subscriptions'));
+      expect(url, contains('sku=db_bounty_pass'));
+      expect(url, contains('package=com.pranta.deadbounce'));
+    });
+
+    test('an expired entitlement is still STORED — filtering is a read concern',
+        () async {
+      // The cache can legitimately outlive an expiry while offline. The row
+      // stays; the repository drops it on read, so a lapsed pass stops working
+      // even before the next server round-trip.
+      final past = DateTime.utc(2020).millisecondsSinceEpoch;
+      await db.purchasesDao.replaceEntitlements([
+        EntitlementsCompanion(
+          entitlementKey: const Value('bounty_pass'),
+          productId: const Value('db_bounty_pass'),
+          grantedAt: const Value(1000),
+          expiresAt: Value(past),
+        ),
+      ]);
+
+      final rows = await db.purchasesDao.allEntitlements();
+      expect(rows, hasLength(1));
+      expect(rows.single.expiresAt, past);
+    });
   });
 }

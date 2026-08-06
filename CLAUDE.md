@@ -598,7 +598,19 @@ ever accepted from the client.
 - **Guests can browse but not buy** — a guest account dies with the install, so the
   purchase would be unrecoverable. The store points at Profile → link instead.
 - **`StoreCatalog` (Dart) must stay in lockstep with `ProductDefinitions` (C#) AND the
-  Play Console SKU ids.** A mismatch means the player pays and verify rejects it.
+  Play Console SKU ids.** A mismatch means the player pays and verify rejects it. A
+  test pins the exact SKU set as a drift canary — update all three together.
+- **Subscriptions** (`db_bounty_pass`): an active pass renders "Active until …" plus a
+  **MANAGE** deep link to Play (policy requires an unobstructed cancel route).
+  `OwnedEntitlement` carries the expiry and the cache is filtered **on read**, so a
+  lapsed pass stops working even before the next server round-trip. Renewals are kept
+  alive by the backend's hourly `deadbounce-subscription-refresh` sweep — without it a
+  renewed subscription would silently expire.
+- **Until the app ships to a Play track there are no SKUs**, so the store shows "The
+  shop is not open yet, partner." That is expected. Go-live steps live in
+  `PLAY_BILLING_SETUP.md`.
+- Android needs **no manifest changes** — `com.android.vending.BILLING` and
+  `ProxyBillingActivityV2` merge in from the Billing Library (verified 2026-08-04).
 - Prices come from Play at runtime (`ProductDetails.price`, already localised) — never
   hardcoded. Restore lives in Settings, in the store, and in the snapshot.
 - **`CoinTxnProcessor` now runs on an allowlist** with per-reason bounds. `adjustment`

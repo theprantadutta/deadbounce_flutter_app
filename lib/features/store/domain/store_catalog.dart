@@ -124,12 +124,34 @@ abstract final class StoreCatalog {
     ),
   ];
 
+  /// The seasonal pass. A real auto-renewing subscription, so it needs the
+  /// manage/cancel affordance the other products don't (see [manageUrlFor]).
+  static const StoreProduct bountyPass = StoreProduct(
+    id: 'db_bounty_pass',
+    kind: StoreProductKind.subscription,
+    title: 'BOUNTY PASS',
+    blurb: 'A season of bounties, exclusive looks and bonus coins.\n'
+        'Renews monthly. Cancel any time in Google Play.',
+    coins: 0,
+    entitlementKey: Entitlements.bountyPass,
+    badge: 'SEASONAL',
+  );
+
   /// Everything, in shelf order.
   static const List<StoreProduct> all = [
     supporterPack,
     removeAds,
+    bountyPass,
     ...coinPacks,
   ];
+
+  /// Deep link to this subscription's Play management page.
+  ///
+  /// Google Play policy requires an easy, non-obstructed route to cancel; this
+  /// is the sanctioned one. Only meaningful for subscriptions.
+  static String manageUrlFor(StoreProduct product) =>
+      'https://play.google.com/store/account/subscriptions'
+      '?sku=${product.id}&package=com.pranta.deadbounce';
 
   static StoreProduct? byId(String id) {
     for (final p in all) {

@@ -344,26 +344,42 @@ class StoreRepositoryImpl implements StoreRepository {
   }
 
   @override
-  Stream<Set<String>> watchEntitlements() => _db.purchasesDao
-      .watchEntitlements()
-      .map((rows) => _liveKeys(rows));
+  Stream<Set<String>> watchEntitlements() =>
+      watchOwned().map((owned) => {for (final e in owned) e.key});
 
   @override
   Future<Set<String>> currentEntitlements() async =>
-      _liveKeys(await _db.purchasesDao.allEntitlements());
+      {for (final e in await currentOwned()) e.key};
+
+  @override
+  Stream<List<OwnedEntitlement>> watchOwned() =>
+      _db.purchasesDao.watchEntitlements().map(_live);
+
+  @override
+  Future<List<OwnedEntitlement>> currentOwned() async =>
+      _live(await _db.purchasesDao.allEntitlements());
 
   @override
   Future<bool> hasEntitlement(String key) async =>
       (await currentEntitlements()).contains(key);
 
-  /// Filters out anything whose subscription window has passed — the cache can
-  /// legitimately outlive an expiry while the device is offline.
-  static Set<String> _liveKeys(List<EntitlementRow> rows) {
+  /// Drops anything whose subscription window has passed — the cache can
+  /// legitimately outlive an expiry while the device is offline, and a lapsed
+  /// pass must stop working even before the next server round-trip.
+  static List<OwnedEntitlement> _live(List<EntitlementRow> rows) {
     final now = DateTime.now().toUtc().millisecondsSinceEpoch;
-    return {
+    return [
       for (final row in rows)
-        if (row.expiresAt == null || row.expiresAt! > now) row.entitlementKey,
-    };
+        if (row.expiresAt == null || row.expiresAt! > now)
+          OwnedEntitlement(
+            key: row.entitlementKey,
+            productId: row.productId,
+            expiresAt: row.expiresAt == null
+                ? null
+                : DateTime.fromMillisecondsSinceEpoch(row.expiresAt!,
+                    isUtc: true),
+          ),
+    ];
   }
 
   @override

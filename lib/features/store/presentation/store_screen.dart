@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../app.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_dimens.dart';
+import '../../../core/util/open_external_link.dart';
 import '../../../core/widgets/db_button.dart';
 import '../../../core/widgets/meta_scaffold.dart';
 import '../../auth/presentation/cubit/auth_cubit.dart';
@@ -112,10 +113,15 @@ class _StoreView extends StatelessWidget {
                     _OfferTile(
                       offer: offer,
                       owned: state.ownsProduct(offer.product),
+                      expiresAt: state.expiryFor(offer.product),
                       busy: state.busyProductId == offer.product.id,
                       // Any purchase in flight locks the whole shelf.
                       enabled: state.busyProductId == null && !isGuest,
                       onBuy: () => _buy(context, offer.product),
+                      onManage: () => openExternalLink(
+                        context,
+                        StoreCatalog.manageUrlFor(offer.product),
+                      ),
                     ),
                   const SizedBox(height: AppSpacing.lg),
                   Padding(
@@ -173,16 +179,32 @@ class _OfferTile extends StatelessWidget {
   const _OfferTile({
     required this.offer,
     required this.owned,
+    required this.expiresAt,
     required this.busy,
     required this.enabled,
     required this.onBuy,
+    required this.onManage,
   });
 
   final StoreOffer offer;
   final bool owned;
+
+  /// Set only for an owned subscription.
+  final DateTime? expiresAt;
   final bool busy;
   final bool enabled;
   final VoidCallback onBuy;
+  final VoidCallback onManage;
+
+  static const List<String> _months = [
+    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+  ];
+
+  static String _formatDate(DateTime utc) {
+    final d = utc.toLocal();
+    return '${d.day} ${_months[d.month - 1]} ${d.year}';
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -237,13 +259,25 @@ class _OfferTile extends StatelessWidget {
             children: [
               Expanded(
                 child: Text(
-                  // Play's localised price string, verbatim.
-                  offer.available ? offer.price : 'Unavailable',
+                  // An active subscription shows its window instead of a
+                  // price — "what am I paying for" beats "what did it cost".
+                  expiresAt != null
+                      ? 'Active until ${_formatDate(expiresAt!)}'
+                      // Play's localised price string, verbatim.
+                      : (offer.available ? offer.price : 'Unavailable'),
                   style: textTheme.titleSmall
                       ?.copyWith(color: AppColors.amber300),
                 ),
               ),
-              if (owned)
+              if (owned && expiresAt != null)
+                // An active subscription: Play policy wants an unobstructed
+                // route to cancel, so the manage link IS the affordance here.
+                DbSecondaryButton(
+                  label: 'MANAGE',
+                  icon: Icons.open_in_new,
+                  onPressed: onManage,
+                )
+              else if (owned)
                 Row(
                   children: [
                     const Icon(Icons.check_circle,

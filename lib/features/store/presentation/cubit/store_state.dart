@@ -31,21 +31,31 @@ final class StoreReady extends StoreState {
 
   final List<StoreOffer> offers;
 
-  /// Entitlement keys the player already holds.
-  final Set<String> owned;
+  /// What the player holds, with subscription windows.
+  final List<OwnedEntitlement> owned;
 
   /// The SKU currently mid-purchase, if any — only that tile shows a spinner,
   /// and every other buy button disables.
   final String? busyProductId;
 
-  bool ownsProduct(StoreProduct product) {
+  bool ownsProduct(StoreProduct product) => _find(product) != null;
+
+  /// When this product's entitlement lapses, or null if it's permanent (or
+  /// not owned). Drives the "ACTIVE UNTIL …" line on the pass.
+  DateTime? expiryFor(StoreProduct product) => _find(product)?.expiresAt;
+
+  OwnedEntitlement? _find(StoreProduct product) {
     final key = product.entitlementKey;
-    return key != null && owned.contains(key);
+    if (key == null) return null;
+    for (final e in owned) {
+      if (e.key == key) return e;
+    }
+    return null;
   }
 
   StoreReady copyWith({
     List<StoreOffer>? offers,
-    Set<String>? owned,
+    List<OwnedEntitlement>? owned,
     String? busyProductId,
     bool clearBusy = false,
   }) {

@@ -54,6 +54,27 @@ final class PurchaseFailed extends PurchaseOutcome {
   final String message;
 }
 
+/// A capability the player currently holds, with its subscription window.
+///
+/// The gates (the Phase 4 ad check) only ever need the key, but the STORE has
+/// to say "active until 3 September" and offer a cancel route — a bare key set
+/// can't express either.
+class OwnedEntitlement {
+  const OwnedEntitlement({
+    required this.key,
+    required this.productId,
+    this.expiresAt,
+  });
+
+  final String key;
+  final String productId;
+
+  /// Null for permanent entitlements.
+  final DateTime? expiresAt;
+
+  bool get isSubscription => expiresAt != null;
+}
+
 abstract interface class StoreRepository {
   /// True once Play Billing is reachable. False on a device without Play
   /// Services — the store UI then explains itself instead of hanging.
@@ -71,10 +92,16 @@ abstract interface class StoreRepository {
   /// Play REQUIRES to work.
   Future<void> restore();
 
-  /// Locally cached entitlement keys, live. Readable offline.
+  /// Locally cached entitlement keys, live. Readable offline. This is the
+  /// cheap form the gameplay gates use.
   Stream<Set<String>> watchEntitlements();
 
   Future<Set<String>> currentEntitlements();
+
+  /// The same entitlements with their expiry — what the store screen renders.
+  Stream<List<OwnedEntitlement>> watchOwned();
+
+  Future<List<OwnedEntitlement>> currentOwned();
 
   /// Convenience for the Phase 4 ad gate.
   Future<bool> hasEntitlement(String key);

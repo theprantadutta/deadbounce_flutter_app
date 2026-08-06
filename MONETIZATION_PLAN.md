@@ -248,17 +248,47 @@ and Phase 3 has to deepen the sink before coin packs mean anything.
       `verify_failed`: it means money changed hands and the server didn't confirm it.
 - [x] Prices come from Play at runtime, already localised — never hardcoded.
 
+### Phase 2b — production-readiness pass (2026-08-04)
+
+Everything code-side for products AND subscriptions is now finished. The store
+correctly reports **"The shop is not open yet, partner."** until the SKUs exist —
+Play won't let you create in-app products before the app has shipped to a track,
+so that state is expected, not a bug. See **`PLAY_BILLING_SETUP.md`** for the
+go-live checklist.
+
+- [x] **Migration verified applied** — all 10 migrations present, `database update`
+      reports up to date.
+- [x] **Service account permissions** granted (View financial data).
+- [x] **`trail_supporter`** present in both cosmetic catalogs, `grantOnly: true` on
+      the client so it isn't handed to every player as free stock.
+- [x] **`db_bounty_pass` added to the client catalog** — it existed server-side but
+      the client couldn't sell it, so the subscription was unreachable.
+- [x] **Subscription UI**: an active pass shows "Active until …" instead of a price
+      and offers **MANAGE** (deep-links to Play's subscription page). Play policy
+      requires an unobstructed cancel route.
+- [x] **`OwnedEntitlement`** carries the expiry — the bare key set the gates use
+      can't express "active until", and the cache is filtered on read so a lapsed
+      pass stops working even before the next server round-trip.
+- [x] **`deadbounce-subscription-refresh`** (Hangfire, hourly at :25). Without it a
+      renewed subscription silently expires — the entitlement carries an
+      `ExpiresAt` and nothing ever re-asked Google. Extends renewals, revokes
+      cancelled/refunded passes **only after** their paid period ends, and treats
+      grace-period/on-hold as still-entitled. Chose polling over Play RTDN
+      deliberately: RTDN needs a Cloud project, a Pub/Sub topic and a public
+      webhook, and an unmonitored webhook can silently stop working.
+- [x] **Android billing verified from the merged manifest** —
+      `com.android.vending.BILLING` and `ProxyBillingActivityV2` merge in from the
+      Billing Library automatically. No manifest edits needed.
+- [x] **Catalog drift canary** — a test pins the exact SKU set, so adding a product
+      to one side only fails the build instead of costing a player money.
+
 ### Still to do before anything can actually be sold
 
-- [ ] **Create the SKUs in the Play Console** with ids matching `ProductDefinitions`
-      exactly (`db_remove_ads`, `db_supporter_pack`, `db_coins_small/medium/large/huge`,
-      `db_bounty_pass`). A typo means the player pays and verify rejects the SKU.
-- [ ] Grant the service account **"View financial data"** in Play Console → Users, or
-      every verification 401s.
-- [ ] Add the `trail_supporter` cosmetic to both cosmetic catalogs (the supporter
-      pack references it).
-- [ ] `dotnet ef database update` on the deployment target.
-- [ ] Test with Play **license testers** (real flow, no charge).
+- [ ] **Ship to a Play track**, then create the 6 products + 1 subscription
+      (`PLAY_BILLING_SETUP.md` §3–4).
+- [ ] Test with Play **licence testers** (real flow, no charge; subscriptions renew
+      on an accelerated clock, which is the only practical way to exercise the
+      refresh job).
 - [ ] Legal → present tense + version bump. **Batch this with the Phase 4 ads
       rewrite** so users aren't re-prompted twice.
 

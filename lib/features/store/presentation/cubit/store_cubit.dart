@@ -15,7 +15,7 @@ class StoreCubit extends Cubit<StoreState> {
   StoreCubit(this._repository) : super(const StoreLoading());
 
   final StoreRepository _repository;
-  StreamSubscription<Set<String>>? _entitlementSub;
+  StreamSubscription<List<OwnedEntitlement>>? _entitlementSub;
 
   Future<void> load() async {
     emit(const StoreLoading());
@@ -51,14 +51,14 @@ class StoreCubit extends Cubit<StoreState> {
     // Owned state drives the whole shelf, so track it live: a purchase
     // completed on another screen (or recovered at start-up) flips the button
     // to OWNED without anyone having to reload.
-    _entitlementSub ??= _repository.watchEntitlements().listen((owned) {
+    _entitlementSub ??= _repository.watchOwned().listen((owned) {
       final s = state;
       if (s is StoreReady) emit(s.copyWith(owned: owned));
     });
 
     emit(StoreReady(
       offers: offers,
-      owned: await _repository.currentEntitlements(),
+      owned: await _repository.currentOwned(),
     ));
   }
 
@@ -92,7 +92,7 @@ class StoreCubit extends Cubit<StoreState> {
       if (!isClosed) {
         final s = state;
         if (s is StoreReady) {
-          emit(s.copyWith(owned: await _repository.currentEntitlements()));
+          emit(s.copyWith(owned: await _repository.currentOwned()));
         }
       }
       return null;
